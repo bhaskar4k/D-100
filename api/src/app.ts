@@ -18,7 +18,7 @@ app.get("/api/health", async (_req, res) => {
         res.status(HttpStatusCode.OK).json(
             new SuccessDto(
                 true,
-                "API and Database are healthy",
+                "API and Database Are healthy ✅ 💪",
                 HttpStatusCode.OK
             )
         );
@@ -26,7 +26,7 @@ app.get("/api/health", async (_req, res) => {
         res.status(HttpStatusCode.SERVICE_UNAVAILABLE).json(
             new ErrorDto(
                 false,
-                "Database connection failed",
+                "Database Connection Failed ❌ 💥",
                 HttpStatusCode.SERVICE_UNAVAILABLE
             )
         );
