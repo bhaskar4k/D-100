@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { pool } from "./data-access-layer/database";
+import { ConnectionPool } from "./data-access-layer/database";
 import { HttpStatusCode } from "./enum/HttpStatusCode";
 import { SuccessDto } from "./dto/SuccessDto";
 import { ErrorDto } from "./dto/ErrorDto";
@@ -12,7 +12,8 @@ app.use(express.json());
 
 app.get("/api/health", async (_req, res) => {
     try {
-        await pool.query("SELECT 1");
+        const DB = await ConnectionPool;
+        await DB.query("SELECT 1");
 
         res.status(HttpStatusCode.OK).json(
             new SuccessDto(

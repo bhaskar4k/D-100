@@ -1,8 +1,21 @@
 import "dotenv/config";
 import app from "./app";
+import { ConnectionPool } from "./data-access-layer/database";
 
 const PORT = Number(process.env.PORT) || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-});
+async function StartServer(): Promise<void> {
+    try {
+        await ConnectionPool;
+
+        app.listen(PORT, () => {
+            console.log(`Server running at http://localhost:${PORT}`);
+            console.log("MySQL connected successfully");
+        });
+    } catch (error) {
+        console.error("Failed to initialize MySQL:", error);
+        process.exit(1);
+    }
+}
+
+StartServer();
