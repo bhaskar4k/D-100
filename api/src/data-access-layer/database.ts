@@ -12,6 +12,10 @@ const database = process.env.DB_NAME || "d_100";
 
 
 export async function InitializeDatabase(): Promise<Pool> {
+    console.log("=====================================================");
+    console.log(" Started :: Connect Database\n");
+    console.log("⌛ Attempting To Connect MySQL Database.");
+
     const connection = await mysql.createConnection(config);
 
     try {
@@ -22,6 +26,10 @@ export async function InitializeDatabase(): Promise<Pool> {
         );
     } finally {
         await connection.end();
+
+        console.log("✅ MySQL Database Connected Successfully.");
+        console.log("\n Finished :: Connect Database");
+        console.log("=====================================================\n");
     }
 
     return mysql.createPool({

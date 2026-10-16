@@ -12,7 +12,6 @@ async function StartServer(): Promise<void> {
 
         app.listen(PORT, () => {
             console.log(`✅ Server Running At http://localhost:${PORT}`);
-            console.log("✅ MySQL Connected Successfully");
         });
     } catch (error) {
         console.error("❌ Failed to initialize MySQL:", error);
