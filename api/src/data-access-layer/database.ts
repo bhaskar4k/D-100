@@ -8,7 +8,7 @@ const config = {
     password: process.env.DB_PASSWORD
 };
 
-const database = process.env.DB_NAME || "D_100";
+const database = process.env.DB_NAME || "d_100";
 
 
 export async function InitializeDatabase(): Promise<Pool> {
