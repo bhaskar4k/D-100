@@ -13,5 +13,5 @@ export async function ExecuteTMenuMasterScript(): Promise<void> {
 
     await pool.query(sql);
 
-    console.log("✅ t_menu_master table initialized successfully.");
+    console.log("✅ T_MENU_MASTER Table Initialized Successfully.");
 }
