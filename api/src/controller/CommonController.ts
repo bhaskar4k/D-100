@@ -3,11 +3,12 @@ import { UserBusiness } from "../business/CommonBusiness";
 import { SuccessDto } from "../dto/SuccessDto";
 import { ErrorDto } from "../dto/ErrorDto";
 import { HttpStatusCode } from "../enum/HttpStatusCode";
+import { MenuItem } from "../entity/CommonEntity";
 
 export class CommonController {
     static async GetMenu(req: Request, res: Response): Promise<void> {
         try {
-            const menu = await UserBusiness.DoGetMenu();
+            const menu: MenuItem[] = await UserBusiness.DoGetMenu();
 
             res.status(HttpStatusCode.OK).json(
                 new SuccessDto(
