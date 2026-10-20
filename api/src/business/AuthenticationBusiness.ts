@@ -72,9 +72,6 @@ export class AuthenticationBusiness {
         try {
             const pool = await ConnectionPool;
 
-            console.log("Email:", email);
-            console.log("Password:", password);
-
             const [rows] = await pool.execute<UserLoginRow[]>(
                 `SELECT id, password, active, deleted
                  FROM T_USER_MASTER
