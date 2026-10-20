@@ -1,0 +1,78 @@
+<div class="p-3">
+    <div class="card shadow-lg">
+
+        <div class="card-body p-3 p-lg-3">
+
+            <h2 class="text-center mb-3">
+                File Details
+            </h2>
+
+            <table class="file-details-table">
+                <tbody>
+                    <tr>
+                        <th class="fw-bold width_max_content">Name</th>
+                        <td class="fw-semibold">{{ File.OriginalName }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <hr>
+
+            <i
+                [class]="'bi fs-3 p-0 m-0 ' + GetFileIcon(File.ContentType).icon + ' ' + GetFileIcon(File.ContentType).color">
+            </i>
+
+            <table class="file-details-table mt-2">
+                <tbody>
+                    <tr>
+                        <th class="fw-bold width_max_content">Size</th>
+                        <td class="fw-semibold">{{ GetReadableFileSize(File.FileSize) }}</td>
+                    </tr>
+
+                    <tr>
+                        <th class="fw-bold width_max_content">Actual Size</th>
+                        <td class="fw-semibold">{{ File.FileSize }} Bytes</td>
+                    </tr>
+
+                    <tr>
+                        <th class="fw-bold width_max_content">Extension</th>
+                        <td class="fw-semibold">{{ File.FileExtension }}</td>
+                    </tr>
+
+                    <tr>
+                        <th class="fw-bold width_max_content">Content Type</th>
+                        <td class="fw-semibold">{{ File.ContentType }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <hr>
+
+            <table class="file-details-table">
+                <tbody>
+                    <tr>
+                        <th class="fw-bold width_max_content">Uploaded At</th>
+                        <td class="fw-semibold">{{ File.CreatedAt }}</td>
+                    </tr>
+
+                    <tr>
+                        <th class="fw-bold width_max_content">Uploaded Ago</th>
+                        <td class="fw-semibold">{{ File.UploadedAgo }}</td>
+                    </tr>
+
+                    <tr>
+                        <th class="fw-bold width_max_content">Modified At</th>
+                        <td class="fw-semibold">{{ File.ModifiedAt }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 px-3 pb-3">
+            <button class="btn btn-secondary" (click)="close()">
+                Close
+            </button>
+        </div>
+
+    </div>
+</div>

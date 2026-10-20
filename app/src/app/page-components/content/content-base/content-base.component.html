@@ -1,0 +1,58 @@
+<div class="page-loader" *ngIf="IsMatProgressBarVisible()">
+    <mat-spinner diameter="50"></mat-spinner>
+</div>
+
+<div class="container-fluid py-3">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="overflow-auto">
+            <ol class="breadcrumb mb-0 flex-nowrap">
+                <div class="d-flex align-items-center">
+                    <h4 class="pt-1"><i class="bi bi-diagram-3 me-1 text-warning"></i>Content&nbsp;&nbsp;&nbsp;</h4>
+
+                    <li class="breadcrumb-item cursor_pointer" *ngFor="let folder of FullFolderPath; let last = last"
+                        [class.active]="last" [attr.aria-current]="last ? 'page' : null">
+
+                        <ng-container *ngIf="!last; else currentFolder">
+                            <a class="text-decoration-none text-primary" role="button"
+                                (click)="NavigateToFolder(folder)">
+                                {{ folder.FolderName }}
+                            </a>
+                        </ng-container>
+
+                        <ng-template #currentFolder>
+                            {{ folder.FolderName }}
+                        </ng-template>
+                    </li>
+                </div>
+            </ol>
+        </nav>
+
+
+        <div class="d-flex align-items-center">
+            <!-- Create Button -->
+            <button class="btn btn-primary d-flex align-items-center align-self-start align-self-md-center me-2"
+                (click)="CreateFolder()">
+                <i class="bi bi-folder-plus me-2"></i>
+                Create
+            </button>
+
+            <!-- Upload Button -->
+            <button class="btn btn-secondary d-flex align-items-center align-self-start align-self-md-center"
+                (click)="UploadFile()">
+                <i class="bi bi-upload me-2"></i>
+                Upload
+            </button>
+        </div>
+
+    </div>
+
+    <hr>
+
+    <app-folder-content *ngIf="RenderFolderList" [AllFolderDetails]="AllFolder" [MatExpansionState]="true"
+        [FolderRoutingPageName]="FolderRoutingPage.Content"></app-folder-content>
+
+    <app-file-content *ngIf="RenderFileList" [AllFileDetails]="AllFile" [MatExpansionState]="false"></app-file-content>
+</div>

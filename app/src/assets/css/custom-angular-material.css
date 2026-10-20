@@ -1,0 +1,20 @@
+.cdk-overlay-container .mat-mdc-tooltip .mdc-tooltip__surface {
+    background: #161b22 !important;
+    color: #f0f6fc !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 8px !important;
+}
+
+/* Removes default styling wrapper defaults for ALL dialogs across the app */
+.mat-mdc-dialog-container .mdc-dialog__surface {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0.5rem !important;
+    /* matches bootstrap rounded-3 */
+    overflow: hidden !important;
+}
+
+.cdk-overlay-container {
+    z-index: 99999 !important;
+}

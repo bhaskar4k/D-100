@@ -1,0 +1,60 @@
+:host {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 1000;
+}
+
+.file-folder-properties-menu {
+    width: 220px;
+    background: #1f2937;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    padding: 6px 0;
+    transform-origin: top right;
+}
+
+.menu-item {
+    width: 100%;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    color: #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: background .15s ease;
+    font-size: .95rem;
+}
+
+.menu-item:hover {
+    background: rgba(255, 255, 255, .08);
+}
+
+.menu-item i {
+    width: 18px;
+    text-align: center;
+    font-size: 1rem;
+    color: #9ca3af;
+}
+
+.menu-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, .08);
+    margin: 6px 0;
+}
+
+.menu-item.text-danger {
+    color: #ef4444 !important;
+}
+
+.menu-item.text-danger i {
+    color: #ef4444;
+}
+
+.menu-item.text-danger:hover {
+    background: rgba(239, 68, 68, .12);
+}

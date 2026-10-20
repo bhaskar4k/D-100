@@ -1,0 +1,13 @@
+.card {
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.input_border {
+    height: 48px;
+    border-radius: .6rem;
+}
+
+.input_border:focus {
+    box-shadow: none;
+}

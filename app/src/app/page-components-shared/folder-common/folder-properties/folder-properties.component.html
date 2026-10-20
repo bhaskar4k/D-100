@@ -1,0 +1,37 @@
+<div class="file-folder-properties-menu" [@popMenu]="ShowMore ? 'open' : 'closed'"
+    (@popMenu.start)="OnAnimStart($event)" (@popMenu.done)="OnAnimDone($event)" [class.d-none]="IsFullyClosed"
+    (click)="$event.stopPropagation()">
+
+    <button class="menu-item" (click)="ViewDetails()">
+        <i class="bi bi-info-circle"></i>
+        <span>Details</span>
+    </button>
+
+    <button class="menu-item" (click)="DownloadFolder()">
+        <i class="bi bi-download"></i>
+        <span>Download</span>
+    </button>
+
+    <!-- <button class="menu-item" (click)="FavouriteFolder()" [ngClass]="Folder.Favourite ? 'favourite_icon_color' : ''">
+        <i class="bi bi-star-fill" [ngClass]="Folder.Favourite ? 'favourite_icon_color' : ''"></i>
+        <span>Favourite</span>
+    </button> -->
+
+    <button class="menu-item" (click)="RenameFolder()">
+        <i class="bi bi-pencil-square"></i>
+        <span>Rename</span>
+    </button>
+
+    <div class="menu-divider"></div>
+
+    <button class="menu-item" (click)="MoveFolder()">
+        <i class="bi bi-shuffle"></i>
+        <span>Move</span>
+    </button>
+
+    <button class="menu-item text-danger" (click)="DeleteFolder()">
+        <i class="bi bi-trash3"></i>
+        <span>Delete</span>
+    </button>
+
+</div>

@@ -1,0 +1,83 @@
+/* =========================================================
+   Custom File Type Colors
+   ========================================================= */
+
+/* IMAGE — Green */
+.file-color-image {
+    color: #22c55e;
+}
+
+/* VIDEO — Cyan */
+.file-color-video {
+    color: #06b6d4;
+}
+
+/* AUDIO — Purple */
+.file-color-audio {
+    color: #a855f7;
+}
+
+/* PDF — Acrobat Red */
+.file-color-pdf {
+    color: #dc2626;
+}
+
+/* WORD — Microsoft Blue */
+.file-color-word {
+    color: #2563eb;
+}
+
+/* EXCEL — Microsoft Green */
+.file-color-excel {
+    color: #059669;
+}
+
+/* POWERPOINT — Microsoft Orange */
+.file-color-powerpoint {
+    color: #f97316;
+}
+
+/* TEXT — Slate Gray */
+.file-color-text {
+    color: #64748b;
+}
+
+/* CSV — Teal */
+.file-color-csv {
+    color: #14b8a6;
+}
+
+/* JSON — Amber */
+.file-color-json {
+    color: #eab308;
+}
+
+/* XML — Orange Red */
+.file-color-xml {
+    color: #ea580c;
+}
+
+/* ARCHIVE — Brown */
+.file-color-archive {
+    color: #92400e;
+}
+
+/* FONT — Pink */
+.file-color-font {
+    color: #ec4899;
+}
+
+/* CODE — Indigo */
+.file-color-code {
+    color: #6366f1;
+}
+
+/* DOCUMENT — Violet */
+.file-color-document {
+    color: #8b5cf6;
+}
+
+/* UNKNOWN — Neutral Gray */
+.file-color-unknown {
+    color: #94a3b8;
+}

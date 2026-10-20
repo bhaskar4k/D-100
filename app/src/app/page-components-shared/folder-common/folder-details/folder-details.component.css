@@ -1,0 +1,20 @@
+.card {
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.folder-details-table th {
+    width: 9rem;
+    min-width: 9rem;
+    max-width: 9rem;
+
+    white-space: nowrap;
+    padding-right: 40px !important;
+    vertical-align: top;
+}
+
+.folder-details-table td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
