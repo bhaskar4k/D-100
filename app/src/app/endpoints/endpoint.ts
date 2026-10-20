@@ -1,5 +1,5 @@
 export const EndpointType = {
-    dev: "http://localhost:8080/",
+    dev: "http://localhost:3000/",
     prod: "https://educarecenter-in-gogy.onrender.com/"
 }
 
@@ -7,7 +7,7 @@ export function GetBaseURL() {
     let BaseUrl = EndpointType.dev;
     // let BaseUrl = EndpointType.prod;
 
-    return BaseUrl + "api/";
+    return BaseUrl + "Api/";
 }
 
 export const Endpoints = {
@@ -16,7 +16,7 @@ export const Endpoints = {
         Login: "auth/user/login",
     },
     Common: {
-        GetMenu: "common/menu/get-menu",
+        GetMenu: "Common/GetMenu",
     },
     Upload: {
         Initiate: "file/upload/initiate",
