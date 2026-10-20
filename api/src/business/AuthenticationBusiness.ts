@@ -1,7 +1,8 @@
 import { ResultSetHeader } from "mysql2";
 import { ConnectionPool } from "../data-access-layer/database";
-import { UserExistsRow } from "../entity/AuthenticationEntity";
-
+import { UserExistsRow, UserLoginRow } from "../entity/AuthenticationEntity";
+import { UserStatus } from "../enum/UserEnum";
+import { Status, TrueFalse } from "../enum/CommonEnum";
 
 export class AuthenticationBusiness {
     static async IsEmailRegistered(email: string): Promise<boolean> {
@@ -61,6 +62,48 @@ export class AuthenticationBusiness {
             );
 
             return result.affectedRows === 1;
+        } catch (error: any) {
+            throw error;
+        }
+    }
+
+
+    static async DoLogin(email: string, password: string): Promise<UserStatus> {
+        try {
+            const pool = await ConnectionPool;
+
+            console.log("Email:", email);
+            console.log("Password:", password);
+
+            const [rows] = await pool.execute<UserLoginRow[]>(
+                `SELECT id, password, active, deleted
+                 FROM T_USER_MASTER
+                 WHERE email = ?
+                 LIMIT 1`,
+                [email.trim().toLowerCase()]
+            );
+
+            if (rows.length === 0) {
+                return UserStatus.DoesNotExist;
+            }
+
+            const user = rows[0];
+
+            console.log("User:", user);
+
+            if (user.active === Status.Inactive) {
+                return UserStatus.Inactive;
+            }
+
+            if (user.deleted === TrueFalse.True) {
+                return UserStatus.Deleted;
+            }
+
+            if (user.password !== password) {
+                return UserStatus.PasswordMismatch;
+            }
+
+            return UserStatus.Active;
         } catch (error: any) {
             throw error;
         }

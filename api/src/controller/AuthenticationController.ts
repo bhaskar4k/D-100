@@ -3,6 +3,7 @@ import { AuthenticationBusiness } from "../business/AuthenticationBusiness";
 import { SuccessDto } from "../dto/SuccessDto";
 import { ErrorDto } from "../dto/ErrorDto";
 import { HttpStatusCode } from "../enum/HttpStatusCode";
+import { UserStatus } from "../enum/UserEnum";
 
 
 export class AuthenticationController {
@@ -55,6 +56,51 @@ export class AuthenticationController {
 
             res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
                 new ErrorDto(false, "An unexpected error occurred to register user.", HttpStatusCode.INTERNAL_SERVER_ERROR)
+            );
+        }
+    }
+
+
+    static async Login(req: Request, res: Response): Promise<void> {
+        try {
+            const { email, password } = req.body;
+
+            if (!email) {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, "Email is required.", HttpStatusCode.BAD_REQUEST));
+                return;
+            }
+
+            if (!password) {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, "Password is required.", HttpStatusCode.BAD_REQUEST));
+                return;
+            }
+
+            const normalizedEmail = email.trim().toLowerCase();
+
+            const CurUserStatus: UserStatus = await AuthenticationBusiness.DoLogin(normalizedEmail, password);
+
+            if (CurUserStatus === UserStatus.DoesNotExist) {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, "User does not exist.", HttpStatusCode.BAD_REQUEST));
+                return;
+            } else if (CurUserStatus === UserStatus.Inactive) {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, "User is inactive. Please activate the user.", HttpStatusCode.BAD_REQUEST));
+                return;
+            } else if (CurUserStatus === UserStatus.Deleted) {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, "User is deleted. Please restore the admin.", HttpStatusCode.BAD_REQUEST));
+                return;
+            } else if (CurUserStatus === UserStatus.PasswordMismatch) {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, "Invalid credentials.", HttpStatusCode.BAD_REQUEST));
+                return;
+            }
+
+            res.status(HttpStatusCode.OK).json(
+                new SuccessDto(CurUserStatus, "User has been logged in successfully.", HttpStatusCode.OK)
+            );
+        } catch (error) {
+            console.error("Login Error:", error);
+
+            res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
+                new ErrorDto(false, "An unexpected error occurred while logging in.", HttpStatusCode.INTERNAL_SERVER_ERROR)
             );
         }
     }
