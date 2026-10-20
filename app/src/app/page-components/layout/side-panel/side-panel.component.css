@@ -1,0 +1,322 @@
+/* ========================
+   SIDEBAR SHELL
+======================== */
+.side-panel {
+  width: 256px;
+  min-width: 256px;
+  height: 100%;
+  background: #0d1117;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.side-panel.open {
+  width: 256px;
+  min-width: 256px;
+}
+
+.side-panel.closed {
+  width: 70px;
+  min-width: 70px;
+}
+
+.side-panel-inner {
+  width: 256px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.side-panel.closed .side-panel-inner {
+  width: 70px;
+}
+
+.side-panel-inner::-webkit-scrollbar {
+  width: 0;
+}
+
+/* ========================
+   TOP BAR
+======================== */
+.sb-topbar {
+  height: 50px;
+  min-height: 50px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 14px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+  flex-shrink: 0;
+}
+
+.sb-toggle-btn {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  margin: 0;
+
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+
+  color: #8b949e;
+
+  font-size: 22px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.sb-toggle-btn:hover {
+  background: rgba(177, 186, 196, 0.08);
+  color: #e6edf3;
+
+  transform: scale(1.03);
+}
+
+.sb-topbar .bi-list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========================
+   SECTION LABEL
+======================== */
+.sb-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(139, 148, 158, 0.45);
+
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  white-space: nowrap;
+  overflow: hidden;
+
+  padding-left: 16px;
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+
+/* ========================
+   NAV ITEMS
+======================== */
+.sb-item,
+.sb-subitem {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  text-decoration: none;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+/* Parent */
+.sb-item {
+  height: 38px;
+
+  padding: 0 12px 0 16px;
+
+  border-radius: 8px;
+  border: none;
+
+  background: transparent;
+
+  color: #8b949e;
+
+  font-size: 13.5px;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+/* Submenu */
+.sb-subitem {
+  height: 34px;
+
+  padding: 0 12px 0 42px;
+
+  border-radius: 7px;
+
+  color: rgba(139, 148, 158, 0.75);
+
+  font-size: 13px;
+  font-weight: 400;
+
+  margin-bottom: 1px;
+}
+
+/* Hover */
+.sb-item:hover,
+.sb-subitem:hover {
+  background: rgba(177, 186, 196, 0.08);
+  color: #e6edf3;
+}
+
+/* Active */
+.sb-item.active,
+a.sb-item.active {
+  background: rgba(31, 111, 235, 0.12);
+  color: #58a6ff;
+}
+
+.sb-item.active::before,
+a.sb-item.active::before {
+  content: '';
+
+  position: absolute;
+
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+
+  width: 3px;
+
+  background: #1f6feb;
+
+  border-radius: 0 3px 3px 0;
+}
+
+.sb-subitem.active {
+  color: #58a6ff;
+}
+
+/* ========================
+   ICONS
+======================== */
+.sb-icon {
+  width: 22px;
+  min-width: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 15px;
+
+  flex-shrink: 0;
+}
+
+.sb-subitem .sb-icon {
+  font-size: 14px;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.sb-subitem:hover .sb-icon,
+.sb-subitem.active .sb-icon {
+  opacity: 1;
+}
+
+/* ========================
+   CHEVRON
+======================== */
+.sb-chevron {
+  margin-left: auto;
+
+  font-size: 11px;
+  opacity: 0.45;
+
+  transition: transform 0.2s ease;
+}
+
+.sb-item.expanded .sb-chevron {
+  transform: rotate(180deg);
+}
+
+/* ========================
+   SUBMENU
+======================== */
+.sb-submenu {
+  overflow: hidden;
+
+  max-height: 0;
+  opacity: 0;
+
+  transition:
+    max-height 0.25s ease,
+    opacity 0.2s ease;
+}
+
+.sb-submenu.open {
+  max-height: 240px;
+  opacity: 1;
+}
+
+/* ========================
+   COLLAPSED MODE
+======================== */
+
+/* Keep menu item alignment */
+.side-panel.closed .sb-item,
+.side-panel.closed .sb-subitem {
+  padding-left: 16px;
+  padding-right: 12px;
+}
+
+/* Keep toggle perfectly fixed */
+.side-panel.closed .sb-topbar {
+  padding: 0 14px;
+}
+
+/* Hide only labels */
+.side-panel.closed .sb-item span,
+.side-panel.closed .sb-subitem span,
+.side-panel.closed .sb-section-label,
+.side-panel.closed .sb-chevron {
+  width: 0;
+  opacity: 0;
+
+  overflow: hidden;
+
+  pointer-events: none;
+}
+
+/* Remove submenu indent in collapsed */
+.side-panel.closed .sb-subitem {
+  padding-left: 16px;
+}
+
+/* Active indicator hidden in collapsed */
+.side-panel.closed .sb-item.active::before {
+  display: none;
+}
+
+/* Submenu closed by default */
+.side-panel.closed .sb-submenu {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Expand submenu on click */
+.side-panel.closed .sb-submenu.open {
+  max-height: 240px;
+  opacity: 1;
+}

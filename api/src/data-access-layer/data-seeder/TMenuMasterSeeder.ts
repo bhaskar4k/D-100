@@ -21,42 +21,18 @@ const menuItems: MenuSeed[] = [
     {
         active: 1,
         displayOrder: 2,
-        icon: "bi bi-diagram-3",
-        label: "Content",
+        icon: "bi bi-cloud-arrow-up",
+        label: "Upload",
         parentLabel: null,
         route: "/content"
     },
     {
         active: 1,
         displayOrder: 3,
-        icon: "bi bi-star-fill",
-        label: "Favourite",
+        icon: "bi bi-cpu",
+        label: "Processing",
         parentLabel: null,
         route: "/favourite"
-    },
-    {
-        active: 1,
-        displayOrder: 4,
-        icon: "bi bi-trash",
-        label: "Recycle Bin",
-        parentLabel: null,
-        route: "/recycle-bin"
-    },
-    {
-        active: 1,
-        displayOrder: 5,
-        icon: "bi bi-gear",
-        label: "Settings",
-        parentLabel: null,
-        route: null
-    },
-    {
-        active: 1,
-        displayOrder: 6,
-        icon: "bi bi-person-circle",
-        label: "Profile",
-        parentLabel: null,
-        route: "/profile"
     },
     {
         active: 1,
@@ -82,30 +58,6 @@ const menuItems: MenuSeed[] = [
         parentLabel: null,
         route: "/logout"
     },
-    {
-        active: 1,
-        displayOrder: 1,
-        icon: "bi bi-person-gear",
-        label: "Profile Settings",
-        parentLabel: "Settings",
-        route: "/settings/profile-settings"
-    },
-    {
-        active: 1,
-        displayOrder: 2,
-        icon: "bi bi-sliders2",
-        label: "Basic Settings",
-        parentLabel: "Settings",
-        route: "/settings/basic-settings"
-    },
-    {
-        active: 1,
-        displayOrder: 3,
-        icon: "bi bi-person-slash",
-        label: "Delete Account",
-        parentLabel: "Settings",
-        route: "/settings/delete-account"
-    }
 ];
 
 export async function SeedTMenuMaster(): Promise<void> {

@@ -1,0 +1,17 @@
+<div class="card shadow border rounded-3 border-secondary-subtle alert-container p-0 overflow-hidden mx-auto text-body bg-body"
+    data-bs-theme="dark" style="width: 600px; max-width: 100%;">
+
+    <h2 class="card-title h5 border-bottom border-secondary-subtle m-0 p-2 bg-body-tertiary fw-bold rounded-top-3">
+        <span [class]="textColorClass">{{ title }}</span>
+    </h2>
+
+    <div class="card-body p-4 py-5 text-start">
+        <p [class]="'text_style m-0 fs-6 lh-base ' + textColorClass" [innerHTML]="formattedText">
+        </p>
+    </div>
+
+    <div
+        class="alert-actions border-top border-secondary-subtle bg-body-tertiary px-3 py-2 m-0 d-flex justify-content-end rounded-bottom-3">
+        <button [class]="buttonClass + ' btn btn-sm btn-secondary m-2'" mat-button (click)="onClose()">Close</button>
+    </div>
+</div>

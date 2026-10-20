@@ -1,0 +1,15 @@
+.page-loader {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+}
+
+/* Angular Material MDC spinner */
+.page-loader mat-spinner {
+    --mdc-circular-progress-active-indicator-color: #ffffff;
+}

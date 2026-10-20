@@ -1,0 +1,40 @@
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    background-color: #1f2937 !important;
+    border-bottom: 1px solid #374151;
+    flex-shrink: 0;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.3rem;
+    transition: color 0.3s ease;
+    color: #e5e7eb !important;
+}
+
+.navbar-brand:hover {
+    color: #60a5fa !important;
+}
+
+.btn-outline-light {
+    border-color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+}
+
+.btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 1);
+    color: white;
+}
+
+.ms-auto {
+    margin-left: auto;
+}
+
+.me-2 {
+    margin-right: 0.5rem;
+}

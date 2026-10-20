@@ -1,14 +1,14 @@
 import express from "express";
-import cors from "cors";
 import { ConnectionPool } from "./data-access-layer/database";
 import { HttpStatusCode } from "./enum/HttpStatusCode";
 import { SuccessDto } from "./dto/SuccessDto";
 import { ErrorDto } from "./dto/ErrorDto";
 import CommonRouter from "./router/CommonRouter";
+import CorsConfig from "./config/CorsConfig";
 
 const app = express();
 
-app.use(cors());
+app.use(CorsConfig);
 app.use(express.json());
 
 // Routers
