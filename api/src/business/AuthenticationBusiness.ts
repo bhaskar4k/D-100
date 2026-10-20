@@ -2,6 +2,7 @@ import { ResultSetHeader } from "mysql2";
 import { ConnectionPool } from "../data-access-layer/database";
 import { UserExistsRow } from "../entity/AuthenticationEntity";
 
+
 export class AuthenticationBusiness {
     static async IsEmailRegistered(email: string): Promise<boolean> {
         try {
