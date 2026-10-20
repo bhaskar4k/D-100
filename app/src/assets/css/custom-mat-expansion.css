@@ -1,0 +1,93 @@
+/* Accordion */
+
+mat-accordion {
+    display: block;
+    margin-top: 1rem;
+}
+
+/* Panel */
+
+.mat-expansion-panel {
+    background: #283548 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
+    margin-bottom: 1rem !important;
+    overflow: visible !important;
+    /* let dropdowns/overlays escape the panel */
+}
+
+/* Header */
+
+.mat-expansion-panel-header {
+    height: 64px !important;
+    padding: 0 24px !important;
+    transition: all 0.2s ease !important;
+    --mat-expansion-header-indicator-color: #ffffff !important;
+    border-radius: 18px !important;
+    /* rounds all 4 corners when collapsed */
+}
+
+/* Expanded header only rounds the top,
+   since the body follows below it */
+.mat-expansion-panel-header.mat-expanded {
+    height: 64px !important;
+    border-radius: 18px 18px 0 0 !important;
+}
+
+/* Hover */
+
+.mat-expansion-panel-header:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Title */
+
+.mat-expansion-panel-header-title {
+    color: #ffffff !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+
+/* Body */
+
+.mat-expansion-panel-body {
+    padding: 0 24px 24px !important;
+    border-radius: 0 0 18px 18px !important;
+    /* rounds the bottom to match the panel's own radius */
+}
+
+/* Divider between header and content */
+
+.mat-expansion-panel-body::before {
+    content: "";
+    display: block;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin-bottom: 24px;
+}
+
+/* Mobile */
+
+@media (max-width: 576px) {
+    .mat-expansion-panel {
+        border-radius: 14px !important;
+    }
+
+    .mat-expansion-panel-header {
+        border-radius: 14px !important;
+    }
+
+    .mat-expansion-panel-header.mat-expanded {
+        border-radius: 14px 14px 0 0 !important;
+    }
+
+    .mat-expansion-panel-header {
+        padding: 0 16px !important;
+    }
+
+    .mat-expansion-panel-body {
+        padding: 0 16px 16px !important;
+        border-radius: 0 0 14px 14px !important;
+    }
+}

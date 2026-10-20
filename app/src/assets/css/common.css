@@ -1,0 +1,12 @@
+hr {
+    border-color: #374151 !important;
+    opacity: 1 !important;
+}
+
+.cursor_pointer {
+    cursor: pointer !important;
+}
+
+.favourite_icon_color {
+    color: #00b7ff !important;
+}

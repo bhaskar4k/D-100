@@ -2,11 +2,13 @@ export class SuccessDto {
     readonly success: boolean = true;
     readonly message: string;
     readonly data: any;
-    readonly status: number;
+    readonly statusCode: number;
+    readonly extraData?: any;
 
-    constructor(data: any, message: string, status: number) {
+    constructor(data: any, message: string, statusCode: number, extraData?: any) {
         this.data = data;
         this.message = message;
-        this.status = status;
+        this.statusCode = statusCode;
+        this.extraData = extraData;
     }
 }

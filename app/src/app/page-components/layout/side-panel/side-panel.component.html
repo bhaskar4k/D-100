@@ -1,0 +1,74 @@
+<aside class="side-panel" [class.open]="isOpen" [class.closed]="!isOpen">
+
+    <div class="side-panel-inner">
+
+        <!-- TOPBAR -->
+        <div class="sb-topbar">
+            <button type="button" class="sb-toggle-btn" (click)="onToggleSidePanel()" matTooltip="Toggle Menu"
+                matTooltipPosition="right">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+
+        <!-- NAVIGATION -->
+        <nav class="sb-nav px-2 py-2" *ngIf="HasFetchedMenuData">
+
+            <ng-container *ngFor="let item of AllMenuItems">
+                <!-- MENU WITH SUBMENU -->
+                <div *ngIf="hasSubmenu(item)" class="sb-group mb-1">
+
+                    <!-- PARENT -->
+                    <button type="button" class="sb-item d-flex align-items-center w-100 gap-2"
+                        [class.expanded]="isMenuExpanded(item.id)" [matTooltip]="!isOpen ? item.label : null"
+                        matTooltipPosition="right" matTooltipShowDelay="150" (click)="toggleSubmenu(item.id)">
+
+                        <i [ngClass]="item.icon" class="sb-icon">
+                        </i>
+
+                        <span class="flex-grow-1 text-start">
+                            {{ item.label }}
+                        </span>
+
+                        <i class="bi sb-chevron" [ngClass]="
+                                isMenuExpanded(item.id)
+                                    ? 'bi-chevron-up'
+                                    : 'bi-chevron-down'">
+                        </i>
+                    </button>
+
+                    <!-- SUBMENU -->
+                    <div class="sb-submenu" [class.open]="isMenuExpanded(item.id)">
+                        <a *ngFor="let subitem of item.submenu" [routerLink]="subitem.route" routerLinkActive="active"
+                            class="sb-subitem d-flex align-items-center gap-2"
+                            [matTooltip]="!isOpen ? subitem.label : null" matTooltipPosition="right"
+                            matTooltipShowDelay="150">
+
+                            <i [ngClass]="subitem.icon" class="sb-icon">
+                            </i>
+
+                            <span>
+                                {{ subitem.label }}
+                            </span>
+                        </a>
+                    </div>
+
+                </div>
+
+                <!-- MENU WITHOUT SUBMENU -->
+                <a *ngIf="!hasSubmenu(item)" [routerLink]="item.route" routerLinkActive="active"
+                    class="sb-item d-flex align-items-center gap-2 mb-1" [matTooltip]="!isOpen ? item.label : null"
+                    matTooltipPosition="right" matTooltipShowDelay="150">
+                    <i [ngClass]="item.icon" class="sb-icon">
+                    </i>
+                    <span>
+                        {{ item.label }}
+                    </span>
+                </a>
+
+            </ng-container>
+
+        </nav>
+
+    </div>
+
+</aside>

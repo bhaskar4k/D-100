@@ -1,0 +1,125 @@
+:host {
+    display: block;
+    height: 100%;
+}
+
+/* =========================
+   BOOTSTRAP UTILITIES
+========================= */
+.d-flex {
+    display: flex !important;
+}
+
+.flex-column {
+    flex-direction: column !important;
+}
+
+.vh-100 {
+    height: 100vh !important;
+}
+
+.flex-grow-1 {
+    flex-grow: 1 !important;
+}
+
+.p-4 {
+    padding: 1.5rem !important;
+}
+
+.overflow-auto {
+    overflow: auto !important;
+}
+
+/* =========================
+   ROOT LAYOUT
+========================= */
+div.d-flex.flex-column.vh-100 {
+    display: flex;
+    flex-direction: column;
+
+    height: 100vh;
+
+    overflow: hidden;
+
+    background: #111827;
+}
+
+/* =========================
+   MAIN CONTENT AREA
+========================= */
+div.d-flex.flex-grow-1 {
+    display: flex;
+
+    flex: 1 1 auto;
+
+    min-width: 0;
+    min-height: 0;
+
+    overflow: hidden;
+
+    position: relative;
+}
+
+/* =========================
+   SIDEBAR HOST
+========================= */
+app-side-panel {
+    display: flex;
+
+    flex-shrink: 0;
+
+    position: relative;
+
+    z-index: 1000;
+}
+
+/* =========================
+   MAIN ROUTER OUTLET AREA
+========================= */
+main {
+    flex: 1 1 auto;
+
+    min-width: 0;
+    min-height: 0;
+
+    width: 100%;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    position: relative;
+
+    background-color: #1f2937;
+    color: #e5e7eb;
+}
+
+/* =========================
+   RESPONSIVE / MOBILE
+========================= */
+@media (max-width: 992px) {
+
+    /* Keep the sidebar absolute but let it have its natural width */
+    app-side-panel {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        /* Remove the width: 0 overrides so it displays properly */
+        z-index: 1200;
+    }
+
+    /* Shift the main content over so the sidebar doesn't overlap it */
+    main {
+        flex: 1 1 100%;
+        width: 100%;
+        min-width: 0;
+        overflow-x: hidden;
+
+        /* Adjust this value to match your actual sidebar's width */
+        margin-left: 70px;
+    }
+
+    .p-4 {
+        padding: 1rem !important;
+    }
+}
