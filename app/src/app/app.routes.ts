@@ -2,10 +2,10 @@ import { Routes } from '@angular/router';
 import { LayoutBaseComponent } from './page-components/layout/layout-base/layout-base.component';
 import { HomeComponent } from './page-components/home/home.component';
 import { ErrorComponent } from './page-components/error/error.component';
-import { RegisterComponent } from './page-components/auth-components/register/register.component';
-import { LoginComponent } from './page-components/auth-components/login/login.component';
+import { RegisterComponent } from './page-components/auth/register/register.component';
+import { LoginComponent } from './page-components/auth/login/login.component';
 import { DashboardComponent } from './page-components/dashboard/dashboard.component';
-import { LogoutComponent } from './page-components/auth-components/logout/logout.component';
+import { LogoutComponent } from './page-components/auth/logout/logout.component';
 import { AuthGuard } from './middleware/AuthGuard';
 
 export const routes: Routes = [
