@@ -1,4 +1,3 @@
-import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { ConnectionPool } from "../data-access-layer/database";
 import { MenuItem, MenuRow } from "../entity/CommonEntity";
 
