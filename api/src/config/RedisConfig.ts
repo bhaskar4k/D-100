@@ -1,16 +1,32 @@
 import { createClient } from "redis";
+import "dotenv/config";
+import { ConnectionPool } from "../data-access-layer/database";
 
-const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+const url = process.env.REDIS_URL || "redis://localhost:6379";
 
-const RedisClient = createClient({ url: REDIS_URL });
 
-RedisClient.on("error", (error) => {
-    console.error("Redis Error:", error);
-});
+export async function InitializeRedis() {
+    console.log("=====================================================");
+    console.log(" Started :: Connect Redis\n");
+    console.log("⌛ Attempting To Connect Redis.");
 
-export const RedisConnection: Promise<typeof RedisClient> = RedisClient.connect().then(() => {
-    console.log("✅ Redis connected");
-    return RedisClient;
-});
+    const client = createClient({ url });
 
-export default RedisClient;
+    client.on("error", (error) => {
+        console.error("Redis Error:", error);
+    });
+
+    try {
+        await client.connect();
+
+        console.log("✅ Redis Connected Successfully.");
+    } finally {
+        console.log("\n Finished :: Connect Redis");
+        console.log("=====================================================\n");
+    }
+
+    return client;
+}
+
+
+export const RedisConnection = ConnectionPool.then(() => InitializeRedis());
