@@ -18,6 +18,7 @@ export interface UserLoginRow extends RowDataPacket {
 }
 
 export interface UserData {
+    auth: boolean;
     id: number;
     email?: string;
     active?: number;

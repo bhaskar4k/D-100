@@ -9,7 +9,7 @@ import { MenuItem } from "../entity/CommonEntity";
 export class CommonController {
     static async GetMenu(req: Request, res: Response): Promise<void> {
         try {
-            const menu: MenuItem[] = await UserBusiness.DoGetMenu();
+            const menu: MenuItem[] = await UserBusiness.DoGetMenu(req.UserData!);
 
             res.status(HttpStatusCode.OK).json(new SuccessDto(menu, "Menu retrieved successfully.", HttpStatusCode.OK));
         } catch (error) {

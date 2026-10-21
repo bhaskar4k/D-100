@@ -1,10 +1,12 @@
 import { ConnectionPool } from "../data-access-layer/database";
+import { UserData } from "../entity/AuthenticationEntity";
 import { MenuItem, MenuRow } from "../entity/CommonEntity";
 
 
 export class UserBusiness {
-    static async DoGetMenu(): Promise<MenuItem[]> {
+    static async DoGetMenu(User: UserData): Promise<MenuItem[]> {
         try {
+            console.log(User);
             const pool = await ConnectionPool;
 
             const [rows] = await pool.query<MenuRow[]>(`

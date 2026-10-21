@@ -20,43 +20,76 @@ function Unauthorized(res: Response, message: string): void {
     res.status(HttpStatusCode.UNAUTHORIZED).json(new ErrorDto(false, message, HttpStatusCode.UNAUTHORIZED));
 }
 
+const GuestUser: UserData = { auth: false, id: 0 };
+
+type ResolveResult = { user: UserData } | { error: string };
+
+async function ResolveUser(req: Request): Promise<ResolveResult> {
+    const header = req.headers.authorization;
+    const SessionUuid = header?.startsWith("Bearer ") ? header.slice(7).trim() : "";
+
+    if (!SessionUuid || !IsValidUuid(SessionUuid) || UuidVersion(SessionUuid) !== 7) {
+        return { error: "Invalid session." };
+    }
+
+    const redis = await RedisConnection;
+    const JwtToken = await redis.get(GetSessionKey(SessionUuid));
+
+    if (!JwtToken) {
+        return { error: "Session expired or not found." };
+    }
+
+    let payload: jwt.JwtPayload;
+    try {
+        payload = jwt.verify(JwtToken, JwtSecret) as jwt.JwtPayload;
+    } catch {
+        return { error: "Invalid or expired token." };
+    }
+
+    return {
+        user: {
+            auth: true,
+            id: payload.id
+        }
+    };
+}
+
+function ServerError(res: Response, error: unknown): void {
+    console.error("JwtMiddleWare Error:", error);
+
+    res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
+        new ErrorDto(false, "An unexpected error occurred while validating session.", HttpStatusCode.INTERNAL_SERVER_ERROR)
+    );
+}
+
+
+// Rejects the request with 401 unless it carries a valid session.
 export async function JwtMiddleWare(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const header = req.headers.authorization;
-        const SessionUuid = header?.startsWith("Bearer ") ? header.slice(7).trim() : "";
+        const result = await ResolveUser(req);
 
-        if (!SessionUuid || !IsValidUuid(SessionUuid) || UuidVersion(SessionUuid) !== 7) {
-            Unauthorized(res, "Invalid session.");
+        if ("error" in result) {
+            Unauthorized(res, result.error);
             return;
         }
 
-        const redis = await RedisConnection;
-        const JwtToken = await redis.get(GetSessionKey(SessionUuid));
-
-        if (!JwtToken) {
-            Unauthorized(res, "Session expired or not found.");
-            return;
-        }
-
-        let payload: jwt.JwtPayload;
-        try {
-            payload = jwt.verify(JwtToken, JwtSecret) as jwt.JwtPayload;
-        } catch {
-            Unauthorized(res, "Invalid or expired token.");
-            return;
-        }
-
-        req.UserData = {
-            id: payload.id,
-        };
-
+        req.UserData = result.user;
         next();
     } catch (error) {
-        console.error("JwtMiddleWare Error:", error);
+        ServerError(res, error);
+    }
+}
 
-        res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
-            new ErrorDto(false, "An unexpected error occurred while validating session.", HttpStatusCode.INTERNAL_SERVER_ERROR)
-        );
+
+// Lets the request through either way; req.UserData.auth tells whether the session was valid.
+export async function OptionalJwtMiddleWare(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const result = await ResolveUser(req);
+
+        req.UserData = "user" in result ? result.user : GuestUser;
+        next();
+    } catch (error) {
+        ServerError(res, error);
     }
 }
 
