@@ -76,13 +76,14 @@ export class AuthenticationBusiness {
     static async DoLogin(email: string, password: string): Promise<LoginResult> {
         try {
             const pool = await ConnectionPool;
+            email = email.trim().toLowerCase();
 
             const [rows] = await pool.execute<UserLoginRow[]>(
                 `SELECT id, password, active, deleted
                  FROM T_USER_MASTER
                  WHERE email = ?
                  LIMIT 1`,
-                [email.trim().toLowerCase()]
+                [email]
             );
 
             if (rows.length === 0) {
@@ -107,7 +108,7 @@ export class AuthenticationBusiness {
             const SessionId = GetSessionKey(UUID);
 
             const JwtToken = jwt.sign(
-                { sub: String(user.id), sid: SessionId },
+                { id: user.id },
                 JwtSecret,
                 { expiresIn: JwtExpiresInSeconds }
             );

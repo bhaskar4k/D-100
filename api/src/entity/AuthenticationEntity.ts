@@ -16,3 +16,10 @@ export interface UserLoginRow extends RowDataPacket {
     active: number;
     deleted: number;
 }
+
+export interface UserData {
+    id: number;
+    email?: string;
+    active?: number;
+    deleted?: number;
+}
