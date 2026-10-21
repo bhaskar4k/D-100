@@ -1,5 +1,6 @@
 import "dotenv/config";
 import app from "./app";
+import "./config/RedisConfig";
 import { ConnectionPool } from "./data-access-layer/database";
 import { CreateTables } from "./data-access-layer/script-runner/CreateTables";
 import { SeedTables } from "./data-access-layer/data-seeder/SeedTables";

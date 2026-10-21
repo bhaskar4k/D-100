@@ -1,8 +1,13 @@
 import { ResultSetHeader } from "mysql2";
 import { ConnectionPool } from "../data-access-layer/database";
-import { UserExistsRow, UserLoginRow } from "../entity/AuthenticationEntity";
+import jwt from "jsonwebtoken";
+import { v7 as uuidv7 } from "uuid";
+import { RedisConnection } from "../config/RedisConfig";
+import { JwtSecret, JwtExpiresInSeconds } from "../config/JwtConfig";
+import { LoginResult, UserExistsRow, UserLoginRow } from "../entity/AuthenticationEntity";
 import { UserStatus } from "../enum/UserEnum";
 import { Status, TrueFalse } from "../enum/CommonEnum";
+import { GetSessionKey } from "../util/AuthUtil";
 
 export class AuthenticationBusiness {
     static async IsEmailRegistered(email: string): Promise<boolean> {
@@ -68,7 +73,7 @@ export class AuthenticationBusiness {
     }
 
 
-    static async DoLogin(email: string, password: string): Promise<UserStatus> {
+    static async DoLogin(email: string, password: string): Promise<LoginResult> {
         try {
             const pool = await ConnectionPool;
 
@@ -81,26 +86,36 @@ export class AuthenticationBusiness {
             );
 
             if (rows.length === 0) {
-                return UserStatus.DoesNotExist;
+                return { status: UserStatus.DoesNotExist };
             }
 
             const user = rows[0];
 
-            console.log("User:", user);
-
             if (user.active === Status.Inactive) {
-                return UserStatus.Inactive;
+                return { status: UserStatus.Inactive };
             }
 
             if (user.deleted === TrueFalse.True) {
-                return UserStatus.Deleted;
+                return { status: UserStatus.Deleted };
             }
 
             if (user.password !== password) {
-                return UserStatus.PasswordMismatch;
+                return { status: UserStatus.PasswordMismatch };
             }
 
-            return UserStatus.Active;
+            const UUID = uuidv7();
+            const SessionId = GetSessionKey(UUID);
+
+            const JwtToken = jwt.sign(
+                { sub: String(user.id), sid: SessionId },
+                JwtSecret,
+                { expiresIn: JwtExpiresInSeconds }
+            );
+
+            const redis = await RedisConnection;
+            await redis.set(SessionId, JwtToken, { EX: JwtExpiresInSeconds });
+
+            return { status: UserStatus.Active, token: UUID };
         } catch (error: any) {
             throw error;
         }
