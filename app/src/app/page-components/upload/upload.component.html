@@ -1,0 +1,52 @@
+<div class="upload-container">
+  <h4 class="mb-3">Upload File</h4>
+
+  <label class="drop-zone" [class.dragging]="IsDragging" (dragover)="OnDragOver($event)" (dragleave)="OnDragLeave()"
+    (drop)="OnDrop($event)">
+    <i class="bi bi-cloud-arrow-up fs-1"></i>
+    <span>Drag &amp; drop a file here, or click to browse</span>
+    <small class="text-secondary">Supported: {{ SupportedExtensions.join(', ') }}</small>
+    <input type="file" hidden [accept]="AcceptAttribute" [disabled]="Uploading" (change)="OnFileSelected($event)" />
+  </label>
+
+  @if (SelectedFile) {
+  <div class="file-info mt-3">
+    <span class="file-name">{{ SelectedFile.name }}</span>
+    <span class="text-secondary">{{ ReadableSize(SelectedFile.size) }}</span>
+  </div>
+  }
+
+  @if (ErrorMessage) {
+  <div class="alert alert-danger mt-3 mb-0">{{ ErrorMessage }}</div>
+  }
+
+  @if (Progress) {
+  <div class="progress mt-3" role="progressbar" [attr.aria-valuenow]="Progress.percent" aria-valuemin="0"
+    aria-valuemax="100">
+    <div class="progress-bar" [class.progress-bar-striped]="Uploading" [class.progress-bar-animated]="Uploading"
+      [class.bg-success]="Completed" [style.width.%]="Progress.percent">
+      {{ Progress.percent.toFixed(1) }}%
+    </div>
+  </div>
+
+  <div class="stats mt-3">
+    <div><span class="label">Progress</span><span>{{ Progress.percent.toFixed(2) }}%</span></div>
+    <div><span class="label">Uploaded</span><span>{{ ReadableSize(Progress.uploadedBytes) }}</span></div>
+    <div><span class="label">Left</span><span>{{ ReadableSize(Progress.leftBytes) }}</span></div>
+    <div><span class="label">Speed</span><span>{{ ReadableSize(Progress.speedBytesPerSecond) }}/s</span></div>
+    <div><span class="label">ETA</span><span>{{ Completed ? 'Done' : FormatEta(Progress.etaSeconds) }}</span></div>
+  </div>
+  }
+
+  @if (Completed) {
+  <div class="alert alert-success mt-3 mb-0">File uploaded successfully.</div>
+  }
+
+  <div class="mt-3 d-flex gap-2">
+    @if (!Uploading) {
+    <button class="btn btn-primary" [disabled]="!SelectedFile" (click)="StartUpload()">Upload</button>
+    } @else {
+    <button class="btn btn-outline-danger" (click)="CancelUpload()">Cancel</button>
+    }
+  </div>
+</div>
