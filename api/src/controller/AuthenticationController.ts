@@ -3,12 +3,15 @@ import { AuthenticationBusiness } from "../business/AuthenticationBusiness";
 import { SuccessDto } from "../dto/SuccessDto";
 import { ErrorDto } from "../dto/ErrorDto";
 import { HttpStatusCode } from "../enum/HttpStatusCode";
+import { Logger } from "../log/Logger";
 import { UserStatus } from "../enum/UserEnum";
 
 
 export class AuthenticationController {
     static async Register(req: Request, res: Response): Promise<void> {
         try {
+            await Logger.Info("Register -> Called", req.UserData?.id);
+
             const { name, email, phone, password } = req.body;
 
             if (!name) {
@@ -52,7 +55,7 @@ export class AuthenticationController {
                 new SuccessDto(UserSaved, "User has been registered successfully.", HttpStatusCode.OK)
             );
         } catch (error) {
-            console.error("Register Error:", error);
+            await Logger.Error("Register Error", error, req.UserData?.id);
 
             res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
                 new ErrorDto(false, "An unexpected error occurred to register user.", HttpStatusCode.INTERNAL_SERVER_ERROR)
@@ -63,6 +66,8 @@ export class AuthenticationController {
 
     static async Login(req: Request, res: Response): Promise<void> {
         try {
+            await Logger.Info("Login -> Called", req.UserData?.id);
+
             const { email, password } = req.body;
 
             if (!email) {
@@ -97,7 +102,7 @@ export class AuthenticationController {
                 new SuccessDto(token, "User has been logged in successfully.", HttpStatusCode.OK)
             );
         } catch (error) {
-            console.error("Login Error:", error);
+            await Logger.Error("Login Error", error, req.UserData?.id);
 
             res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
                 new ErrorDto(false, "An unexpected error occurred while logging in.", HttpStatusCode.INTERNAL_SERVER_ERROR)

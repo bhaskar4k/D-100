@@ -5,6 +5,7 @@ import { RedisConnection } from "../config/RedisConfig";
 import { ConnectionPool } from "../data-access-layer/database";
 import { FileUploadStatus } from "../enum/FileUploadStatus";
 import { GetAllowedExtensions } from "../util/UploadUtil";
+import { Logger } from "../log/Logger";
 import { UploadInitiateResult, UploadSession } from "../entity/UploadEntity";
 
 const RAW_UPLOAD_PATH = process.env.RAW_UPLOAD_PATH;
@@ -83,6 +84,8 @@ export class UploadBusiness {
         const redis = await RedisConnection;
         await redis.set(SessionKey(uploadId), JSON.stringify(session), { EX: UploadSessionTtlSeconds });
 
+        await Logger.Info(`Upload initiated: ${uploadId} (${path.parse(FileName).name}${extension}, ${FileSize} bytes, ${totalChunks} chunks).`, UserId);
+
         return { uploadId, chunkSize: ChunkSize, totalChunks };
     }
 
@@ -159,6 +162,8 @@ export class UploadBusiness {
         );
 
         await redis.del([SessionKey(UploadId), ChunksKey(UploadId)]);
+
+        await Logger.Info(`Upload completed: ${UploadId} (${session.fileSize} bytes).`, UserId);
 
         return null;
     }

@@ -8,6 +8,7 @@ import { LoginResult, UserExistsRow, UserLoginRow } from "../entity/Authenticati
 import { UserStatus } from "../enum/UserEnum";
 import { Status, TrueFalse } from "../enum/CommonEnum";
 import { GetSessionKey } from "../util/AuthUtil";
+import { Logger } from "../log/Logger";
 
 export class AuthenticationBusiness {
     static async IsEmailRegistered(email: string): Promise<boolean> {
@@ -66,6 +67,10 @@ export class AuthenticationBusiness {
                 ]
             );
 
+            if (result.affectedRows === 1) {
+                await Logger.Info(`User registered: ${email}`, result.insertId);
+            }
+
             return result.affectedRows === 1;
         } catch (error: any) {
             throw error;
@@ -87,20 +92,24 @@ export class AuthenticationBusiness {
             );
 
             if (rows.length === 0) {
+                await Logger.Info(`Login failed: no user found for ${email}.`);
                 return { status: UserStatus.DoesNotExist };
             }
 
             const user = rows[0];
 
             if (user.active === Status.Inactive) {
+                await Logger.Info(`Login failed: user is inactive (${email}).`, user.id);
                 return { status: UserStatus.Inactive };
             }
 
             if (user.deleted === TrueFalse.True) {
+                await Logger.Info(`Login failed: user is deleted (${email}).`, user.id);
                 return { status: UserStatus.Deleted };
             }
 
             if (user.password !== password) {
+                await Logger.Info(`Login failed: invalid password (${email}).`, user.id);
                 return { status: UserStatus.PasswordMismatch };
             }
 
@@ -115,6 +124,8 @@ export class AuthenticationBusiness {
 
             const redis = await RedisConnection;
             await redis.set(SessionId, JwtToken, { EX: JwtExpiresInSeconds });
+
+            await Logger.Info(`User logged in: ${email}`, user.id);
 
             return { status: UserStatus.Active, token: UUID };
         } catch (error: any) {

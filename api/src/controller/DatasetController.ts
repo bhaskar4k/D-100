@@ -3,6 +3,7 @@ import { DatasetService } from "../business/DatasetService";
 import { SuccessDto } from "../dto/SuccessDto";
 import { ErrorDto } from "../dto/ErrorDto";
 import { HttpStatusCode } from "../enum/HttpStatusCode";
+import { Logger } from "../log/Logger";
 
 const DefaultPageSize = 10;
 const MaxPageSize = 100;
@@ -12,6 +13,8 @@ const MaxSearchLength = 100;
 export class DatasetController {
     static async GetAll(req: Request, res: Response): Promise<void> {
         try {
+            await Logger.Info("GetAllDatasets -> Called", req.UserData?.id);
+
             const page = Math.max(1, Math.floor(Number(req.query.page)) || 1);
             const pageSize = Math.min(MaxPageSize, Math.max(1, Math.floor(Number(req.query.pageSize)) || DefaultPageSize));
 
@@ -21,7 +24,7 @@ export class DatasetController {
 
             res.status(HttpStatusCode.OK).json(new SuccessDto(result, "Datasets retrieved successfully.", HttpStatusCode.OK));
         } catch (error) {
-            console.error("GetAll Datasets Error:", error);
+            await Logger.Error("GetAll Datasets Error", error, req.UserData?.id);
 
             res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
                 new ErrorDto(null, "An unexpected error occurred to get datasets.", HttpStatusCode.INTERNAL_SERVER_ERROR)
