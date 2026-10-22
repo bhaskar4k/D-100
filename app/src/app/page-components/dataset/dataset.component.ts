@@ -33,7 +33,7 @@ export class DatasetComponent implements OnInit {
   Datasets: DatasetItem[] = [];
   Total = 0;
   PageIndex = 0;
-  PageSize = 10;
+  PageSize = 5;
   Loading = false;
   ErrorMessage = '';
 
