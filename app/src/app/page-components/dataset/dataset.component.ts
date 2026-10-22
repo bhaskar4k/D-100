@@ -1,17 +1,21 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog } from '@angular/material/dialog';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { DatasetService } from '../../services/dataset.service';
 import { DatasetItem } from '../../models/dataset.model';
 import { FILE_UPLOAD_STATUS_LABEL } from '../../enums/file-upload-status.enum';
 import { GetReadableFileSize } from '../../common/FileUtil';
 import { FormatDuration } from '../../common/CommonUtil';
+import { CustomAlertComponent } from '../../page-components-shared/custom-alert/custom-alert.component';
+import { ResponseTypeColor } from '../../constants/commonConsts';
 
 @Component({
   selector: 'app-dataset',
-  imports: [DatePipe, MatTableModule, MatPaginatorModule],
+  imports: [CommonModule, DatePipe, MatTableModule, MatPaginatorModule, MatProgressSpinnerModule],
   templateUrl: './dataset.component.html',
   styleUrl: './dataset.component.css'
 })
@@ -37,14 +41,16 @@ export class DatasetComponent implements OnInit, OnDestroy {
   PageIndex = 0;
   PageSize = 5;
   SearchText = '';
-  Loading = false;
-  ErrorMessage = '';
+  MatProgressBar = false;
 
   private search$ = new Subject<string>();
   private searchSubscription?: Subscription;
   private loadSubscription?: Subscription;
 
-  constructor(private datasetService: DatasetService) { }
+  constructor(
+    private datasetService: DatasetService,
+    private dialog: MatDialog
+  ) { }
 
   ngOnInit(): void {
     // Searching runs on the server so it covers every dataset, not just the current page.
@@ -79,18 +85,17 @@ export class DatasetComponent implements OnInit, OnDestroy {
   }
 
   private Load(): void {
-    this.Loading = true;
-    this.ErrorMessage = '';
+    this.MatProgressBar = true;
 
     // A newer request supersedes one still in flight, so a slow response can't overwrite fresher results.
     this.loadSubscription?.unsubscribe();
 
     this.loadSubscription = this.datasetService.GetAll(this.PageIndex + 1, this.PageSize, this.SearchText).subscribe({
       next: response => {
-        this.Loading = false;
+        this.MatProgressBar = false;
 
         if (!response.success) {
-          this.ErrorMessage = response.message;
+          this.dialog.open(CustomAlertComponent, { data: { text: response.message, type: ResponseTypeColor.ERROR } });
           return;
         }
 
@@ -98,8 +103,8 @@ export class DatasetComponent implements OnInit, OnDestroy {
         this.Total = response.data.total;
       },
       error: () => {
-        this.Loading = false;
-        this.ErrorMessage = 'Failed to load datasets.';
+        this.MatProgressBar = false;
+        this.dialog.open(CustomAlertComponent, { data: { text: 'Failed to load datasets.', type: ResponseTypeColor.ERROR } });
       }
     });
   }

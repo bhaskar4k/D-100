@@ -1,11 +1,16 @@
 import { Component, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatDialog } from '@angular/material/dialog';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subscription } from 'rxjs';
 import { UploadProgress, UploadService, SupportedUploadExtensions } from '../../services/upload.service';
 import { GetReadableFileSize } from '../../common/FileUtil';
+import { CustomAlertComponent } from '../../page-components-shared/custom-alert/custom-alert.component';
+import { ResponseTypeColor } from '../../constants/commonConsts';
 
 @Component({
   selector: 'app-upload',
-  imports: [],
+  imports: [CommonModule, MatProgressSpinnerModule],
   templateUrl: './upload.component.html',
   styleUrl: './upload.component.css'
 })
@@ -18,12 +23,15 @@ export class UploadComponent implements OnDestroy {
   Progress: UploadProgress | null = null;
   Uploading = false;
   Completed = false;
-  ErrorMessage = '';
+  MatProgressBar = false;
   IsDragging = false;
 
   private subscription?: Subscription;
 
-  constructor(private uploadService: UploadService) { }
+  constructor(
+    private uploadService: UploadService,
+    private dialog: MatDialog
+  ) { }
 
   OnFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -53,26 +61,33 @@ export class UploadComponent implements OnDestroy {
 
     this.Uploading = true;
     this.Completed = false;
-    this.ErrorMessage = '';
     this.Progress = null;
+
+    // The spinner covers only the start-up (initiating the upload session); once progress flows, the
+    // progress bar takes over and stays usable (it has the Cancel button).
+    this.MatProgressBar = true;
 
     this.subscription = this.uploadService.Upload(this.SelectedFile).subscribe({
       next: progress => {
+        this.MatProgressBar = false;
         this.Progress = progress;
       },
       error: error => {
+        this.MatProgressBar = false;
         this.Uploading = false;
-        this.ErrorMessage = error?.message ?? 'Upload failed.';
+        this.dialog.open(CustomAlertComponent, { data: { text: error?.message ?? 'Upload failed.', type: ResponseTypeColor.ERROR } });
       },
       complete: () => {
         this.Uploading = false;
         this.Completed = true;
+        this.dialog.open(CustomAlertComponent, { data: { text: 'File uploaded successfully.', type: ResponseTypeColor.SUCCESS } });
       }
     });
   }
 
   CancelUpload(): void {
     this.subscription?.unsubscribe();
+    this.MatProgressBar = false;
     this.Uploading = false;
     this.Progress = null;
   }
@@ -103,11 +118,12 @@ export class UploadComponent implements OnDestroy {
   private SetFile(file: File | null): void {
     this.Completed = false;
     this.Progress = null;
-    this.ErrorMessage = '';
 
     if (file && !this.uploadService.IsSupportedFile(file)) {
       this.SelectedFile = null;
-      this.ErrorMessage = `Unsupported file type. Allowed: ${this.SupportedExtensions.join(', ')}`;
+      this.dialog.open(CustomAlertComponent, {
+        data: { text: `Unsupported file type.\nAllowed: ${this.SupportedExtensions.join(', ')}`, type: ResponseTypeColor.ERROR }
+      });
       return;
     }
 

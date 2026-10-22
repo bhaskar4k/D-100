@@ -1,9 +1,9 @@
+<div class="page-loader" *ngIf="MatProgressBar">
+  <mat-spinner diameter="50"></mat-spinner>
+</div>
+
 <div class="dataset-container">
   <h4 class="mb-4">Datasets</h4>
-
-  @if (ErrorMessage) {
-  <div class="alert alert-danger">{{ ErrorMessage }}</div>
-  }
 
   <div class="app-table-toolbar">
     <div class="app-table-search">
@@ -68,12 +68,12 @@
 
       <tr class="mat-mdc-no-data-row" *matNoDataRow>
         <td class="mat-mdc-cell" [attr.colspan]="DisplayedColumns.length">
-          {{ Loading ? 'Loading datasets...' : (SearchText ? 'No datasets match your search.' : 'No datasets found.') }}
+          {{ SearchText ? 'No datasets match your search.' : 'No datasets found.' }}
         </td>
       </tr>
     </table>
 
     <mat-paginator [length]="Total" [pageIndex]="PageIndex" [pageSize]="PageSize" [pageSizeOptions]="PageSizeOptions"
-      [disabled]="Loading" showFirstLastButtons (page)="OnPageChange($event)"></mat-paginator>
+      showFirstLastButtons (page)="OnPageChange($event)"></mat-paginator>
   </div>
 </div>
