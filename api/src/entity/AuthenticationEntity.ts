@@ -1,7 +1,13 @@
 import { RowDataPacket } from "mysql2";
+import { UserStatus } from "../enum/UserEnum";
 
 export interface UserExistsRow extends RowDataPacket {
     id: string | number;
+}
+
+export interface LoginResult {
+    status: UserStatus;
+    token?: string;
 }
 
 export interface UserLoginRow extends RowDataPacket {
@@ -9,4 +15,12 @@ export interface UserLoginRow extends RowDataPacket {
     password: string;
     active: number;
     deleted: number;
+}
+
+export interface UserData {
+    auth: boolean;
+    id: number;
+    email?: string;
+    active?: number;
+    deleted?: number;
 }
