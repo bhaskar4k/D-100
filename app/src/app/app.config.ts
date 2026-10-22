@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { JwtInterceptor } from './middleware/JwtInterceptor';
+import { MAT_PAGINATOR_DEFAULT_OPTIONS, MatPaginatorDefaultOptions } from '@angular/material/paginator';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -13,6 +14,13 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([
         JwtInterceptor
       ])
-    )
+    ),
+    {
+      provide: MAT_PAGINATOR_DEFAULT_OPTIONS,
+      useValue: {
+        formFieldAppearance: 'outline',
+        selectConfig: { panelClass: 'app-paginator-select-panel' }
+      } as MatPaginatorDefaultOptions
+    }
   ]
 };

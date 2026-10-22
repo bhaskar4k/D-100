@@ -1,5 +1,7 @@
 /* Shared look for every Angular Material table (mat-table + mat-paginator).
-   Wrap the table in <div class="app-table-container"> and add class="app-table" to <table mat-table>. */
+   Wrap the table in <div class="app-table-container"> and add class="app-table" to <table mat-table>.
+   The paginator's dropdown panel is styled through .app-paginator-select-panel, which is applied
+   globally via MAT_PAGINATOR_DEFAULT_OPTIONS in app.config.ts. */
 
 .app-table-container {
     width: 100%;
@@ -12,48 +14,161 @@
     --mat-table-header-headline-color: #9ca3af;
     --mat-table-row-item-label-text-color: #e5e7eb;
     --mat-table-row-item-outline-color: rgba(255, 255, 255, 0.08);
-    --mat-table-header-headline-size: 0.75rem;
+    --mat-table-header-headline-size: 0.6875rem;
     --mat-table-header-headline-weight: 600;
-    --mat-table-row-item-label-text-size: 0.875rem;
-    --mat-table-header-container-height: 48px;
-    --mat-table-row-item-container-height: 52px;
+    --mat-table-row-item-label-text-size: 0.8125rem;
+    --mat-table-header-container-height: 44px;
+    --mat-table-row-item-container-height: 48px;
 
     --mat-paginator-container-background-color: #161b22;
     --mat-paginator-container-text-color: #9ca3af;
+    --mat-paginator-container-text-size: 0.75rem;
+    --mat-paginator-container-size: 48px;
     --mat-paginator-enabled-icon-color: #e5e7eb;
     --mat-paginator-disabled-icon-color: #4b5563;
-    --mat-paginator-select-trigger-text-color: #e5e7eb;
+    --mat-paginator-select-trigger-text-size: 0.75rem;
+    --mat-paginator-form-field-container-height: 30px;
+    --mat-paginator-form-field-container-vertical-padding: 3px;
     --mat-select-enabled-trigger-text-color: #e5e7eb;
     --mat-select-enabled-arrow-color: #9ca3af;
-    --mat-form-field-outlined-outline-color: rgba(255, 255, 255, 0.2);
+    --mat-select-trigger-text-size: 0.75rem;
 }
 
 .app-table {
     width: 100%;
 }
 
-.app-table .mat-mdc-header-cell {
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+/* Header and data cells: centered both ways */
+.app-table .mat-mdc-header-cell,
+.app-table .mat-mdc-cell {
+    text-align: center;
+    vertical-align: middle;
     white-space: nowrap;
+}
+
+.app-table .mat-mdc-header-cell {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .app-table .mat-mdc-cell {
-    white-space: nowrap;
+    font-size: 0.8125rem;
+}
+
+/* Fade in / out on row hover */
+.app-table .mat-mdc-row {
+    transition: background-color 0.25s ease-in-out;
 }
 
 .app-table .mat-mdc-row:hover {
-    background-color: rgba(59, 130, 246, 0.08);
+    background-color: rgba(59, 130, 246, 0.1);
 }
 
 .app-table .mat-mdc-no-data-row .mat-mdc-cell {
     padding: 24px 16px;
-    text-align: center;
     color: #9ca3af;
 }
 
+/* Paginator */
 .app-table-container .mat-mdc-paginator {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.75rem;
+}
+
+.app-table-container .mat-mdc-paginator-container {
+    min-height: 48px;
+    padding: 0 12px;
+}
+
+.app-table-container .mat-mdc-paginator-page-size {
+    align-items: center;
+    gap: 8px;
+}
+
+.app-table-container .mat-mdc-paginator-page-size-label {
+    margin: 0;
+    font-size: 0.75rem;
+}
+
+.app-table-container .mat-mdc-paginator-page-size-select {
+    width: 72px;
+    margin: 0;
+}
+
+.app-table-container .mat-mdc-paginator-page-size-select .mat-mdc-text-field-wrapper {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+    padding: 0 8px;
+}
+
+.app-table-container .mat-mdc-paginator-page-size-select .mat-mdc-form-field-infix {
+    min-height: 0;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.app-table-container .mat-mdc-paginator-page-size-select .mdc-notched-outline__leading,
+.app-table-container .mat-mdc-paginator-page-size-select .mdc-notched-outline__notch,
+.app-table-container .mat-mdc-paginator-page-size-select .mdc-notched-outline__trailing {
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    transition: border-color 0.2s ease-in-out;
+}
+
+.app-table-container .mat-mdc-paginator-page-size-select:hover .mdc-notched-outline__leading,
+.app-table-container .mat-mdc-paginator-page-size-select:hover .mdc-notched-outline__notch,
+.app-table-container .mat-mdc-paginator-page-size-select:hover .mdc-notched-outline__trailing {
+    border-color: #3b82f6 !important;
+}
+
+.app-table-container .mat-mdc-paginator-page-size-select .mat-mdc-select-value {
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.app-table-container .mat-mdc-paginator-range-label {
+    margin: 0 16px;
+    font-size: 0.75rem;
+}
+
+.app-table-container .mat-mdc-paginator .mat-mdc-icon-button {
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+}
+
+/* Paginator page-size dropdown (rendered in the CDK overlay, outside the table container) */
+.app-paginator-select-panel.mat-mdc-select-panel {
+    background-color: #161b22;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 4px 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.app-paginator-select-panel .mat-mdc-option {
+    min-height: 32px;
+    padding: 0 12px;
+    justify-content: center;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.app-paginator-select-panel .mat-mdc-option .mdc-list-item__primary-text {
+    color: #e5e7eb;
+    font-size: 0.75rem;
+}
+
+.app-paginator-select-panel .mat-mdc-option:hover:not(.mdc-list-item--disabled),
+.app-paginator-select-panel .mat-mdc-option.mat-mdc-option-active {
+    background-color: rgba(59, 130, 246, 0.12);
+}
+
+.app-paginator-select-panel .mat-mdc-option.mdc-list-item--selected:not(.mat-mdc-option-multiple) {
+    background-color: rgba(59, 130, 246, 0.2);
+}
+
+.app-paginator-select-panel .mat-mdc-option.mdc-list-item--selected .mdc-list-item__primary-text {
+    color: #60a5fa;
 }
 
 /* Small status pills, usable inside any table cell */
