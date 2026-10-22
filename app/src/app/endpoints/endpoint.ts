@@ -18,6 +18,9 @@ export const Endpoints = {
     Common: {
         GetMenu: "Common/GetMenu",
     },
+    Dataset: {
+        GetAll: "Dataset/GetAll",
+    },
     Upload: {
         Initiate: "Upload/Initiate",
         Chunk: "Upload/Chunk",

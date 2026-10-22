@@ -33,6 +33,15 @@ const menuItems: MenuSeed[] = [
     {
         active: 1,
         displayOrder: 3,
+        icon: "bi bi-table",
+        label: "Datasets",
+        parentLabel: null,
+        route: "/datasets",
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 4,
         icon: "bi bi-cpu",
         label: "Processing",
         parentLabel: null,
