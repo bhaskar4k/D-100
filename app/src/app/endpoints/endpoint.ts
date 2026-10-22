@@ -19,8 +19,9 @@ export const Endpoints = {
         GetMenu: "Common/GetMenu",
     },
     Upload: {
-        Initiate: "file/upload/initiate",
-        Chunk: "file/upload/chunk"
+        Initiate: "Upload/Initiate",
+        Chunk: "Upload/Chunk",
+        Complete: "Upload/Complete"
     },
     Download: {
         SingleFile: "file/download/single-file"

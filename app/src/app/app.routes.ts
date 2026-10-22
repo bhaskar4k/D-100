@@ -6,6 +6,7 @@ import { RegisterComponent } from './page-components/auth/register/register.comp
 import { LoginComponent } from './page-components/auth/login/login.component';
 import { DashboardComponent } from './page-components/dashboard/dashboard.component';
 import { LogoutComponent } from './page-components/auth/logout/logout.component';
+import { UploadComponent } from './page-components/upload/upload.component';
 import { AuthGuard } from './middleware/AuthGuard';
 
 export const routes: Routes = [
@@ -26,9 +27,7 @@ export const routes: Routes = [
         path: '',
         canActivate: [AuthGuard],
         children: [
-          { path: 'content', redirectTo: 'content/root', pathMatch: 'full' },
-
-
+          { path: 'upload', component: UploadComponent },
           { path: 'logout', component: LogoutComponent }
         ]
       },
