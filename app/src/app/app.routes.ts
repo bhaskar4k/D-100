@@ -7,6 +7,7 @@ import { LoginComponent } from './page-components/auth/login/login.component';
 import { DashboardComponent } from './page-components/dashboard/dashboard.component';
 import { LogoutComponent } from './page-components/auth/logout/logout.component';
 import { UploadComponent } from './page-components/upload/upload.component';
+import { DatasetComponent } from './page-components/dataset/dataset.component';
 import { AuthGuard } from './middleware/AuthGuard';
 
 export const routes: Routes = [
@@ -28,6 +29,7 @@ export const routes: Routes = [
         canActivate: [AuthGuard],
         children: [
           { path: 'upload', component: UploadComponent },
+          { path: 'datasets', component: DatasetComponent },
           { path: 'logout', component: LogoutComponent }
         ]
       },
