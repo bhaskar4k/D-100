@@ -1,7 +1,7 @@
 /* Shared look for every Angular Material table (mat-table + mat-paginator).
    Wrap the table in <div class="app-table-container"> and add class="app-table" to <table mat-table>.
-   The paginator's dropdown panel is styled through .app-paginator-select-panel, which is applied
-   globally via MAT_PAGINATOR_DEFAULT_OPTIONS in app.config.ts. */
+   The paginator's page-size dropdown is rendered in the CDK overlay (outside the container), so it is
+   styled globally through the mat-select panel classes. */
 
 .app-table-container {
     width: 100%;
@@ -137,37 +137,51 @@
     padding: 6px;
 }
 
-/* Paginator page-size dropdown (rendered in the CDK overlay, outside the table container) */
-.app-paginator-select-panel.mat-mdc-select-panel {
+/* Page-size box: rounded outline */
+.app-table-container .mat-mdc-paginator-page-size-select .mat-mdc-text-field-wrapper {
+    border-radius: 8px;
+}
+
+.app-table-container .mat-mdc-paginator-page-size-select .mdc-notched-outline__leading {
+    border-radius: 8px 0 0 8px !important;
+}
+
+.app-table-container .mat-mdc-paginator-page-size-select .mdc-notched-outline__trailing {
+    border-radius: 0 8px 8px 0 !important;
+}
+
+/* Select dropdown (rendered in the CDK overlay, outside the table container) */
+div.mat-mdc-select-panel.mdc-menu-surface {
     background-color: #161b22;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 8px;
-    padding: 4px 0;
+    border-radius: 8px !important;
+    padding: 4px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
-.app-paginator-select-panel .mat-mdc-option {
+.mat-mdc-select-panel .mat-mdc-option {
     min-height: 32px;
     padding: 0 12px;
+    border-radius: 6px;
     justify-content: center;
     transition: background-color 0.2s ease-in-out;
 }
 
-.app-paginator-select-panel .mat-mdc-option .mdc-list-item__primary-text {
+.mat-mdc-select-panel .mat-mdc-option .mdc-list-item__primary-text {
     color: #e5e7eb;
     font-size: 0.75rem;
 }
 
-.app-paginator-select-panel .mat-mdc-option:hover:not(.mdc-list-item--disabled),
-.app-paginator-select-panel .mat-mdc-option.mat-mdc-option-active {
+.mat-mdc-select-panel .mat-mdc-option:hover:not(.mdc-list-item--disabled),
+.mat-mdc-select-panel .mat-mdc-option.mat-mdc-option-active {
     background-color: rgba(59, 130, 246, 0.12);
 }
 
-.app-paginator-select-panel .mat-mdc-option.mdc-list-item--selected:not(.mat-mdc-option-multiple) {
+.mat-mdc-select-panel .mat-mdc-option.mdc-list-item--selected:not(.mat-mdc-option-multiple) {
     background-color: rgba(59, 130, 246, 0.2);
 }
 
-.app-paginator-select-panel .mat-mdc-option.mdc-list-item--selected .mdc-list-item__primary-text {
+.mat-mdc-select-panel .mat-mdc-option.mdc-list-item--selected .mdc-list-item__primary-text {
     color: #60a5fa;
 }
 
