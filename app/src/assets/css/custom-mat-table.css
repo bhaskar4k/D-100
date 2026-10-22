@@ -96,29 +96,28 @@
     margin: 0;
 }
 
+/* The border is drawn on the wrapper itself (Material's notched outline collapses to 1px without a label,
+   which clips any border-radius), and the outline is hidden. */
 .app-table-container .mat-mdc-paginator-page-size-select .mat-mdc-text-field-wrapper {
     background-color: rgba(255, 255, 255, 0.04);
-    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
     padding: 0 8px;
+    transition: border-color 0.2s ease-in-out;
+}
+
+.app-table-container .mat-mdc-paginator-page-size-select:hover .mat-mdc-text-field-wrapper {
+    border-color: #3b82f6;
+}
+
+.app-table-container .mat-mdc-paginator-page-size-select .mdc-notched-outline {
+    display: none;
 }
 
 .app-table-container .mat-mdc-paginator-page-size-select .mat-mdc-form-field-infix {
     min-height: 0;
     padding-top: 6px;
     padding-bottom: 6px;
-}
-
-.app-table-container .mat-mdc-paginator-page-size-select .mdc-notched-outline__leading,
-.app-table-container .mat-mdc-paginator-page-size-select .mdc-notched-outline__notch,
-.app-table-container .mat-mdc-paginator-page-size-select .mdc-notched-outline__trailing {
-    border-color: rgba(255, 255, 255, 0.16) !important;
-    transition: border-color 0.2s ease-in-out;
-}
-
-.app-table-container .mat-mdc-paginator-page-size-select:hover .mdc-notched-outline__leading,
-.app-table-container .mat-mdc-paginator-page-size-select:hover .mdc-notched-outline__notch,
-.app-table-container .mat-mdc-paginator-page-size-select:hover .mdc-notched-outline__trailing {
-    border-color: #3b82f6 !important;
 }
 
 .app-table-container .mat-mdc-paginator-page-size-select .mat-mdc-select-value {
@@ -135,19 +134,6 @@
     width: 36px;
     height: 36px;
     padding: 6px;
-}
-
-/* Page-size box: rounded outline */
-.app-table-container .mat-mdc-paginator-page-size-select .mat-mdc-text-field-wrapper {
-    border-radius: 8px;
-}
-
-.app-table-container .mat-mdc-paginator-page-size-select .mdc-notched-outline__leading {
-    border-radius: 8px 0 0 8px !important;
-}
-
-.app-table-container .mat-mdc-paginator-page-size-select .mdc-notched-outline__trailing {
-    border-radius: 0 8px 8px 0 !important;
 }
 
 /* Select dropdown (rendered in the CDK overlay, outside the table container) */
