@@ -4,11 +4,14 @@ import { GetAllowedExtensions } from "../util/UploadUtil";
 import { SuccessDto } from "../dto/SuccessDto";
 import { ErrorDto } from "../dto/ErrorDto";
 import { HttpStatusCode } from "../enum/HttpStatusCode";
+import { Logger } from "../log/Logger";
 
 
 export class UploadController {
     static async Initiate(req: Request, res: Response): Promise<void> {
         try {
+            await Logger.Info("UploadInitiate -> Called", req.UserData?.id);
+
             const { fileName, fileSize } = req.body ?? {};
 
             if (typeof fileName !== "string" || !fileName.trim()) {
@@ -32,7 +35,7 @@ export class UploadController {
 
             res.status(HttpStatusCode.OK).json(new SuccessDto(result, "Upload initiated successfully.", HttpStatusCode.OK));
         } catch (error) {
-            console.error("Upload Initiate Error:", error);
+            await Logger.Error("Upload Initiate Error", error, req.UserData?.id);
 
             res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
                 new ErrorDto(false, "An unexpected error occurred while initiating upload.", HttpStatusCode.INTERNAL_SERVER_ERROR)
@@ -43,6 +46,8 @@ export class UploadController {
 
     static async Chunk(req: Request, res: Response): Promise<void> {
         try {
+            await Logger.Info("UploadChunk -> Called", req.UserData?.id);
+
             const uploadId = String(req.params.uploadId);
             const index = Number(req.query.index);
 
@@ -60,7 +65,7 @@ export class UploadController {
 
             res.status(HttpStatusCode.OK).json(new SuccessDto(true, "Chunk uploaded successfully.", HttpStatusCode.OK));
         } catch (error) {
-            console.error("Upload Chunk Error:", error);
+            await Logger.Error("Upload Chunk Error", error, req.UserData?.id);
 
             res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
                 new ErrorDto(false, "An unexpected error occurred while uploading chunk.", HttpStatusCode.INTERNAL_SERVER_ERROR)
@@ -71,6 +76,8 @@ export class UploadController {
 
     static async Complete(req: Request, res: Response): Promise<void> {
         try {
+            await Logger.Info("UploadComplete -> Called", req.UserData?.id);
+
             const uploadId = String(req.body?.uploadId ?? "");
 
             const error = await UploadBusiness.DoComplete(String(req.UserData!.id), uploadId);
@@ -82,7 +89,7 @@ export class UploadController {
 
             res.status(HttpStatusCode.OK).json(new SuccessDto(true, "File uploaded successfully.", HttpStatusCode.OK));
         } catch (error) {
-            console.error("Upload Complete Error:", error);
+            await Logger.Error("Upload Complete Error", error, req.UserData?.id);
 
             res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
                 new ErrorDto(false, "An unexpected error occurred while completing upload.", HttpStatusCode.INTERNAL_SERVER_ERROR)
