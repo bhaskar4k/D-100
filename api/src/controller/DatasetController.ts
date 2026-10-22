@@ -6,6 +6,7 @@ import { HttpStatusCode } from "../enum/HttpStatusCode";
 
 const DefaultPageSize = 10;
 const MaxPageSize = 100;
+const MaxSearchLength = 100;
 
 
 export class DatasetController {
@@ -14,7 +15,9 @@ export class DatasetController {
             const page = Math.max(1, Math.floor(Number(req.query.page)) || 1);
             const pageSize = Math.min(MaxPageSize, Math.max(1, Math.floor(Number(req.query.pageSize)) || DefaultPageSize));
 
-            const result = await DatasetService.GetDatasets(page, pageSize);
+            const search = String(req.query.search ?? "").trim().slice(0, MaxSearchLength);
+
+            const result = await DatasetService.GetDatasets(page, pageSize, search);
 
             res.status(HttpStatusCode.OK).json(new SuccessDto(result, "Datasets retrieved successfully.", HttpStatusCode.OK));
         } catch (error) {
