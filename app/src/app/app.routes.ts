@@ -27,9 +27,6 @@ export const routes: Routes = [
         path: '',
         canActivate: [AuthGuard],
         children: [
-          { path: 'content', redirectTo: 'content/root', pathMatch: 'full' },
-
-
           { path: 'upload', component: UploadComponent },
           { path: 'logout', component: LogoutComponent }
         ]
