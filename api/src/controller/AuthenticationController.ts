@@ -77,7 +77,7 @@ export class AuthenticationController {
 
             const normalizedEmail = email.trim().toLowerCase();
 
-            const CurUserStatus: UserStatus = await AuthenticationBusiness.DoLogin(normalizedEmail, password);
+            const { status: CurUserStatus, token } = await AuthenticationBusiness.DoLogin(normalizedEmail, password);
 
             if (CurUserStatus === UserStatus.DoesNotExist) {
                 res.status(HttpStatusCode.OK).json(new ErrorDto(false, "User does not exist.", HttpStatusCode.BAD_REQUEST));
@@ -94,7 +94,7 @@ export class AuthenticationController {
             }
 
             res.status(HttpStatusCode.OK).json(
-                new SuccessDto(CurUserStatus, "User has been logged in successfully.", HttpStatusCode.OK)
+                new SuccessDto(token, "User has been logged in successfully.", HttpStatusCode.OK)
             );
         } catch (error) {
             console.error("Login Error:", error);

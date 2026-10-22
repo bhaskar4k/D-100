@@ -6,5 +6,6 @@ CREATE TABLE IF NOT EXISTS t_menu_master (
     label VARCHAR(255) NOT NULL,
     parent_id INT NULL,
     route VARCHAR(500) NULL,
+    access_type INT NOT NULL,
     PRIMARY KEY (id)
 );
