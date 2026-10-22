@@ -2,6 +2,8 @@ import fs from "fs/promises";
 import path from "path";
 import { v7 as uuidv7, validate as IsValidUuid } from "uuid";
 import { RedisConnection } from "../config/RedisConfig";
+import { ConnectionPool } from "../data-access-layer/database";
+import { FileUploadStatus } from "../enum/FileUploadStatus";
 import { GetAllowedExtensions } from "../util/UploadUtil";
 import { UploadInitiateResult, UploadSession } from "../entity/UploadEntity";
 
@@ -58,6 +60,14 @@ export class UploadBusiness {
         const uploadId = uuidv7();
         const totalChunks = Math.ceil(FileSize / ChunkSize);
 
+        const pool = await ConnectionPool;
+        await pool.execute(
+            `INSERT INTO T_DATASET
+                (dataset_uid, filename, extension, filesize, status, initiated_on)
+             VALUES (?, ?, ?, ?, ?, NOW(3))`,
+            [uploadId, path.parse(FileName).name, extension, FileSize, FileUploadStatus.INIT]
+        );
+
         const filePath = GetFilePath(uploadId, extension);
         await fs.mkdir(path.dirname(filePath), { recursive: true });
 
@@ -107,6 +117,12 @@ export class UploadBusiness {
         await redis.sAdd(ChunksKey(UploadId), String(Index));
         await redis.expire(ChunksKey(UploadId), UploadSessionTtlSeconds);
 
+        const pool = await ConnectionPool;
+        await pool.execute(
+            `UPDATE T_DATASET SET status = ? WHERE dataset_uid = ? AND status = ?`,
+            [FileUploadStatus.UPLOADING, UploadId, FileUploadStatus.INIT]
+        );
+
         return null;
     }
 
@@ -131,6 +147,16 @@ export class UploadBusiness {
         if (stat.size !== session.fileSize) {
             return "Uploaded file size does not match.";
         }
+
+        const pool = await ConnectionPool;
+        await pool.execute(
+            `UPDATE T_DATASET
+             SET status = ?,
+                 upload_completed_on = NOW(3),
+                 uploading_time = TIMESTAMPDIFF(MICROSECOND, initiated_on, NOW(3)) DIV 1000
+             WHERE dataset_uid = ?`,
+            [FileUploadStatus.COMPLETED, UploadId]
+        );
 
         await redis.del([SessionKey(UploadId), ChunksKey(UploadId)]);
 
