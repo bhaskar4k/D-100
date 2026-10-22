@@ -4,6 +4,7 @@ import { ConnectionPool } from "./data-access-layer/database";
 import { CreateTables } from "./data-access-layer/script-runner/CreateTables";
 import { SeedTables } from "./data-access-layer/data-seeder/SeedTables";
 import { RedisConnection } from "./config/RedisConfig";
+import { InitializeStorage } from "./config/StorageConfig";
 
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -16,6 +17,9 @@ async function StartServer(): Promise<void> {
 
         // Connect Redis
         await RedisConnection;
+
+        // Create Storage Folders
+        await InitializeStorage();
 
         // Create Tables
         await CreateTables();
