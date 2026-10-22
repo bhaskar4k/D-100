@@ -33,6 +33,15 @@ const menuItems: MenuSeed[] = [
     {
         active: 1,
         displayOrder: 3,
+        icon: "bi bi-table",
+        label: "Datasets",
+        parentLabel: null,
+        route: "/datasets",
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 4,
         icon: "bi bi-cpu",
         label: "Processing",
         parentLabel: null,
@@ -41,7 +50,7 @@ const menuItems: MenuSeed[] = [
     },
     {
         active: 1,
-        displayOrder: 7,
+        displayOrder: 5,
         icon: "bi bi-box-arrow-in-right",
         label: "Login",
         parentLabel: null,
@@ -50,7 +59,7 @@ const menuItems: MenuSeed[] = [
     },
     {
         active: 1,
-        displayOrder: 8,
+        displayOrder: 6,
         icon: "bi bi-person-add",
         label: "Register",
         parentLabel: null,
@@ -59,7 +68,7 @@ const menuItems: MenuSeed[] = [
     },
     {
         active: 1,
-        displayOrder: 9,
+        displayOrder: 7,
         icon: "bi bi-box-arrow-left",
         label: "Logout",
         parentLabel: null,

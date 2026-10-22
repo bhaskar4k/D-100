@@ -1,3 +1,7 @@
+<div class="page-loader" *ngIf="MatProgressBar">
+  <mat-spinner diameter="50"></mat-spinner>
+</div>
+
 <div class="upload-container">
   <h4 class="mb-3">Upload File</h4>
 
@@ -16,10 +20,6 @@
   </div>
   }
 
-  @if (ErrorMessage) {
-  <div class="alert alert-danger mt-3 mb-0">{{ ErrorMessage }}</div>
-  }
-
   @if (Progress) {
   <div class="progress mt-3" role="progressbar" [attr.aria-valuenow]="Progress.percent" aria-valuemin="0"
     aria-valuemax="100">
@@ -36,10 +36,6 @@
     <div><span class="label">Speed</span><span>{{ ReadableSize(Progress.speedBytesPerSecond) }}/s</span></div>
     <div><span class="label">ETA</span><span>{{ Completed ? 'Done' : FormatEta(Progress.etaSeconds) }}</span></div>
   </div>
-  }
-
-  @if (Completed) {
-  <div class="alert alert-success mt-3 mb-0">File uploaded successfully.</div>
   }
 
   <div class="mt-3 d-flex gap-2">

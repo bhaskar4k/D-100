@@ -6,6 +6,7 @@ import { ErrorDto } from "./dto/ErrorDto";
 import CommonRouter from "./router/CommonRouter";
 import AuthenticationRouter from "./router/AuthenticationRouter";
 import UploadRouter from "./router/UploadRoutes";
+import DatasetRouter from "./router/DatasetRoutes";
 import CorsConfig from "./config/CorsConfig";
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use("/Api/Common", CommonRouter);
 app.use("/Api/Authentication", AuthenticationRouter);
 app.use("/Api/Upload", UploadRouter);
+app.use("/Api/Dataset", DatasetRouter);
 
 
 app.get("/api/health", async (_req, res) => {
