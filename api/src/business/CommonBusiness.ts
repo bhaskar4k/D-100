@@ -1,20 +1,26 @@
 import { ConnectionPool } from "../data-access-layer/database";
 import { UserData } from "../entity/AuthenticationEntity";
 import { MenuItem, MenuRow } from "../entity/CommonEntity";
-
+import { MenuAccessType } from "../enum/CommonEnum";
 
 export class UserBusiness {
     static async DoGetMenu(User: UserData): Promise<MenuItem[]> {
         try {
-            console.log(User);
             const pool = await ConnectionPool;
 
+            const SubQuery = User.auth === true ? 
+                `AND (access_type = ${MenuAccessType.Authenticated} OR 
+                access_type = ${MenuAccessType.Common})` : 
+                `AND (access_type = ${MenuAccessType.NonAuthenticated} OR 
+                access_type = ${MenuAccessType.Common})`;
+            
             const [rows] = await pool.query<MenuRow[]>(`
-            SELECT id, label, icon, route, parent_id, display_order
-            FROM t_menu_master
-            WHERE active = 1
-            ORDER BY display_order ASC
-        `);
+                SELECT id, label, icon, route, parent_id, display_order
+                FROM t_menu_master
+                WHERE active = 1
+                ${SubQuery}
+                ORDER BY display_order ASC
+            `);
 
             const menuMap = new Map<number, MenuItem>();
             const rootMenus: MenuItem[] = [];

@@ -1,4 +1,5 @@
 import { ConnectionPool } from "../../data-access-layer/database";
+import { MenuAccessType } from "../../enum/CommonEnum";
 
 interface MenuSeed {
     active: number;
@@ -7,6 +8,7 @@ interface MenuSeed {
     label: string;
     parentLabel: string | null;
     route: string | null;
+    access_type: number;
 }
 
 const menuItems: MenuSeed[] = [
@@ -16,7 +18,8 @@ const menuItems: MenuSeed[] = [
         icon: "bi bi-house",
         label: "Dashboard",
         parentLabel: null,
-        route: "/dashboard"
+        route: "/dashboard",
+        access_type: MenuAccessType.Common
     },
     {
         active: 1,
@@ -24,7 +27,8 @@ const menuItems: MenuSeed[] = [
         icon: "bi bi-cloud-arrow-up",
         label: "Upload",
         parentLabel: null,
-        route: "/content"
+        route: "/upload",
+        access_type: MenuAccessType.Authenticated
     },
     {
         active: 1,
@@ -32,7 +36,8 @@ const menuItems: MenuSeed[] = [
         icon: "bi bi-cpu",
         label: "Processing",
         parentLabel: null,
-        route: "/favourite"
+        route: "/processing",
+        access_type: MenuAccessType.Authenticated
     },
     {
         active: 1,
@@ -40,7 +45,8 @@ const menuItems: MenuSeed[] = [
         icon: "bi bi-box-arrow-in-right",
         label: "Login",
         parentLabel: null,
-        route: "/login"
+        route: "/login",
+        access_type: MenuAccessType.NonAuthenticated
     },
     {
         active: 1,
@@ -48,7 +54,8 @@ const menuItems: MenuSeed[] = [
         icon: "bi bi-person-add",
         label: "Register",
         parentLabel: null,
-        route: "/register"
+        route: "/register",
+        access_type: MenuAccessType.NonAuthenticated
     },
     {
         active: 1,
@@ -56,7 +63,8 @@ const menuItems: MenuSeed[] = [
         icon: "bi bi-box-arrow-left",
         label: "Logout",
         parentLabel: null,
-        route: "/logout"
+        route: "/logout",
+        access_type: MenuAccessType.Authenticated
     },
 ];
 
@@ -100,15 +108,16 @@ export async function SeedTMenuMaster(): Promise<void> {
             } else {
                 const [result] = await connection.execute<any>(
                     `INSERT INTO T_MENU_MASTER
-                        (ACTIVE, DISPLAY_ORDER, ICON, LABEL, PARENT_ID, ROUTE)
-                     VALUES (?, ?, ?, ?, ?, ?)`,
+                        (ACTIVE, DISPLAY_ORDER, ICON, LABEL, PARENT_ID, ROUTE, ACCESS_TYPE)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
                     [
                         item.active,
                         item.displayOrder,
                         item.icon,
                         item.label,
                         parentId,
-                        item.route
+                        item.route,
+                        item.access_type
                     ]
                 );
 
