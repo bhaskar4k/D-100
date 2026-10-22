@@ -5,7 +5,7 @@
 
 .app-table-container {
     width: 100%;
-    overflow-x: auto;
+    overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 0.5rem;
     background-color: #161b22;
@@ -32,6 +32,12 @@
     --mat-select-enabled-trigger-text-color: #e5e7eb;
     --mat-select-enabled-arrow-color: #9ca3af;
     --mat-select-trigger-text-size: 0.75rem;
+}
+
+/* Only the table scrolls sideways on narrow screens; the paginator stays put below it */
+.app-table-scroll {
+    width: 100%;
+    overflow-x: auto;
 }
 
 .app-table {
@@ -171,23 +177,33 @@ div.mat-mdc-select-panel.mdc-menu-surface {
     color: #60a5fa;
 }
 
-/* Search box above a table:
-   <div class="app-table-toolbar"><div class="app-table-search"><i class="bi bi-search"></i><input ...></div></div> */
-.app-table-toolbar {
+/* Page header above a table: title on the left, search on the right.
+   Wraps (title, then search full-width) on narrow screens.
+   <div class="app-page-header"><h4 class="app-page-title">..</h4><div class="app-table-search">..</div></div> */
+.app-page-header {
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+    margin-bottom: 16px;
+}
+
+.app-page-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
 }
 
 .app-table-search {
     position: relative;
     display: flex;
     align-items: center;
-    width: 280px;
-    max-width: 100%;
+    flex: 0 1 280px;
+    min-width: 0;
 }
 
-.app-table-search > .bi-search {
+.app-table-search>.bi-search {
     position: absolute;
     left: 12px;
     font-size: 0.8125rem;
@@ -238,6 +254,26 @@ div.mat-mdc-select-panel.mdc-menu-surface {
 .app-table-search-clear:hover {
     color: #e5e7eb;
     background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Small screens */
+@media (max-width: 575.98px) {
+    .app-table-search {
+        flex: 1 1 100%;
+    }
+
+    .app-table-container .mat-mdc-paginator-container {
+        justify-content: center;
+        padding: 4px 8px;
+    }
+
+    .app-table-container .mat-mdc-paginator-page-size-label {
+        display: none;
+    }
+
+    .app-table-container .mat-mdc-paginator-range-label {
+        margin: 0 8px;
+    }
 }
 
 /* Small status pills, usable inside any table cell */
