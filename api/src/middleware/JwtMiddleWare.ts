@@ -7,6 +7,7 @@ import { UserData } from "../entity/AuthenticationEntity";
 import { HttpStatusCode } from "../enum/HttpStatusCode";
 import { ErrorDto } from "../dto/ErrorDto";
 import { GetSessionKey } from "../util/AuthUtil";
+import { Logger } from "../log/Logger";
 
 declare global {
     namespace Express {
@@ -55,7 +56,7 @@ async function ResolveUser(req: Request): Promise<ResolveResult> {
 }
 
 function ServerError(res: Response, error: unknown): void {
-    console.error("JwtMiddleWare Error:", error);
+    void Logger.Error("JwtMiddleWare Error", error);
 
     res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
         new ErrorDto(false, "An unexpected error occurred while validating session.", HttpStatusCode.INTERNAL_SERVER_ERROR)
