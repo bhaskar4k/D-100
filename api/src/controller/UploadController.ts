@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import { UploadBusiness, AllowedExtensions } from "../business/UploadBusiness";
+import { UploadBusiness } from "../business/UploadBusiness";
+import { GetAllowedExtensions } from "../util/UploadUtil";
 import { SuccessDto } from "../dto/SuccessDto";
 import { ErrorDto } from "../dto/ErrorDto";
 import { HttpStatusCode } from "../enum/HttpStatusCode";
@@ -17,7 +18,7 @@ export class UploadController {
 
             if (!UploadBusiness.IsSupportedFile(fileName)) {
                 res.status(HttpStatusCode.OK).json(
-                    new ErrorDto(false, `Unsupported file type. Allowed: ${AllowedExtensions.join(", ")}`, HttpStatusCode.BAD_REQUEST)
+                    new ErrorDto(false, `Unsupported file type. Allowed: ${GetAllowedExtensions().join(", ")}`, HttpStatusCode.BAD_REQUEST)
                 );
                 return;
             }

@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import { v7 as uuidv7, validate as IsValidUuid } from "uuid";
 import { RedisConnection } from "../config/RedisConfig";
+import { GetAllowedExtensions } from "../util/UploadUtil";
 import { UploadInitiateResult, UploadSession } from "../entity/UploadEntity";
 
 const RAW_UPLOAD_PATH = process.env.RAW_UPLOAD_PATH;
@@ -10,11 +11,10 @@ if (!RAW_UPLOAD_PATH) {
     throw new Error("RAW_UPLOAD_PATH is not configured in .env");
 }
 
-export const ChunkSize = 8 * 1024 * 1024;
-export const AllowedExtensions = [".xlsx", ".xls", ".csv", ".parquet"];
+export const ChunkSize = (Number(process.env.UPLOAD_CHUNK_SIZE_MB) || 8) * 1024 * 1024;
 
-const UploadSessionTtlSeconds = 24 * 60 * 60;
-const UploadedFileName = "UploadedFile";
+const UploadSessionTtlSeconds = Number(process.env.UPLOAD_SESSION_TTL_SECONDS) || 24 * 60 * 60;
+const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
 
 
 function SessionKey(UploadId: string): string {
@@ -49,7 +49,7 @@ async function GetSession(UploadId: string, UserId: string): Promise<UploadSessi
 
 export class UploadBusiness {
     static IsSupportedFile(FileName: string): boolean {
-        return AllowedExtensions.includes(path.extname(FileName).toLowerCase());
+        return GetAllowedExtensions().includes(path.extname(FileName).toLowerCase());
     }
 
 
