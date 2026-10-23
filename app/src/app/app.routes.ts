@@ -7,8 +7,8 @@ import { LoginComponent } from './page-components/auth/login/login.component';
 import { DashboardComponent } from './page-components/dashboard/dashboard.component';
 import { LogoutComponent } from './page-components/auth/logout/logout.component';
 import { UploadComponent } from './page-components/upload/upload.component';
-import { DatasetComponent } from './page-components/dataset/dataset.component';
 import { AuthGuard } from './middleware/AuthGuard';
+import { ViewDatasetGridComponent } from './page-components/manage-dataset/view-dataset-grid/view-dataset-grid.component';
 
 export const routes: Routes = [
   {
@@ -29,7 +29,7 @@ export const routes: Routes = [
         canActivate: [AuthGuard],
         children: [
           { path: 'upload', component: UploadComponent },
-          { path: 'datasets', component: DatasetComponent },
+          { path: 'datasets', component: ViewDatasetGridComponent },
           { path: 'logout', component: LogoutComponent }
         ]
       },

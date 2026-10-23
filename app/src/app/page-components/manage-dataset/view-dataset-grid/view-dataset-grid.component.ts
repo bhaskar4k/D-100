@@ -5,33 +5,39 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
-import { DatasetService } from '../../services/dataset.service';
-import { DatasetItem } from '../../models/dataset.model';
-import { FILE_UPLOAD_STATUS_LABEL } from '../../enums/file-upload-status.enum';
-import { GetReadableFileSize } from '../../common/FileUtil';
-import { FormatDuration } from '../../common/CommonUtil';
-import { CustomAlertComponent } from '../../page-components-shared/custom-alert/custom-alert.component';
-import { ResponseTypeColor } from '../../constants/commonConsts';
+import { DatasetService } from '../../../services/dataset.service';
+import { DatasetItem } from '../../../models/dataset.model';
+import { FILE_UPLOAD_STATUS_LABEL } from '../../../enums/file-upload-status.enum';
+import { DATASET_PROCESSING_STATUS_LABEL, DatasetProcessingStatus } from '../../../enums/dataset-processing-status.enum';
+import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
+import { FormatDuration } from '../../../common/CommonUtil';
+import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
+import { ResponseTypeColor } from '../../../constants/commonConsts';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
-  selector: 'app-dataset',
-  imports: [CommonModule, DatePipe, MatTableModule, MatPaginatorModule, MatProgressSpinnerModule],
-  templateUrl: './dataset.component.html',
-  styleUrl: './dataset.component.css'
+  selector: 'app-view-dataset-grid',
+  imports: [CommonModule, DatePipe, MatTableModule, MatPaginatorModule, MatProgressSpinnerModule, MatTooltipModule],
+  templateUrl: './view-dataset-grid.component.html',
+  styleUrl: './view-dataset-grid.component.css'
 })
-export class DatasetComponent implements OnInit, OnDestroy {
+export class ViewDatasetGridComponent implements OnInit, OnDestroy {
   readonly DisplayedColumns = [
     'fileName',
     'extension',
     'fileSize',
     'status',
-    'uploadInitiatedOn',
-    'uploadCompletedOn',
-    'uploadingTime',
-    'uploadedOn'
+    'uploadedOn',
+    'isProcessed',
+    'processingStatus',
+    'processedOn',
+    'action'
   ];
-  readonly DateFormat = 'dd MMM yyyy, HH:mm:ss.SSS';
+
+  ProcessingUids = new Set<string>();
+  readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
   readonly ReadableSize = GetReadableFileSize;
+  readonly FileIcon = GetFileIconByExtension;
   readonly Duration = FormatDuration;
   readonly PageSizeOptions = [10, 25, 50, 100];
   readonly SearchDebounceMs = 300;
@@ -78,10 +84,48 @@ export class DatasetComponent implements OnInit, OnDestroy {
     return FILE_UPLOAD_STATUS_LABEL[status] ?? { label: 'Unknown', color: 'status-init' };
   }
 
+  GetProcessingStatus(status: number): { label: string; color: string } {
+    return DATASET_PROCESSING_STATUS_LABEL[status] ?? { label: 'Unknown', color: 'status-init' };
+  }
+
+  CanProcess(row: DatasetItem): boolean {
+    return row.processingStatus === DatasetProcessingStatus.NOT_INITIATED
+      || row.processingStatus === DatasetProcessingStatus.FAILED;
+  }
+
   OnPageChange(event: PageEvent): void {
     this.PageIndex = event.pageIndex;
     this.PageSize = event.pageSize;
     this.Load();
+  }
+
+  OnProcess(datasetUid: string): void {
+    if (this.ProcessingUids.has(datasetUid)) {
+      return;
+    }
+
+    this.ProcessingUids.add(datasetUid);
+
+    this.datasetService.Process(datasetUid).subscribe({
+      next: response => {
+        this.ProcessingUids.delete(datasetUid);
+        this.Load();
+
+        this.dialog.open(CustomAlertComponent, {
+          data: {
+            text: response.message,
+            type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+          }
+        });
+      },
+      error: () => {
+        this.ProcessingUids.delete(datasetUid);
+
+        this.dialog.open(CustomAlertComponent, {
+          data: { text: 'Failed to queue dataset for processing.', type: ResponseTypeColor.ERROR }
+        });
+      }
+    });
   }
 
   private Load(): void {
