@@ -8,6 +8,7 @@ import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs'
 import { DatasetService } from '../../../services/dataset.service';
 import { DatasetItem } from '../../../models/dataset.model';
 import { FILE_UPLOAD_STATUS_LABEL } from '../../../enums/file-upload-status.enum';
+import { DATASET_PROCESSING_STATUS_LABEL, DatasetProcessingStatus } from '../../../enums/dataset-processing-status.enum';
 import { GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
@@ -26,10 +27,11 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
     'extension',
     'fileSize',
     'status',
-    'uploadInitiatedOn',
-    'uploadCompletedOn',
     'uploadingTime',
     'uploadedOn',
+    'isProcessed',
+    'processingStatus',
+    'processingTime',
     'action'
   ];
 
@@ -82,6 +84,15 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
     return FILE_UPLOAD_STATUS_LABEL[status] ?? { label: 'Unknown', color: 'status-init' };
   }
 
+  GetProcessingStatus(status: number): { label: string; color: string } {
+    return DATASET_PROCESSING_STATUS_LABEL[status] ?? { label: 'Unknown', color: 'status-init' };
+  }
+
+  CanProcess(row: DatasetItem): boolean {
+    return row.processingStatus === DatasetProcessingStatus.NOT_INITIATED
+      || row.processingStatus === DatasetProcessingStatus.FAILED;
+  }
+
   OnPageChange(event: PageEvent): void {
     this.PageIndex = event.pageIndex;
     this.PageSize = event.pageSize;
@@ -98,6 +109,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
     this.datasetService.Process(datasetUid).subscribe({
       next: response => {
         this.ProcessingUids.delete(datasetUid);
+        this.Load();
 
         this.dialog.open(CustomAlertComponent, {
           data: {

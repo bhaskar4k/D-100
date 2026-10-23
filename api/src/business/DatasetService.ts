@@ -6,6 +6,7 @@ import { DatasetCountRow, DatasetPage, DatasetRow } from "../entity/DatasetEntit
 import { DatasetProcessingQueue, GetRabbitMqChannel } from "../config/RabbitMqConfig";
 import { StatusLabels } from "../enum/FileUploadStatus";
 import { DatasetOwnerRow } from "../entity/DatasetEntity";
+import { TrueFalse } from "../enum/CommonEnum";
 
 
 // Builds the WHERE clause for the owning user, plus an optional search over file name (with or
@@ -53,8 +54,8 @@ export class DatasetService {
             );
 
             const [rows] = await pool.query<DatasetRow[]>(
-                `SELECT dataset_uid, filename, extension, filesize, status,
-                        created_on, initiated_on, upload_completed_on, uploading_time
+                `SELECT dataset_uid, filename, extension, filesize, status, created_on,
+                        uploading_time, is_processed, processing_status, processing_time, is_active
                  FROM T_DATASET
                  ${where}
                  ORDER BY id DESC
@@ -69,10 +70,12 @@ export class DatasetService {
                     extension: row.extension,
                     fileSize: Number(row.filesize),
                     status: row.status,
-                    uploadInitiatedOn: row.initiated_on,
-                    uploadCompletedOn: row.upload_completed_on,
                     uploadingTime: row.uploading_time === null ? null : Number(row.uploading_time),
-                    uploadedOn: row.created_on
+                    uploadedOn: row.created_on,
+                    isProcessed: row.is_processed === TrueFalse.True ? true : false,
+                    processingStatus: row.processing_status,
+                    processingTime: row.processing_time === null ? null : Number(row.processing_time),
+                    isActive: row.is_active === TrueFalse.True ? true : false
                 })),
                 total: Number(countRows[0].total),
                 page: Page,
