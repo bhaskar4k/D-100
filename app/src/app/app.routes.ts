@@ -9,6 +9,7 @@ import { LogoutComponent } from './page-components/auth/logout/logout.component'
 import { UploadComponent } from './page-components/upload/upload.component';
 import { AuthGuard } from './middleware/AuthGuard';
 import { ViewDatasetGridComponent } from './page-components/manage-dataset/view-dataset-grid/view-dataset-grid.component';
+import { ViewDatasetInfoComponent } from './page-components/manage-dataset/view-dataset-info/view-dataset-info.component';
 
 export const routes: Routes = [
   {
@@ -30,6 +31,7 @@ export const routes: Routes = [
         children: [
           { path: 'upload', component: UploadComponent },
           { path: 'datasets', component: ViewDatasetGridComponent },
+          { path: 'datasets/view', component: ViewDatasetInfoComponent },
           { path: 'logout', component: LogoutComponent }
         ]
       },

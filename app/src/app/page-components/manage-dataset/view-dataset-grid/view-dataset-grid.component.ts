@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -56,7 +57,8 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
 
   constructor(
     private datasetService: DatasetService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -95,7 +97,8 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
   }
 
   CanDelete(row: DatasetItem): boolean {
-    return row.isActive && row.processingStatus !== DatasetProcessingStatus.PROCESSING;
+    return row.isActive && row.processingStatus !== DatasetProcessingStatus.IN_QUEUE &&
+      row.processingStatus !== DatasetProcessingStatus.PROCESSING;
   }
 
   OnPageChange(event: PageEvent): void {
@@ -106,6 +109,10 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
 
   OnRefresh(): void {
     this.Load();
+  }
+
+  OnInfo(datasetUid: string): void {
+    this.router.navigate(['/datasets/view'], { queryParams: { id: datasetUid } });
   }
 
   OnDelete(datasetUid: string, fileName: string, extension: string): void {
