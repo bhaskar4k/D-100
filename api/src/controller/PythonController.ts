@@ -59,4 +59,15 @@ export class PythonController {
 
         res.status(HttpStatusCode.OK).json(PythonOutput);
     }
+
+    static async GetFileMetadata(req: Request, res: Response): Promise<void> {
+        await Logger.Info("PythonGetFileMetadata -> Called", req.UserData?.id);
+
+        const FilePath = "D:\\Projects\\D-100-Storage\\RAW\\01a16305-b905-7578-a8a5-f8e8f2c2b6de\\UploadedFile.csv"
+
+        const PythonOutput = await RunPython("GetFileMetadata", { FilePath });
+        console.log("PythonGetFileMetadata -> Output:", PythonOutput);
+
+        res.status(HttpStatusCode.OK).json(PythonOutput);
+    }
 }

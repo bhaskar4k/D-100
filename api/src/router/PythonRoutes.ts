@@ -11,5 +11,6 @@ PythonRouter.get("/Ping", PythonController.Ping);
 PythonRouter.get("/Echo", PythonController.Echo);
 PythonRouter.get("/Add", PythonController.Add);
 PythonRouter.get("/Divide", PythonController.Divide);
+PythonRouter.get("/GetFileMetadata", PythonController.GetFileMetadata);
 
 export default PythonRouter;
