@@ -6,6 +6,8 @@ import { SeedTables } from "./data-access-layer/data-seeder/SeedTables";
 import { RedisConnection } from "./config/RedisConfig";
 import { InitializeStorage } from "./config/StorageConfig";
 import { Logger } from "./log/Logger";
+import { WorkerJobManager } from "./worker-job/WorkerJobManager";
+import { RegisterWorkerJobs } from "./worker-job/WorkerJobRegistry";
 
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -27,8 +29,12 @@ async function StartServer(): Promise<void> {
 
         // Seed Tables
         await SeedTables();
-        
-        
+
+        // Start Background Worker Jobs
+        RegisterWorkerJobs();
+        await WorkerJobManager.StartAll();
+
+
         app.listen(PORT, () => {
             console.log(`✅ Server Running At http://localhost:${PORT}`);
             void Logger.Info(`Server started on port ${PORT}.`);
