@@ -337,3 +337,19 @@ div.mat-mdc-select-panel.mdc-menu-surface {
     background-color: rgba(156, 163, 175, 0.18);
     color: #9ca3af;
 }
+
+/* File-type badge: neutral tinted pill with an icon on the left. The icon keeps its own
+   file-color-* class so each extension stays visually distinct. */
+.app-badge.file-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #e5e7eb;
+    text-transform: lowercase;
+}
+
+.app-badge.file-badge i {
+    font-size: 0.95rem;
+    line-height: 1;
+}

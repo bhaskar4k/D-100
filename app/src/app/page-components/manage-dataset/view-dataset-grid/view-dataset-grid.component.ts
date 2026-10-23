@@ -9,7 +9,7 @@ import { DatasetService } from '../../../services/dataset.service';
 import { DatasetItem } from '../../../models/dataset.model';
 import { FILE_UPLOAD_STATUS_LABEL } from '../../../enums/file-upload-status.enum';
 import { DATASET_PROCESSING_STATUS_LABEL, DatasetProcessingStatus } from '../../../enums/dataset-processing-status.enum';
-import { GetReadableFileSize } from '../../../common/FileUtil';
+import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
@@ -37,6 +37,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
   ProcessingUids = new Set<string>();
   readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
   readonly ReadableSize = GetReadableFileSize;
+  readonly FileIcon = GetFileIconByExtension;
   readonly Duration = FormatDuration;
   readonly PageSizeOptions = [10, 25, 50, 100];
   readonly SearchDebounceMs = 300;
