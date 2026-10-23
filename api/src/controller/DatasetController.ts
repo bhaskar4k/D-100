@@ -20,7 +20,7 @@ export class DatasetController {
 
             const search = String(req.query.search ?? "").trim().slice(0, MaxSearchLength);
 
-            const result = await DatasetService.GetDatasets(page, pageSize, search);
+            const result = await DatasetService.GetDatasets(Number(req.UserData!.id), page, pageSize, search);
 
             res.status(HttpStatusCode.OK).json(new SuccessDto(result, "Datasets retrieved successfully.", HttpStatusCode.OK));
         } catch (error) {

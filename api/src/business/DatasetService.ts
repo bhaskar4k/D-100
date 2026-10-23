@@ -8,36 +8,44 @@ import { StatusLabels } from "../enum/FileUploadStatus";
 import { DatasetOwnerRow } from "../entity/DatasetEntity";
 
 
-// Builds the WHERE clause for a search over file name (with or without extension), extension and status label.
-function BuildSearch(Search: string): { where: string; params: any[] } {
+// Builds the WHERE clause for the owning user, plus an optional search over file name (with or
+// without extension), extension and status label. The owner filter is always present so one
+// user never sees another user's datasets.
+function BuildWhere(UserId: number, Search: string): { where: string; params: any[] } {
+    const clauses: string[] = ["created_by = ?"];
+    const params: any[] = [UserId];
+
     if (!Search) {
-        return { where: "", params: [] };
+        return { where: `WHERE ${clauses.join(" AND ")}`, params };
     }
 
     const term = Search.toLowerCase();
     const like = `%${term.replace(/[\\%_]/g, "\\$&")}%`;
 
-    const clauses = ["filename LIKE ?", "extension LIKE ?", "CONCAT(filename, extension) LIKE ?"];
-    const params: any[] = [like, like, like];
+    const searchClauses = ["filename LIKE ?", "extension LIKE ?", "CONCAT(filename, extension) LIKE ?"];
+    const searchParams: any[] = [like, like, like];
 
     const matchedStatuses = Object.entries(StatusLabels)
         .filter(([label]) => label.includes(term))
         .map(([, status]) => status);
 
     if (matchedStatuses.length > 0) {
-        clauses.push(`status IN (${matchedStatuses.map(() => "?").join(", ")})`);
-        params.push(...matchedStatuses);
+        searchClauses.push(`status IN (${matchedStatuses.map(() => "?").join(", ")})`);
+        searchParams.push(...matchedStatuses);
     }
 
-    return { where: `WHERE ${clauses.join(" OR ")}`, params };
+    clauses.push(`(${searchClauses.join(" OR ")})`);
+    params.push(...searchParams);
+
+    return { where: `WHERE ${clauses.join(" AND ")}`, params };
 }
 
 
 export class DatasetService {
-    static async GetDatasets(Page: number, PageSize: number, Search: string = ""): Promise<DatasetPage> {
+    static async GetDatasets(UserId: number, Page: number, PageSize: number, Search: string = ""): Promise<DatasetPage> {
         try {
             const pool = await ConnectionPool;
-            const { where, params } = BuildSearch(Search);
+            const { where, params } = BuildWhere(UserId, Search);
 
             const [countRows] = await pool.query<DatasetCountRow[]>(
                 `SELECT COUNT(*) AS total FROM T_DATASET ${where}`,
