@@ -7,5 +7,6 @@ const DatasetRouter = Router();
 DatasetRouter.use(JwtMiddleWare);
 
 DatasetRouter.get("/GetAll", DatasetController.GetAll);
+DatasetRouter.post("/Process", DatasetController.Process);
 
 export default DatasetRouter;

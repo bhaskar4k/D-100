@@ -20,6 +20,7 @@ export const Endpoints = {
     },
     Dataset: {
         GetAll: "Dataset/GetAll",
+        Process: "Dataset/Process",
     },
     Upload: {
         Initiate: "Upload/Initiate",

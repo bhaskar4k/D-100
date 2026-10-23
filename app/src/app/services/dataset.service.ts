@@ -19,4 +19,8 @@ export class DatasetService {
 
         return this.http.get<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.GetAll, { params });
     }
+
+    Process(datasetUid: string): Observable<ApiResponseDto> {
+        return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.Process, { datasetUid });
+    }
 }

@@ -1,0 +1,18 @@
+.app-table-action {
+    background: transparent;
+    border: none;
+    padding: 4px 8px;
+    color: #198754;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.app-table-action:hover:not(:disabled) {
+    color: #146c43;
+}
+
+.app-table-action:disabled {
+    color: #adb5bd;
+    cursor: not-allowed;
+}

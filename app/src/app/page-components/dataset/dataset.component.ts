@@ -28,8 +28,11 @@ export class DatasetComponent implements OnInit, OnDestroy {
     'uploadInitiatedOn',
     'uploadCompletedOn',
     'uploadingTime',
-    'uploadedOn'
+    'uploadedOn',
+    'action'
   ];
+
+  ProcessingUids = new Set<string>();
   readonly DateFormat = 'dd MMM yyyy, HH:mm:ss.SSS';
   readonly ReadableSize = GetReadableFileSize;
   readonly Duration = FormatDuration;
@@ -82,6 +85,34 @@ export class DatasetComponent implements OnInit, OnDestroy {
     this.PageIndex = event.pageIndex;
     this.PageSize = event.pageSize;
     this.Load();
+  }
+
+  OnProcess(datasetUid: string): void {
+    if (this.ProcessingUids.has(datasetUid)) {
+      return;
+    }
+
+    this.ProcessingUids.add(datasetUid);
+
+    this.datasetService.Process(datasetUid).subscribe({
+      next: response => {
+        this.ProcessingUids.delete(datasetUid);
+
+        this.dialog.open(CustomAlertComponent, {
+          data: {
+            text: response.message,
+            type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+          }
+        });
+      },
+      error: () => {
+        this.ProcessingUids.delete(datasetUid);
+
+        this.dialog.open(CustomAlertComponent, {
+          data: { text: 'Failed to queue dataset for processing.', type: ResponseTypeColor.ERROR }
+        });
+      }
+    });
   }
 
   private Load(): void {

@@ -1,6 +1,17 @@
+import { validate as IsValidUuid } from "uuid";
+import { RowDataPacket } from "mysql2";
 import { ConnectionPool } from "../data-access-layer/database";
 import { FileUploadStatus } from "../enum/FileUploadStatus";
+import { DatasetProcessingStatus } from "../enum/DatasetProcessingStatus";
 import { DatasetCountRow, DatasetPage, DatasetRow } from "../entity/DatasetEntity";
+import { DatasetProcessingQueue, GetRabbitMqChannel } from "../config/RabbitMqConfig";
+
+interface DatasetOwnerRow extends RowDataPacket {
+    id: number;
+    created_by: number;
+    status: number;
+    processing_status: number;
+}
 
 const StatusLabels: Record<string, FileUploadStatus> = {
     initiated: FileUploadStatus.INIT,
@@ -74,5 +85,67 @@ export class DatasetService {
         } catch (error: any) {
             throw error;
         }
+    }
+
+
+    // Enqueues a completed dataset for background processing. Returns an error message when the
+    // dataset doesn't exist, doesn't belong to the caller, or isn't eligible for processing; null
+    // once it has been marked IN_QUEUE and its primary key published to RabbitMQ.
+    static async Process(UserId: number, DatasetUid: string): Promise<string | null> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [rows] = await pool.query<DatasetOwnerRow[]>(
+            `SELECT id, created_by, status, processing_status
+             FROM T_DATASET
+             WHERE dataset_uid = ? AND is_active = 1
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (rows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = rows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.status !== FileUploadStatus.COMPLETED) {
+            return "Dataset upload is not complete yet.";
+        }
+
+        if (dataset.processing_status === DatasetProcessingStatus.IN_QUEUE
+            || dataset.processing_status === DatasetProcessingStatus.PROCESSING) {
+            return "Dataset is already queued or being processed.";
+        }
+
+        if (dataset.processing_status === DatasetProcessingStatus.PROCESSED) {
+            return "Dataset is already processed.";
+        }
+
+        await pool.execute(
+            `UPDATE T_DATASET
+             SET processing_status = ?, processing_initiated_on = NOW(3),
+                 processing_completed_on = NULL, processing_time = NULL
+             WHERE id = ?`,
+            [DatasetProcessingStatus.IN_QUEUE, dataset.id]
+        );
+
+        // Enqueue the primary key (not the uid) so consumers can read/update the row directly.
+        const channel = GetRabbitMqChannel();
+        await channel.assertQueue(DatasetProcessingQueue, { durable: true });
+        channel.sendToQueue(
+            DatasetProcessingQueue,
+            Buffer.from(JSON.stringify({ datasetId: Number(dataset.id) })),
+            { persistent: true, contentType: "application/json" }
+        );
+
+        return null;
     }
 }

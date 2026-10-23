@@ -64,6 +64,17 @@
           <td mat-cell *matCellDef="let row">{{ row.uploadedOn | date: DateFormat }}</td>
         </ng-container>
 
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef>Action</th>
+          <td mat-cell *matCellDef="let row">
+            <button type="button" class="app-table-action" title="Process dataset"
+              aria-label="Process dataset" [disabled]="ProcessingUids.has(row.datasetUid)"
+              (click)="OnProcess(row.datasetUid)">
+              <i class="bi bi-play-circle-fill"></i>
+            </button>
+          </td>
+        </ng-container>
+
         <tr mat-header-row *matHeaderRowDef="DisplayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: DisplayedColumns"></tr>
 

@@ -64,9 +64,9 @@ export class UploadBusiness {
         const pool = await ConnectionPool;
         await pool.execute(
             `INSERT INTO T_DATASET
-                (dataset_uid, filename, extension, filesize, status, initiated_on)
-             VALUES (?, ?, ?, ?, ?, NOW(3))`,
-            [uploadId, path.parse(FileName).name, extension, FileSize, FileUploadStatus.INIT]
+                (dataset_uid, filename, extension, filesize, status, created_by, initiated_on)
+             VALUES (?, ?, ?, ?, ?, ?, NOW(3))`,
+            [uploadId, path.parse(FileName).name, extension, FileSize, FileUploadStatus.INIT, Number(UserId)]
         );
 
         const filePath = GetFilePath(uploadId, extension);
