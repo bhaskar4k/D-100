@@ -36,7 +36,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
   ];
 
   ProcessingUids = new Set<string>();
-  readonly DateFormat = 'dd MMM yyyy, HH:mm:ss.SSS';
+  readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
   readonly ReadableSize = GetReadableFileSize;
   readonly Duration = FormatDuration;
   readonly PageSizeOptions = [10, 25, 50, 100];
