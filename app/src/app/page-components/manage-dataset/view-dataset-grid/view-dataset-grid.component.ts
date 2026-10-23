@@ -27,11 +27,10 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
     'extension',
     'fileSize',
     'status',
-    'uploadingTime',
     'uploadedOn',
     'isProcessed',
     'processingStatus',
-    'processingTime',
+    'processedOn',
     'action'
   ];
 
