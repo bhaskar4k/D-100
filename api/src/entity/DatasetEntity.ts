@@ -56,3 +56,65 @@ export interface DatasetOwnerRow extends RowDataPacket {
     processing_status: number;
     is_active: number;
 }
+
+export interface DatasetDetailRow extends RowDataPacket {
+    id: number;
+    dataset_uid: string;
+    filename: string;
+    extension: string;
+    filesize: string | number;
+    status: number;
+    initiated_on: Date;
+    upload_completed_on: Date | null;
+    uploading_time: string | number | null;
+    row_count: string | number | null;
+    is_processed: number;
+    processing_status: number;
+    processing_initiated_on: Date | null;
+    processing_completed_on: Date | null;
+    processing_time: string | number | null;
+    created_by: number;
+    created_on: Date;
+    is_active: number;
+}
+
+export interface DatasetColumnRow extends RowDataPacket {
+    id: number;
+    column_name: string;
+    type: number;
+    nullable: number;
+    unique_count: string | number;
+}
+
+export interface DatasetColumnItem {
+    id: number;
+    columnName: string;
+    type: number;
+    nullable: boolean;
+    uniqueCount: number;
+}
+
+export interface DatasetDetailItem {
+    datasetUid: string;
+    fileName: string;
+    extension: string;
+    fileSize: number;
+    status: number;
+    uploadInitiatedOn: Date;
+    uploadCompletedOn: Date | null;
+    uploadingTime: number | null;
+    uploadedOn: Date;
+    rowCount: number | null;
+    isProcessed: boolean;
+    processingStatus: number;
+    processingInitiatedOn: Date | null;
+    processingCompletedOn: Date | null;
+    processingTime: number | null;
+    isActive: boolean;
+    createdBy: number;
+}
+
+export interface DatasetDetailResult {
+    dataset: DatasetDetailItem;
+    columns: DatasetColumnItem[];
+}
