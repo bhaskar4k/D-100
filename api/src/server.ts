@@ -4,6 +4,7 @@ import { ConnectionPool } from "./data-access-layer/database";
 import { CreateTables } from "./data-access-layer/script-runner/CreateTables";
 import { SeedTables } from "./data-access-layer/data-seeder/SeedTables";
 import { RedisConnection } from "./config/RedisConfig";
+import { RabbitMqConnection } from "./config/RabbitMqConfig";
 import { InitializeStorage } from "./config/StorageConfig";
 import { Logger } from "./log/Logger";
 import { WorkerJobManager } from "./worker-job/WorkerJobManager";
@@ -21,6 +22,9 @@ async function StartServer(): Promise<void> {
 
         // Connect Redis
         await RedisConnection;
+
+        // Connect RabbitMQ
+        await RabbitMqConnection;
 
         // Create Storage Folders
         await InitializeStorage();
