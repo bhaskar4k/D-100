@@ -6,9 +6,12 @@ import { SeedTables } from "./data-access-layer/data-seeder/SeedTables";
 import { RedisConnection } from "./config/RedisConfig";
 import { InitializeStorage } from "./config/StorageConfig";
 import { Logger } from "./log/Logger";
+import { WorkerJobManager } from "./worker-job/WorkerJobManager";
+import { RegisterWorkerJobs } from "./worker-job/WorkerJobRegistry";
 
 
 const PORT = Number(process.env.PORT) || 3000;
+const API_SERVER_URL = process.env.API_SERVER_URL || "http://localhost";
 
 
 async function StartServer(): Promise<void> {
@@ -27,11 +30,17 @@ async function StartServer(): Promise<void> {
 
         // Seed Tables
         await SeedTables();
-        
-        
+
+        // Register Worker Jobs
+        RegisterWorkerJobs();
+
+        // Start Worker Jobs
+        await WorkerJobManager.StartAll();
+
+
         app.listen(PORT, () => {
-            console.log(`✅ Server Running At http://localhost:${PORT}`);
-            void Logger.Info(`Server started on port ${PORT}.`);
+            console.log(`✅ API Server Running At ${API_SERVER_URL}:${PORT}`);
+            void Logger.Info(`API Server started on port ${PORT}.`);
         });
     } catch (error) {
         console.error("❌ Failed to initialize MySQL:", error);
