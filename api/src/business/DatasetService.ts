@@ -10,11 +10,11 @@ import { TrueFalse } from "../enum/CommonEnum";
 
 
 // Builds the WHERE clause for the owning user, plus an optional search over file name (with or
-// without extension), extension and status label. The owner filter is always present so one
-// user never sees another user's datasets.
+// without extension), extension and status label. Owner and is_active filters are always
+// present so one user never sees another user's datasets or soft-deleted rows.
 function BuildWhere(UserId: number, Search: string): { where: string; params: any[] } {
-    const clauses: string[] = ["created_by = ?"];
-    const params: any[] = [UserId];
+    const clauses: string[] = ["created_by = ?", "is_active = ?"];
+    const params: any[] = [UserId, TrueFalse.True];
 
     if (!Search) {
         return { where: `WHERE ${clauses.join(" AND ")}`, params };
