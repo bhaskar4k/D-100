@@ -6,14 +6,21 @@
     <div class="app-page-header">
         <h4 class="app-page-title">Datasets</h4>
 
-        <div class="app-table-search">
-            <i class="bi bi-search"></i>
-            <input #searchInput type="text" placeholder="Search datasets..." autocomplete="off" [value]="SearchText"
-                (input)="OnSearch(searchInput.value)" />
-            @if (SearchText) {
-            <button type="button" class="app-table-search-clear" aria-label="Clear search"
-                (click)="searchInput.value = ''; OnSearch('')"><i class="bi bi-x-lg"></i></button>
-            }
+        <div class="app-page-actions">
+            <button type="button" class="app-icon-button" matTooltip="Refresh datasets" matTooltipPosition="above"
+                [disabled]="MatProgressBar" (click)="OnRefresh()">
+                <i class="bi bi-arrow-clockwise" [class.spin]="MatProgressBar"></i>
+            </button>
+
+            <div class="app-table-search">
+                <i class="bi bi-search"></i>
+                <input #searchInput type="text" placeholder="Search datasets..." autocomplete="off" [value]="SearchText"
+                    (input)="OnSearch(searchInput.value)" />
+                @if (SearchText) {
+                <button type="button" class="app-table-search-clear" aria-label="Clear search"
+                    (click)="searchInput.value = ''; OnSearch('')"><i class="bi bi-x-lg"></i></button>
+                }
+            </div>
         </div>
     </div>
 

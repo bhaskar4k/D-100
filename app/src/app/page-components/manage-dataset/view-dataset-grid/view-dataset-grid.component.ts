@@ -99,6 +99,10 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
     this.Load();
   }
 
+  OnRefresh(): void {
+    this.Load();
+  }
+
   OnProcess(datasetUid: string): void {
     if (this.ProcessingUids.has(datasetUid)) {
       return;
