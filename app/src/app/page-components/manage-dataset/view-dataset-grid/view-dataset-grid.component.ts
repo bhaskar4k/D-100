@@ -35,6 +35,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
   ];
 
   ProcessingUids = new Set<string>();
+  DeletingUids = new Set<string>();
   readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
   readonly ReadableSize = GetReadableFileSize;
   readonly FileIcon = GetFileIconByExtension;
@@ -89,8 +90,12 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
   }
 
   CanProcess(row: DatasetItem): boolean {
-    return row.processingStatus === DatasetProcessingStatus.NOT_INITIATED
-      || row.processingStatus === DatasetProcessingStatus.FAILED;
+    return row.isActive && (row.processingStatus === DatasetProcessingStatus.NOT_INITIATED
+      || row.processingStatus === DatasetProcessingStatus.FAILED);
+  }
+
+  CanDelete(row: DatasetItem): boolean {
+    return row.isActive && row.processingStatus !== DatasetProcessingStatus.PROCESSING;
   }
 
   OnPageChange(event: PageEvent): void {
@@ -101,6 +106,40 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
 
   OnRefresh(): void {
     this.Load();
+  }
+
+  OnDelete(datasetUid: string, fileName: string, extension: string): void {
+    if (this.DeletingUids.has(datasetUid)) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete dataset "${fileName}${extension}"?`);
+    if (!confirmed) {
+      return;
+    }
+
+    this.DeletingUids.add(datasetUid);
+
+    this.datasetService.Delete(datasetUid).subscribe({
+      next: response => {
+        this.DeletingUids.delete(datasetUid);
+        this.Load();
+
+        this.dialog.open(CustomAlertComponent, {
+          data: {
+            text: response.message,
+            type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+          }
+        });
+      },
+      error: () => {
+        this.DeletingUids.delete(datasetUid);
+
+        this.dialog.open(CustomAlertComponent, {
+          data: { text: 'Failed to delete dataset.', type: ResponseTypeColor.ERROR }
+        });
+      }
+    });
   }
 
   OnProcess(datasetUid: string): void {

@@ -87,12 +87,21 @@
                 <ng-container matColumnDef="action">
                     <th mat-header-cell *matHeaderCellDef>Action</th>
                     <td mat-cell *matCellDef="let row">
-                        <button type="button" class="app-table-action text-warning" matTooltip="Process dataset"
-                            matTooltipPosition="above" aria-label="Process dataset" *ngIf="CanProcess(row)"
-                            [disabled]="ProcessingUids.has(row.datasetUid) || MatProgressBar"
-                            (click)="OnProcess(row.datasetUid)">
-                            <i class="bi bi-cpu"></i>
-                        </button>
+                        <div class="app-table-actions">
+                            <button type="button" class="app-table-action text-warning" matTooltip="Process dataset"
+                                matTooltipPosition="above" aria-label="Process dataset" *ngIf="CanProcess(row)"
+                                [disabled]="ProcessingUids.has(row.datasetUid) || MatProgressBar"
+                                (click)="OnProcess(row.datasetUid)">
+                                <i class="bi bi-cpu"></i>
+                            </button>
+
+                            <button type="button" class="app-table-action text-danger" matTooltip="Delete dataset"
+                                matTooltipPosition="above" aria-label="Delete dataset" *ngIf="CanDelete(row)"
+                                [disabled]="DeletingUids.has(row.datasetUid) || MatProgressBar"
+                                (click)="OnDelete(row.datasetUid, row.fileName, row.extension)">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
+                        </div>
                     </td>
                 </ng-container>
 

@@ -146,4 +146,54 @@ export class DatasetService {
 
         return null;
     }
+
+
+    // Soft-deletes a dataset (is_active = 0). Returns an error message when the dataset doesn't
+    // exist, doesn't belong to the caller, is already deleted, or is currently being processed;
+    // null once is_active has been flipped off. Hard delete would strand the raw file and any
+    // T_COLUMN rows, which can be cleaned up separately.
+    static async Delete(UserId: number, DatasetUid: string): Promise<string | null> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [rows] = await pool.query<DatasetOwnerRow[]>(
+            `SELECT id, created_by, status, processing_status, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (rows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = rows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active !== TrueFalse.True) {
+            return "Dataset is already deleted.";
+        }
+
+        if (dataset.processing_status === DatasetProcessingStatus.IN_QUEUE) {
+            return "Dataset is currently in the processing queue. Try again once it finishes.";
+        }
+
+        if (dataset.processing_status === DatasetProcessingStatus.PROCESSING) {
+            return "Dataset is currently being processed. Try again once it finishes.";
+        }
+
+        await pool.execute(
+            `UPDATE T_DATASET SET is_active = ? WHERE id = ?`,
+            [TrueFalse.False, dataset.id]
+        );
+
+        return null;
+    }
 }
