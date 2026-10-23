@@ -20,6 +20,7 @@ export const Endpoints = {
     },
     Dataset: {
         GetAll: "Dataset/GetAll",
+        GetDetails: "Dataset/GetDetails",
         Process: "Dataset/Process",
         Delete: "Dataset/Delete",
     },

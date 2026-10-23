@@ -33,6 +33,32 @@ export class DatasetController {
     }
 
 
+    static async GetDetails(req: Request, res: Response): Promise<void> {
+        try {
+            await Logger.Info("GetDatasetDetails -> Called", req.UserData?.id);
+
+            const datasetUid = String(req.params.datasetUid ?? "").trim();
+
+            const result = await DatasetService.GetDetails(Number(req.UserData!.id), datasetUid);
+
+            if (typeof result === "string") {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, result, HttpStatusCode.BAD_REQUEST));
+                return;
+            }
+
+            res.status(HttpStatusCode.OK).json(
+                new SuccessDto(result, "Dataset details retrieved successfully.", HttpStatusCode.OK)
+            );
+        } catch (error) {
+            await Logger.Error("Get Dataset Details Error", error, req.UserData?.id);
+
+            res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
+                new ErrorDto(null, "An unexpected error occurred while fetching the dataset.", HttpStatusCode.INTERNAL_SERVER_ERROR)
+            );
+        }
+    }
+
+
     static async Delete(req: Request, res: Response): Promise<void> {
         try {
             await Logger.Info("DatasetDelete -> Called", req.UserData?.id);

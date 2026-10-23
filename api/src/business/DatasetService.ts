@@ -5,7 +5,7 @@ import { DatasetProcessingStatus } from "../enum/DatasetProcessingStatus";
 import { DatasetCountRow, DatasetPage, DatasetRow } from "../entity/DatasetEntity";
 import { DatasetProcessingQueue, GetRabbitMqChannel } from "../config/RabbitMqConfig";
 import { StatusLabels } from "../enum/FileUploadStatus";
-import { DatasetOwnerRow } from "../entity/DatasetEntity";
+import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow } from "../entity/DatasetEntity";
 import { TrueFalse } from "../enum/CommonEnum";
 
 
@@ -145,6 +145,81 @@ export class DatasetService {
         );
 
         return null;
+    }
+
+
+    // Returns the full dataset record and its columns. Returns an error message when the dataset
+    // doesn't exist, is soft-deleted, or doesn't belong to the caller.
+    static async GetDetails(UserId: number, DatasetUid: string): Promise<DatasetDetailResult | string> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [datasetRows] = await pool.query<DatasetDetailRow[]>(
+            `SELECT id, dataset_uid, filename, extension, filesize, status,
+                    initiated_on, upload_completed_on, uploading_time,
+                    row_count, is_processed, processing_status,
+                    processing_initiated_on, processing_completed_on, processing_time,
+                    created_by, created_on, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (datasetRows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const row = datasetRows[0];
+
+        if (Number(row.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (row.is_active !== TrueFalse.True) {
+            return "Dataset is deleted.";
+        }
+
+        const [columnRows] = await pool.query<DatasetColumnRow[]>(
+            `SELECT id, column_name, type, nullable, unique_count
+             FROM T_COLUMN
+             WHERE dataset_id = ?
+             ORDER BY id ASC`,
+            [row.id]
+        );
+
+        const dataset: DatasetDetailItem = {
+            datasetUid: row.dataset_uid,
+            fileName: row.filename,
+            extension: row.extension,
+            fileSize: Number(row.filesize),
+            status: row.status,
+            uploadInitiatedOn: row.initiated_on,
+            uploadCompletedOn: row.upload_completed_on,
+            uploadingTime: row.uploading_time === null ? null : Number(row.uploading_time),
+            uploadedOn: row.created_on,
+            rowCount: row.row_count === null ? null : Number(row.row_count),
+            isProcessed: row.is_processed === TrueFalse.True,
+            processingStatus: row.processing_status,
+            processingInitiatedOn: row.processing_initiated_on,
+            processingCompletedOn: row.processing_completed_on,
+            processingTime: row.processing_time === null ? null : Number(row.processing_time),
+            isActive: row.is_active === TrueFalse.True,
+            createdBy: Number(row.created_by)
+        };
+
+        const columns: DatasetColumnItem[] = columnRows.map((Column) => ({
+            id: Number(Column.id),
+            columnName: Column.column_name,
+            type: Column.type,
+            nullable: Column.nullable === TrueFalse.True,
+            uniqueCount: Number(Column.unique_count)
+        }));
+
+        return { dataset, columns };
     }
 
 
