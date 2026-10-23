@@ -14,10 +14,11 @@ import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/Fil
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-view-dataset-info',
-  imports: [CommonModule, DatePipe, RouterModule, MatTableModule, MatProgressSpinnerModule],
+  imports: [CommonModule, DatePipe, RouterModule, MatTableModule, MatProgressSpinnerModule, MatTooltipModule],
   templateUrl: './view-dataset-info.component.html',
   styleUrl: './view-dataset-info.component.css'
 })
