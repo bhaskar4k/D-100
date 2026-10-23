@@ -36,26 +36,3 @@ def divide(a: float, b: float) -> BaseDto:
         return ErrorDto(None, "Cannot divide by zero.", 400, {"a": a, "b": b})
 
     return SuccessDto({"a": a, "b": b, "quotient": a / b}, "Divided.", 200)
-
-
-@expose
-def file_info(path: str) -> BaseDto:
-    """Basic facts about a file on disk (example of a function that touches the file system)."""
-    if not os.path.isfile(path):
-        return ErrorDto(None, "File not found.", 404, {"path": path})
-
-    return SuccessDto(
-        {
-            "path": path,
-            "size": os.path.getsize(path),
-            "extension": os.path.splitext(path)[1].lower(),
-        },
-        "File found.",
-        200,
-    )
-
-
-@expose
-def crash() -> BaseDto:
-    """Always raises (checks the unhandled-exception path; remove once the bridge is verified)."""
-    raise RuntimeError("Deliberate failure from pyd_100.crash()")
