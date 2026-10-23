@@ -33,6 +33,32 @@ export class DatasetController {
     }
 
 
+    static async Delete(req: Request, res: Response): Promise<void> {
+        try {
+            await Logger.Info("DatasetDelete -> Called", req.UserData?.id);
+
+            const datasetUid = String(req.body?.datasetUid ?? "").trim();
+
+            const error = await DatasetService.Delete(Number(req.UserData!.id), datasetUid);
+
+            if (error) {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, error, HttpStatusCode.BAD_REQUEST));
+                return;
+            }
+
+            res.status(HttpStatusCode.OK).json(
+                new SuccessDto(true, "Dataset deleted successfully.", HttpStatusCode.OK)
+            );
+        } catch (error) {
+            await Logger.Error("Dataset Delete Error", error, req.UserData?.id);
+
+            res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
+                new ErrorDto(null, "An unexpected error occurred while deleting the dataset.", HttpStatusCode.INTERNAL_SERVER_ERROR)
+            );
+        }
+    }
+
+
     static async Process(req: Request, res: Response): Promise<void> {
         try {
             await Logger.Info("DatasetProcess -> Called", req.UserData?.id);

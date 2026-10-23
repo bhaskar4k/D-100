@@ -18,4 +18,21 @@ hr {
     font-size: 15px;
     cursor: pointer;
     line-height: 1;
+    transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+}
+
+.app-table-action:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.app-table-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Horizontal cluster for several action icons in one table cell. */
+.app-table-actions {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
 }
