@@ -1,6 +1,7 @@
-/* Scrollbar styling - dark theme */
+/* Scrollbar styling - dark theme. `height` keeps horizontal scrollbars equally thin. */
 ::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -14,4 +15,53 @@
 
 ::-webkit-scrollbar-thumb:hover {
     background: #6b7280;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #4b5563 #1f2937;
+}
+
+/* Opt-in refined scrollbar for horizontally scrolling table bodies. Transparent track blends with
+   the card, the thumb is a slim pill that only shows on hover; combined with a small bottom gap
+   so the scrollbar never butts up against the paginator. */
+.app-scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.2s ease-in-out;
+}
+
+.app-scroll-thin:hover,
+.app-scroll-thin:focus-within {
+    scrollbar-color: rgba(156, 163, 175, 0.45) transparent;
+}
+
+.app-scroll-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.app-scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 0 8px;
+}
+
+.app-scroll-thin::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 999px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.app-scroll-thin:hover::-webkit-scrollbar-thumb,
+.app-scroll-thin:focus-within::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.35);
+}
+
+.app-scroll-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.6);
 }

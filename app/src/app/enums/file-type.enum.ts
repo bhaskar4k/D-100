@@ -201,6 +201,40 @@ export const MIME_TYPE_MAP: Record<string, FileType> = {
 };
 
 
+// Extension → FileType. Keys are lower-case and include the leading dot. Add new upload
+// formats here so the file-type icon renders without touching components.
+export const EXTENSION_TYPE_MAP: Record<string, FileType> = {
+
+    '.csv': FileType.CSV,
+
+    '.xlsx': FileType.EXCEL,
+    '.xls': FileType.EXCEL,
+    '.xlsm': FileType.EXCEL,
+
+    '.parquet': FileType.CODE,
+
+    '.json': FileType.JSON,
+    '.xml': FileType.XML,
+
+    '.txt': FileType.TEXT,
+    '.md': FileType.TEXT,
+
+    '.pdf': FileType.PDF,
+
+    '.doc': FileType.WORD,
+    '.docx': FileType.WORD,
+
+    '.ppt': FileType.POWERPOINT,
+    '.pptx': FileType.POWERPOINT,
+
+    '.zip': FileType.ARCHIVE,
+    '.rar': FileType.ARCHIVE,
+    '.7z': FileType.ARCHIVE,
+    '.tar': FileType.ARCHIVE,
+    '.gz': FileType.ARCHIVE,
+};
+
+
 export const FILE_TYPE_ICON_MAP: Record<FileType, FileIcon> = {
 
     [FileType.IMAGE]: {

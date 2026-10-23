@@ -34,10 +34,13 @@
     --mat-select-trigger-text-size: 0.75rem;
 }
 
-/* Only the table scrolls sideways on narrow screens; the paginator stays put below it */
+/* Only the table scrolls sideways on narrow screens; the paginator stays put below it.
+   Inherits the slim, hover-reveal scrollbar from .app-scroll-thin so the horizontal bar does
+   not clash with the dark card. The bottom padding gives the thumb breathing room. */
 .app-table-scroll {
     width: 100%;
     overflow-x: auto;
+    padding-bottom: 4px;
 }
 
 .app-table {
@@ -298,4 +301,55 @@ div.mat-mdc-select-panel.mdc-menu-surface {
 .app-badge.status-completed {
     background-color: rgba(34, 197, 94, 0.18);
     color: #4ade80;
+}
+
+.app-badge.status-processing-not-initiated {
+    background-color: rgba(156, 163, 175, 0.18);
+    color: #9ca3af;
+}
+
+.app-badge.status-processing-queued {
+    background-color: rgba(59, 130, 246, 0.18);
+    color: #60a5fa;
+}
+
+.app-badge.status-processing-running {
+    background-color: rgba(245, 158, 11, 0.18);
+    color: #fbbf24;
+}
+
+.app-badge.status-processing-done {
+    background-color: rgba(34, 197, 94, 0.18);
+    color: #4ade80;
+}
+
+.app-badge.status-processing-failed {
+    background-color: rgba(239, 68, 68, 0.18);
+    color: #f87171;
+}
+
+.app-badge.status-yes {
+    background-color: rgba(34, 197, 94, 0.18);
+    color: #4ade80;
+}
+
+.app-badge.status-no {
+    background-color: rgba(156, 163, 175, 0.18);
+    color: #9ca3af;
+}
+
+/* File-type badge: neutral tinted pill with an icon on the left. The icon keeps its own
+   file-color-* class so each extension stays visually distinct. */
+.app-badge.file-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #e5e7eb;
+    text-transform: lowercase;
+}
+
+.app-badge.file-badge i {
+    font-size: 0.95rem;
+    line-height: 1;
 }

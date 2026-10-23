@@ -4,10 +4,11 @@ export interface DatasetItem {
     extension: string;
     fileSize: number;
     status: number;
-    uploadInitiatedOn: string;
-    uploadCompletedOn: string | null;
-    uploadingTime: number | null;
     uploadedOn: string;
+    isProcessed: boolean;
+    processingStatus: number;
+    processingCompletedOn: string | null;
+    isActive: boolean;
 }
 
 export interface DatasetPage {

@@ -1,4 +1,5 @@
 import {
+    EXTENSION_TYPE_MAP,
     FILE_TYPE_ICON_MAP,
     FileIcon,
     FileType,
@@ -63,6 +64,21 @@ export function GetFileIcon(
 
     return FILE_TYPE_ICON_MAP[fileType]
         ?? FILE_TYPE_ICON_MAP[FileType.UNKNOWN];
+}
+
+
+export function GetFileIconByExtension(
+    extension: string | null | undefined
+): FileIcon {
+
+    if (!extension) {
+        return FILE_TYPE_ICON_MAP[FileType.UNKNOWN];
+    }
+
+    const key = (extension.startsWith('.') ? extension : '.' + extension).toLowerCase();
+    const fileType = EXTENSION_TYPE_MAP[key] ?? FileType.UNKNOWN;
+
+    return FILE_TYPE_ICON_MAP[fileType];
 }
 
 

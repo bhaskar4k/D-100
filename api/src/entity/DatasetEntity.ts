@@ -7,9 +7,10 @@ export interface DatasetRow extends RowDataPacket {
     filesize: string | number;
     status: number;
     created_on: Date;
-    initiated_on: Date;
-    upload_completed_on: Date | null;
-    uploading_time: string | number | null;
+    is_processed: number;
+    processing_status: number;
+    processing_completed_on: Date | null;
+    is_active: number;
 }
 
 export interface DatasetItem {
@@ -18,10 +19,11 @@ export interface DatasetItem {
     extension: string;
     fileSize: number;
     status: number;
-    uploadInitiatedOn: Date;
-    uploadCompletedOn: Date | null;
-    uploadingTime: number | null;
     uploadedOn: Date;
+    isProcessed: boolean;
+    processingStatus: number;
+    processingCompletedOn: Date | null;
+    isActive: boolean;
 }
 
 export interface DatasetPage {
@@ -45,4 +47,11 @@ export interface DatafileColumnMetadata {
     type: number;
     nullable: boolean;
     uniqueCount: number;
+}
+
+export interface DatasetOwnerRow extends RowDataPacket {
+    id: number;
+    created_by: number;
+    status: number;
+    processing_status: number;
 }
