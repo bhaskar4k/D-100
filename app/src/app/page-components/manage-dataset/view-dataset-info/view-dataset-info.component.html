@@ -32,19 +32,19 @@
         </div>
 
         <div class="app-detail-cell">
-            <div class="app-detail-label">Processing Status</div>
+            <div class="app-detail-label">Is Processed</div>
             <div class="app-detail-value">
-                <span class="app-badge" [class]="GetProcessingStatus(D.processingStatus).color">
-                    {{ GetProcessingStatus(D.processingStatus).label }}
+                <span class="app-badge" [class]="D.isProcessed ? 'status-yes' : 'status-no'">
+                    {{ D.isProcessed ? 'Yes' : 'No' }}
                 </span>
             </div>
         </div>
 
         <div class="app-detail-cell">
-            <div class="app-detail-label">Is Processed</div>
+            <div class="app-detail-label">Processing Status</div>
             <div class="app-detail-value">
-                <span class="app-badge" [class]="D.isProcessed ? 'status-yes' : 'status-no'">
-                    {{ D.isProcessed ? 'Yes' : 'No' }}
+                <span class="app-badge" [class]="GetProcessingStatus(D.processingStatus).color">
+                    {{ GetProcessingStatus(D.processingStatus).label }}
                 </span>
             </div>
         </div>
@@ -56,7 +56,7 @@
 
         <div class="app-detail-cell">
             <div class="app-detail-label">Column Count</div>
-            <div class="app-detail-value">{{ Columns.length.toLocaleString() }}</div>
+            <div class="app-detail-value">{{ D.isProcessed ? Columns.length.toLocaleString() : '-' }}</div>
         </div>
 
         <div class="app-detail-cell">
