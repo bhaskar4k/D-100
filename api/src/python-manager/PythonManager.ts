@@ -21,9 +21,10 @@ async function Safe<T>(Description: string, Call: () => Promise<PythonResponse<T
 }
 
 
-// Calls an @expose'd pyd-100 function with keyword arguments.
-export function RunPython<T = unknown>(FunctionName: string, Kwargs: Record<string, unknown> = {}): Promise<PythonResponse<T>> {
-    return Safe(`call '${FunctionName}'`, () => CallPython<T>(FunctionName, Kwargs));
+// Calls an @expose'd pyd-100 function with keyword arguments. TimeoutMs overrides the default
+// PYTHON_TIMEOUT_MS for this single call (pass it for long-running jobs like dataset processing).
+export function RunPython<T = unknown>(FunctionName: string, Kwargs: Record<string, unknown> = {}, TimeoutMs?: number): Promise<PythonResponse<T>> {
+    return Safe(`call '${FunctionName}'`, () => CallPython<T>(FunctionName, Kwargs, TimeoutMs));
 }
 
 // Lists the functions pyd-100 exposes.
