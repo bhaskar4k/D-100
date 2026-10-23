@@ -34,10 +34,13 @@
     --mat-select-trigger-text-size: 0.75rem;
 }
 
-/* Only the table scrolls sideways on narrow screens; the paginator stays put below it */
+/* Only the table scrolls sideways on narrow screens; the paginator stays put below it.
+   Inherits the slim, hover-reveal scrollbar from .app-scroll-thin so the horizontal bar does
+   not clash with the dark card. The bottom padding gives the thumb breathing room. */
 .app-table-scroll {
     width: 100%;
     overflow-x: auto;
+    padding-bottom: 4px;
 }
 
 .app-table {
