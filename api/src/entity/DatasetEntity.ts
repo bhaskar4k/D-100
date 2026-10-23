@@ -46,3 +46,10 @@ export interface DatafileColumnMetadata {
     nullable: boolean;
     uniqueCount: number;
 }
+
+export interface DatasetOwnerRow extends RowDataPacket {
+    id: number;
+    created_by: number;
+    status: number;
+    processing_status: number;
+}

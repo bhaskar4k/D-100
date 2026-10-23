@@ -1,23 +1,11 @@
 import { validate as IsValidUuid } from "uuid";
-import { RowDataPacket } from "mysql2";
 import { ConnectionPool } from "../data-access-layer/database";
 import { FileUploadStatus } from "../enum/FileUploadStatus";
 import { DatasetProcessingStatus } from "../enum/DatasetProcessingStatus";
 import { DatasetCountRow, DatasetPage, DatasetRow } from "../entity/DatasetEntity";
 import { DatasetProcessingQueue, GetRabbitMqChannel } from "../config/RabbitMqConfig";
-
-interface DatasetOwnerRow extends RowDataPacket {
-    id: number;
-    created_by: number;
-    status: number;
-    processing_status: number;
-}
-
-const StatusLabels: Record<string, FileUploadStatus> = {
-    initiated: FileUploadStatus.INIT,
-    uploading: FileUploadStatus.UPLOADING,
-    completed: FileUploadStatus.COMPLETED
-};
+import { StatusLabels } from "../enum/FileUploadStatus";
+import { DatasetOwnerRow } from "../entity/DatasetEntity";
 
 
 // Builds the WHERE clause for a search over file name (with or without extension), extension and status label.
