@@ -5,21 +5,21 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
-import { DatasetService } from '../../services/dataset.service';
-import { DatasetItem } from '../../models/dataset.model';
-import { FILE_UPLOAD_STATUS_LABEL } from '../../enums/file-upload-status.enum';
-import { GetReadableFileSize } from '../../common/FileUtil';
-import { FormatDuration } from '../../common/CommonUtil';
-import { CustomAlertComponent } from '../../page-components-shared/custom-alert/custom-alert.component';
-import { ResponseTypeColor } from '../../constants/commonConsts';
+import { DatasetService } from '../../../services/dataset.service';
+import { DatasetItem } from '../../../models/dataset.model';
+import { FILE_UPLOAD_STATUS_LABEL } from '../../../enums/file-upload-status.enum';
+import { GetReadableFileSize } from '../../../common/FileUtil';
+import { FormatDuration } from '../../../common/CommonUtil';
+import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
+import { ResponseTypeColor } from '../../../constants/commonConsts';
 
 @Component({
-  selector: 'app-dataset',
+  selector: 'app-view-dataset-grid',
   imports: [CommonModule, DatePipe, MatTableModule, MatPaginatorModule, MatProgressSpinnerModule],
-  templateUrl: './dataset.component.html',
-  styleUrl: './dataset.component.css'
+  templateUrl: './view-dataset-grid.component.html',
+  styleUrl: './view-dataset-grid.component.css'
 })
-export class DatasetComponent implements OnInit, OnDestroy {
+export class ViewDatasetGridComponent implements OnInit, OnDestroy {
   readonly DisplayedColumns = [
     'fileName',
     'extension',
