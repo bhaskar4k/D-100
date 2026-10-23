@@ -23,6 +23,8 @@ export class WorkerJobManager {
         }
 
         void Logger.Info(`WorkerJobManager started ${WorkerJobManager.Jobs.length} job(s).`);
+
+        console.log("✅ Worker Job Started Successfully.");
     }
 
     static async StopAll(): Promise<void> {
