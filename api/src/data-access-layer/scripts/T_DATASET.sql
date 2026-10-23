@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS T_DATASET (
     filename VARCHAR(255) NOT NULL,
     extension VARCHAR(20) NOT NULL,
     filesize BIGINT NOT NULL,
+    row_count BIGINT NULL DEFAULT NULL,
 
     status INT NOT NULL DEFAULT 1,
     initiated_on DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -15,8 +16,8 @@ CREATE TABLE IF NOT EXISTS T_DATASET (
     processing_status INT NOT NULL DEFAULT 0,
     processing_initiated_on DATETIME(3) NULL DEFAULT NULL,
     processing_completed_on DATETIME(3) NULL DEFAULT NULL,
-    processing_time BIGINT NULL DEFAULT NULL COMMENT 'milliseconds from processing_initiated_on to processing_completed_on',
-    
+    processing_time BIGINT NULL DEFAULT NULL COMMENT 'milliseconds from processing_initiated_on to processing_completed_on', 
+
     created_by INT NOT NULL,
     created_on DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
