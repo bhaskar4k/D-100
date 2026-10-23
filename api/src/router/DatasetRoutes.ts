@@ -8,5 +8,6 @@ DatasetRouter.use(JwtMiddleWare);
 
 DatasetRouter.get("/GetAll", DatasetController.GetAll);
 DatasetRouter.post("/Process", DatasetController.Process);
+DatasetRouter.post("/Delete", DatasetController.Delete);
 
 export default DatasetRouter;

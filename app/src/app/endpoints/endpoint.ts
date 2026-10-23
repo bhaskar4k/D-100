@@ -21,6 +21,7 @@ export const Endpoints = {
     Dataset: {
         GetAll: "Dataset/GetAll",
         Process: "Dataset/Process",
+        Delete: "Dataset/Delete",
     },
     Upload: {
         Initiate: "Upload/Initiate",

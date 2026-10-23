@@ -23,4 +23,8 @@ export class DatasetService {
     Process(datasetUid: string): Observable<ApiResponseDto> {
         return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.Process, { datasetUid });
     }
+
+    Delete(datasetUid: string): Observable<ApiResponseDto> {
+        return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.Delete, { datasetUid });
+    }
 }
