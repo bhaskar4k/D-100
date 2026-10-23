@@ -9,14 +9,23 @@ from .DataReader import (
     SupportedExtensions,
 )
 from ..dto import BaseDto, ErrorDto, SuccessDto
+from ..enums.data_type import FromPolarsDtype
 from ..registry import expose
-
-PreviewRows = 5
 
 
 @expose
 def GetFileMetadata(FilePath: str) -> BaseDto:
-    """Schema, row count and a small preview of a data file (everything JSON-friendly)."""
+    """Exact metadata of a data file, shaped like the API's DatafileMetadata:
+
+        { rowCount, columnInfo: [{ name, type, nullable, uniqueCount }] }
+
+    - rowCount     number of data rows (the header is not counted).
+    - type         a DataType enum value.
+    - nullable     True if the column actually contains at least one null (empty cell).
+    - uniqueCount  number of distinct non-null values (SQL's COUNT(DISTINCT ...); nulls are not counted).
+
+    Everything is computed over the whole file in one pass, never from a sample.
+    """
     if not os.path.isfile(FilePath):
         return ErrorDto(None, "File not found.", 404, {"FilePath": FilePath})
 
@@ -28,19 +37,38 @@ def GetFileMetadata(FilePath: str) -> BaseDto:
             {"FilePath": FilePath},
         )
 
-    Lazy = ReadFileAsPolarsLazyFrame(FilePath)
-    Schema = Lazy.collect_schema()
+    try:
+        Lazy = ReadFileAsPolarsLazyFrame(FilePath)
+        Schema = Lazy.collect_schema()
 
-    return SuccessDto(
+        if len(Schema) == 0:
+            return ErrorDto(None, "The file has no columns.", 422, {"FilePath": FilePath})
+
+        # Columns are addressed by position (pl.nth), so unusual names (duplicates, regex-like
+        # names such as "^a$", empty names) can never be misread as something else.
+        Expressions: list[pl.Expr] = [pl.len().alias("rows")]
+
+        for Index in range(len(Schema)):
+            Expressions.append(pl.nth(Index).null_count().alias(f"nulls_{Index}"))
+            Expressions.append(pl.nth(Index).drop_nulls().n_unique().alias(f"unique_{Index}"))
+
+        Counts = Lazy.select(Expressions).collect().row(0)
+    except Exception as error:  # noqa: BLE001 - unreadable/corrupt files are a client problem, not a crash
+        return ErrorDto(
+            None,
+            f"Could not read the file: {error}",
+            422,
+            {"FilePath": FilePath, "type": type(error).__name__},
+        )
+
+    ColumnInfo = [
         {
-            "FilePath": FilePath,
-            "Extension": GetExtension(FilePath),
-            "FileSize": os.path.getsize(FilePath),
-            "RowCount": Lazy.select(pl.len()).collect().item(),
-            "ColumnCount": len(Schema),
-            "Columns": [{"Name": Name, "Type": str(Type)} for Name, Type in Schema.items()],
-            "Preview": Lazy.head(PreviewRows).collect().to_dicts(),
-        },
-        "File metadata retrieved.",
-        200,
-    )
+            "name": Name,
+            "type": int(FromPolarsDtype(Dtype)),
+            "nullable": Counts[1 + 2 * Index] > 0,
+            "uniqueCount": Counts[2 + 2 * Index],
+        }
+        for Index, (Name, Dtype) in enumerate(Schema.items())
+    ]
+
+    return SuccessDto({"rowCount": Counts[0], "columnInfo": ColumnInfo}, "File metadata retrieved.", 200)
