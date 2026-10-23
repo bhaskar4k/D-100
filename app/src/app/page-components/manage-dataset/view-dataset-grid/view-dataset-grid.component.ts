@@ -95,7 +95,8 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
   }
 
   CanDelete(row: DatasetItem): boolean {
-    return row.isActive && row.processingStatus !== DatasetProcessingStatus.PROCESSING;
+    return row.isActive && row.processingStatus !== DatasetProcessingStatus.IN_QUEUE &&
+      row.processingStatus !== DatasetProcessingStatus.PROCESSING;
   }
 
   OnPageChange(event: PageEvent): void {
