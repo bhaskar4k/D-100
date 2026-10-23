@@ -47,7 +47,7 @@ export class DatasetController {
             }
 
             res.status(HttpStatusCode.OK).json(
-                new SuccessDto(true, "Dataset deleted successfully.", HttpStatusCode.OK)
+                new SuccessDto(true, "Dataset has been deleted successfully.", HttpStatusCode.OK)
             );
         } catch (error) {
             await Logger.Error("Dataset Delete Error", error, req.UserData?.id);
