@@ -51,7 +51,10 @@
 
                 <ng-container matColumnDef="isProcessed">
                     <th mat-header-cell *matHeaderCellDef>Is Processed</th>
-                    <td mat-cell *matCellDef="let row">{{ row.isProcessed ? 'Yes' : 'No' }}</td>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="app-badge" [class]="row.isProcessed ? 'status-yes' : 'status-no'">{{
+                            row.isProcessed ? 'Yes' : 'No' }}</span>
+                    </td>
                 </ng-container>
 
                 <ng-container matColumnDef="processingStatus">
