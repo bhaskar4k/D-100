@@ -61,6 +61,13 @@
     letter-spacing: 0.04em;
 }
 
+/* mat-sort-header wraps the th's content in a flex container that defaults to flex-start,
+   which overrides the th's text-align:center. Center it so sortable headers line up with
+   non-sortable ones. */
+.app-table .mat-sort-header-container {
+    justify-content: center;
+}
+
 .app-table .mat-mdc-cell {
     font-size: 0.8125rem;
 }
