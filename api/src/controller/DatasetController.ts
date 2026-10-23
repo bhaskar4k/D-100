@@ -47,7 +47,7 @@ export class DatasetController {
             }
 
             res.status(HttpStatusCode.OK).json(
-                new SuccessDto(true, "Dataset queued for processing.", HttpStatusCode.OK)
+                new SuccessDto(true, "Dataset has been successfully queued for processing.", HttpStatusCode.OK)
             );
         } catch (error) {
             await Logger.Error("Dataset Process Error", error, req.UserData?.id);

@@ -69,10 +69,11 @@
                 <ng-container matColumnDef="action">
                     <th mat-header-cell *matHeaderCellDef>Action</th>
                     <td mat-cell *matCellDef="let row">
-                        <button type="button" class="app-table-action" title="Process dataset"
-                            aria-label="Process dataset" [disabled]="ProcessingUids.has(row.datasetUid)"
+                        <button type="button" class="app-table-action text-warning" matTooltip="Process dataset"
+                            matTooltipPosition="above" aria-label="Process dataset"
+                            [disabled]="ProcessingUids.has(row.datasetUid) || MatProgressBar"
                             (click)="OnProcess(row.datasetUid)">
-                            <i class="bi bi-play-circle-fill"></i>
+                            <i class="bi bi-cpu"></i>
                         </button>
                     </td>
                 </ng-container>

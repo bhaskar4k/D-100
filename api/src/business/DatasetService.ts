@@ -105,7 +105,7 @@ export class DatasetService {
         }
 
         if (dataset.status !== FileUploadStatus.COMPLETED) {
-            return "Dataset upload is not complete yet.";
+            return "Dataset upload is not completed yet.";
         }
 
         if (dataset.processing_status === DatasetProcessingStatus.IN_QUEUE

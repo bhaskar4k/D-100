@@ -12,10 +12,11 @@ import { GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-view-dataset-grid',
-  imports: [CommonModule, DatePipe, MatTableModule, MatPaginatorModule, MatProgressSpinnerModule],
+  imports: [CommonModule, DatePipe, MatTableModule, MatPaginatorModule, MatProgressSpinnerModule, MatTooltipModule],
   templateUrl: './view-dataset-grid.component.html',
   styleUrl: './view-dataset-grid.component.css'
 })
