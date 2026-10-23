@@ -10,7 +10,7 @@ const PythonPackage = "pyd_100";
 
 
 export class PythonError extends Error {
-    constructor(message: string, readonly PythonType?: string, readonly Trace?: string) {
+    constructor(message: string) {
         super(message);
         this.name = "PythonError";
     }
@@ -59,29 +59,32 @@ function Run(Args: string[], Input: string): Promise<string> {
 }
 
 
-function Parse<T>(Output: string): T {
-    let response: { ok: boolean; result?: T; error?: string; type?: string; trace?: string };
-
-    try {
-        response = JSON.parse(Output);
-    } catch {
-        throw new PythonError(`Python returned invalid JSON: ${Output.slice(0, 200)}`);
-    }
-
-    if (!response.ok) {
-        throw new PythonError(response.error ?? "Unknown Python error.", response.type, response.trace);
-    }
-
-    return response.result as T;
+export interface PythonResponse<T = unknown> {
+    success: boolean;
+    message: string;
+    data: T;
+    statusCode: number;
+    extraData?: any;
 }
 
 
-// Call an @expose'd function of pyd-100 with keyword arguments; resolves with its JSON result.
-export async function CallPython<T = unknown>(FunctionName: string, Kwargs: Record<string, unknown> = {}): Promise<T> {
+function Parse<T>(Output: string): PythonResponse<T> {
+    try {
+        return JSON.parse(Output) as PythonResponse<T>;
+    } catch {
+        throw new PythonError(`Python returned invalid JSON: ${Output.slice(0, 200)}`);
+    }
+}
+
+
+// Call an @expose'd function of pyd-100 with keyword arguments.
+// Resolves with the DTO the function produced (check `success`); it only throws PythonError when
+// Python itself can't be run (not found, timeout, unreadable output).
+export async function CallPython<T = unknown>(FunctionName: string, Kwargs: Record<string, unknown> = {}): Promise<PythonResponse<T>> {
     return Parse<T>(await Run(["call", FunctionName], JSON.stringify(Kwargs)));
 }
 
 // Names of the functions the installed pyd-100 package exposes.
 export async function ListPythonFunctions(): Promise<string[]> {
-    return Parse<string[]>(await Run(["list"], ""));
+    return (await Parse<string[]>(await Run(["list"], ""))).data;
 }
