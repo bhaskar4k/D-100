@@ -34,3 +34,15 @@ export interface DatasetPage {
 export interface DatasetCountRow extends RowDataPacket {
     total: number;
 }
+
+export interface DatafileMetadata {
+    rowCount: number;
+    columnInfo: DatafileColumnMetadata[];
+}
+
+export interface DatafileColumnMetadata {
+    name: string;
+    type: number;
+    nullable: boolean;
+    uniqueCount: number;
+}
