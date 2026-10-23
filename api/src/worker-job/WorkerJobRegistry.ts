@@ -8,7 +8,7 @@ export function RegisterWorkerJobs(): void {
     console.log(" Started :: Registering Worker Jobs\n");
 
     WorkerJobManager.Register("Heartbeat", 60_000, async () => {
-        await Logger.Info("Worker heartbeat tick.");
+        // await Logger.Info("Worker heartbeat tick.");
     });
 
     console.log("✅ Heartbeat Job Registered Successfully.");
