@@ -59,6 +59,34 @@ export class DatasetController {
     }
 
 
+    static async UpdateColumnName(req: Request, res: Response): Promise<void> {
+        try {
+            await Logger.Info("DatasetUpdateColumnName -> Called", req.UserData?.id);
+
+            const datasetUid = String(req.body?.datasetUid ?? "").trim();
+            const columnId = Number(req.body?.columnId);
+            const newName = String(req.body?.newName ?? "");
+
+            const error = await DatasetService.UpdateColumnName(Number(req.UserData!.id), datasetUid, columnId, newName);
+
+            if (error) {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, error, HttpStatusCode.BAD_REQUEST));
+                return;
+            }
+
+            res.status(HttpStatusCode.OK).json(
+                new SuccessDto(true, "Column name updated successfully.", HttpStatusCode.OK)
+            );
+        } catch (error) {
+            await Logger.Error("Dataset UpdateColumnName Error", error, req.UserData?.id);
+
+            res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
+                new ErrorDto(null, "An unexpected error occurred while renaming the column.", HttpStatusCode.INTERNAL_SERVER_ERROR)
+            );
+        }
+    }
+
+
     static async UpdateName(req: Request, res: Response): Promise<void> {
         try {
             await Logger.Info("DatasetUpdateName -> Called", req.UserData?.id);

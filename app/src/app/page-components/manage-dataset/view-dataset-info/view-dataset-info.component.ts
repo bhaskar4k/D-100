@@ -15,6 +15,7 @@ import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
 import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
+import { EditColumnNameComponent, EditColumnNameDialogData, EditColumnNameDialogResult } from '../../../page-components-shared/edit-column-name/edit-column-name.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -29,7 +30,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   styleUrl: './view-dataset-info.component.css'
 })
 export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
-  readonly ColumnColumns = ['id', 'columnName', 'type', 'nullable', 'uniqueCount'];
+  readonly ColumnColumns = ['id', 'columnName', 'type', 'nullable', 'uniqueCount', 'action'];
   readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
   readonly ReadableSize = GetReadableFileSize;
   readonly FileIcon = GetFileIconByExtension;
@@ -42,6 +43,7 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
   ColumnDataSource = new MatTableDataSource<DatasetColumnItem>([]);
   ColumnSearchText = '';
   MatProgressBar = false;
+  RenamingColumnIds = new Set<number>();
 
   private readonly columnSearch$ = new Subject<string>();
   private routeSubscription?: Subscription;
@@ -134,6 +136,54 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
 
   BackToList(): void {
     this.router.navigate(['/datasets']);
+  }
+
+  OnEditColumn(column: DatasetColumnItem): void {
+    if (!this.Dataset || this.RenamingColumnIds.has(column.id)) {
+      return;
+    }
+
+    const datasetUid = this.Dataset.datasetUid;
+
+    const dialogRef = this.dialog.open<EditColumnNameComponent, EditColumnNameDialogData, EditColumnNameDialogResult>(
+      EditColumnNameComponent,
+      {
+        data: { datasetUid, columnId: column.id, columnName: column.columnName },
+        autoFocus: 'first-tabbable'
+      }
+    );
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result || !result.newName || result.newName === column.columnName) {
+        return;
+      }
+
+      this.RenamingColumnIds.add(column.id);
+
+      this.datasetService.UpdateColumnName(datasetUid, column.id, result.newName).subscribe({
+        next: response => {
+          this.RenamingColumnIds.delete(column.id);
+
+          if (response.success) {
+            this.Load(datasetUid);
+          }
+
+          this.dialog.open(CustomAlertComponent, {
+            data: {
+              text: response.message,
+              type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+            }
+          });
+        },
+        error: () => {
+          this.RenamingColumnIds.delete(column.id);
+
+          this.dialog.open(CustomAlertComponent, {
+            data: { text: 'Failed to rename column.', type: ResponseTypeColor.ERROR }
+          });
+        }
+      });
+    });
   }
 
   private Load(datasetUid: string): void {

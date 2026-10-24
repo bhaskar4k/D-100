@@ -35,4 +35,8 @@ export class DatasetService {
     UpdateName(datasetUid: string, newName: string): Observable<ApiResponseDto> {
         return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.UpdateName, { datasetUid, newName });
     }
+
+    UpdateColumnName(datasetUid: string, columnId: number, newName: string): Observable<ApiResponseDto> {
+        return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.UpdateColumnName, { datasetUid, columnId, newName });
+    }
 }

@@ -1,4 +1,5 @@
 import { validate as IsValidUuid } from "uuid";
+import { ResultSetHeader } from "mysql2";
 import { ConnectionPool } from "../data-access-layer/database";
 import { FileUploadStatus } from "../enum/FileUploadStatus";
 import { DatasetProcessingStatus } from "../enum/DatasetProcessingStatus";
@@ -276,6 +277,76 @@ export class DatasetService {
         await pool.execute(
             `UPDATE T_DATASET SET filename = ?, modified_on = NOW(3) WHERE id = ?`,
             [trimmed, dataset.id]
+        );
+
+        return null;
+    }
+
+
+    // Renames one column of a dataset. Returns an error message when the dataset or column
+    // doesn't exist, the dataset doesn't belong to the caller, is deleted, or the new name
+    // fails validation; null once column_name and modified_on have been updated.
+    static async UpdateColumnName(UserId: number, DatasetUid: string, ColumnId: number, NewName: string): Promise<string | null> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        if (!Number.isFinite(ColumnId) || ColumnId <= 0) {
+            return "A valid column id is required.";
+        }
+
+        const trimmed = (NewName ?? "").trim();
+
+        if (trimmed.length === 0) {
+            return "Column name is required.";
+        }
+
+        if (trimmed.length > 500) {
+            return "Column name must be 500 characters or fewer.";
+        }
+
+        if (/[\x00-\x1f]/.test(trimmed)) {
+            return "Column name contains invalid characters.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [datasetRows] = await pool.query<DatasetOwnerRow[]>(
+            `SELECT id, created_by, status, processing_status, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (datasetRows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = datasetRows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active !== TrueFalse.True) {
+            return "Dataset is deleted.";
+        }
+
+        // Scoping the UPDATE to this dataset's id means a mismatched column id affects no rows,
+        // which the affectedRows check turns into a clear 'column not found' message.
+        const [result] = await pool.execute<ResultSetHeader>(
+            `UPDATE T_COLUMN SET column_name = ?, modified_on = NOW(3) WHERE id = ? AND dataset_id = ?`,
+            [trimmed, ColumnId, dataset.id]
+        );
+
+        if (result.affectedRows === 0) {
+            return "Column not found for this dataset.";
+        }
+
+        await pool.execute(
+            `UPDATE T_DATASET SET modified_on = NOW(3) WHERE id = ?`,
+            [dataset.id]
         );
 
         return null;
