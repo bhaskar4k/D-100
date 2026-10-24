@@ -11,7 +11,7 @@ export function RegisterWorkerJobs(): void {
     WorkerJobManager.Register("Heartbeat", 60_000, async () => {});
     console.log("✅ Heartbeat Job Registered Successfully.");
 
-    WorkerJobManager.Register("DatasetProcessing", 60_000, DatasetProcessingTick, true);
+    WorkerJobManager.Register("DatasetProcessing", 5_000, DatasetProcessingTick, true);
     console.log("✅ DatasetProcessing Job Registered Successfully.");
 
     console.log("\n Finished :: Registering Worker Jobs");
