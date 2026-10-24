@@ -138,10 +138,12 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
       }
 
       this.RenamingUids.add(row.datasetUid);
+      this.MatProgressBar = true;
 
       this.datasetService.UpdateName(row.datasetUid, result.newName).subscribe({
         next: response => {
           this.RenamingUids.delete(row.datasetUid);
+          this.MatProgressBar = false;
           this.Load();
 
           this.dialog.open(CustomAlertComponent, {
@@ -153,6 +155,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.RenamingUids.delete(row.datasetUid);
+          this.MatProgressBar = false;
 
           this.dialog.open(CustomAlertComponent, {
             data: { text: 'Failed to rename dataset.', type: ResponseTypeColor.ERROR }
@@ -187,10 +190,12 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
       }
 
       this.DeletingUids.add(datasetUid);
+      this.MatProgressBar = true;
 
       this.datasetService.Delete(datasetUid).subscribe({
         next: response => {
           this.DeletingUids.delete(datasetUid);
+          this.MatProgressBar = false;
           this.Load();
 
           this.dialog.open(CustomAlertComponent, {
@@ -202,6 +207,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.DeletingUids.delete(datasetUid);
+          this.MatProgressBar = false;
 
           this.dialog.open(CustomAlertComponent, {
             data: { text: 'Failed to delete dataset.', type: ResponseTypeColor.ERROR }
@@ -217,10 +223,12 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
     }
 
     this.ProcessingUids.add(datasetUid);
+    this.MatProgressBar = true;
 
     this.datasetService.Process(datasetUid).subscribe({
       next: response => {
         this.ProcessingUids.delete(datasetUid);
+        this.MatProgressBar = false;
         this.Load();
 
         this.dialog.open(CustomAlertComponent, {
@@ -232,6 +240,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.ProcessingUids.delete(datasetUid);
+        this.MatProgressBar = false;
 
         this.dialog.open(CustomAlertComponent, {
           data: { text: 'Failed to queue dataset for processing.', type: ResponseTypeColor.ERROR }

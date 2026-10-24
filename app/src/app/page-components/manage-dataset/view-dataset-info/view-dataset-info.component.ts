@@ -169,10 +169,12 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
       }
 
       this.DeletingColumnIds.add(column.id);
+      this.MatProgressBar = true;
 
       this.datasetService.DeleteColumn(datasetUid, column.id).subscribe({
         next: response => {
           this.DeletingColumnIds.delete(column.id);
+          this.MatProgressBar = false;
 
           if (response.success) {
             this.Load(datasetUid);
@@ -187,6 +189,7 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.DeletingColumnIds.delete(column.id);
+          this.MatProgressBar = false;
 
           this.dialog.open(CustomAlertComponent, {
             data: { text: 'Failed to delete column.', type: ResponseTypeColor.ERROR }
@@ -217,10 +220,12 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
       }
 
       this.RenamingColumnIds.add(column.id);
+      this.MatProgressBar = true;
 
       this.datasetService.UpdateColumnName(datasetUid, column.id, result.newName).subscribe({
         next: response => {
           this.RenamingColumnIds.delete(column.id);
+          this.MatProgressBar = false;
 
           if (response.success) {
             this.Load(datasetUid);
@@ -235,6 +240,7 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.RenamingColumnIds.delete(column.id);
+          this.MatProgressBar = false;
 
           this.dialog.open(CustomAlertComponent, {
             data: { text: 'Failed to rename column.', type: ResponseTypeColor.ERROR }
