@@ -175,6 +175,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
           message: `Are you sure you want to delete <strong>${fileName}${extension}</strong>?`,
           confirmLabel: 'Delete',
           cancelLabel: 'Cancel',
+          iconClass: 'bi bi-trash3-fill',
           type: ResponseTypeColor.ERROR
         }
       }

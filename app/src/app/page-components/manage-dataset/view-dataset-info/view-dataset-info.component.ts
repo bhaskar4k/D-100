@@ -157,6 +157,7 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
           <br>Although, you can bring it back from the unprocessed file.`,
           confirmLabel: 'Delete',
           cancelLabel: 'Cancel',
+          iconClass: 'bi bi-trash3-fill',
           type: ResponseTypeColor.ERROR
         }
       }

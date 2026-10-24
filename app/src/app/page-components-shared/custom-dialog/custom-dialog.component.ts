@@ -8,8 +8,11 @@ export interface CustomDialogData {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  // Drives the color + icon of the dialog. ERROR = destructive (red button), WARNING = yellow,
-  // INFO/SUCCESS = primary. Defaults to WARNING when omitted.
+  // Bootstrap-icons class(es) for the header icon. Caller decides the glyph; defaults to a
+  // generic question mark when omitted.
+  iconClass?: string;
+  // Drives the color of the header text and confirm button only. ERROR = destructive (red),
+  // WARNING = yellow, INFO/SUCCESS = primary/green. Defaults to WARNING when omitted.
   type?: ResponseType;
 }
 
@@ -27,7 +30,7 @@ export class CustomDialogComponent {
   confirmLabel = 'Approve';
   cancelLabel = 'Reject';
   headerClass = 'text-warning';
-  iconClass = 'bi bi-exclamation-triangle-fill';
+  iconClass = 'bi bi-question-circle-fill';
   confirmButtonClass = 'btn btn-warning';
 
   constructor(
@@ -38,26 +41,23 @@ export class CustomDialogComponent {
     this.title = data?.title ?? this.title;
     this.confirmLabel = data?.confirmLabel ?? this.confirmLabel;
     this.cancelLabel = data?.cancelLabel ?? this.cancelLabel;
+    this.iconClass = data?.iconClass ?? this.iconClass;
 
     switch (data?.type) {
       case ResponseTypeColor.ERROR:
         this.headerClass = 'text-danger';
-        this.iconClass = 'bi bi-trash3-fill';
         this.confirmButtonClass = 'btn btn-danger';
         break;
       case ResponseTypeColor.SUCCESS:
         this.headerClass = 'text-success';
-        this.iconClass = 'bi bi-check-circle-fill';
         this.confirmButtonClass = 'btn btn-success';
         break;
       case ResponseTypeColor.INFO:
         this.headerClass = 'text-primary';
-        this.iconClass = 'bi bi-info-circle-fill';
         this.confirmButtonClass = 'btn btn-primary';
         break;
       default:
         this.headerClass = 'text-warning';
-        this.iconClass = 'bi bi-exclamation-triangle-fill';
         this.confirmButtonClass = 'btn btn-warning';
     }
   }
