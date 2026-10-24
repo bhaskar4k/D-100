@@ -126,3 +126,7 @@ export interface DatasetDetailResult {
     dataset: DatasetDetailItem;
     columns: DatasetColumnItem[];
 }
+
+export interface ColumnLookupRow extends RowDataPacket {
+    column_name: string;
+}
