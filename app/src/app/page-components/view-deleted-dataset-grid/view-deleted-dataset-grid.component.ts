@@ -29,11 +29,15 @@ export class ViewDeletedDatasetGridComponent implements OnInit, OnDestroy {
     'status',
     'uploadedOn',
     'isProcessed',
-    'processingStatus',
-    'processedOn',
     'modifiedOn',
+    'autoDeletingOn',
     'action'
   ];
+
+  // Server stores auto_deletion_time as UNIX seconds; UI needs a JS Date for the date pipe.
+  ToDate(epochSeconds: number | null): Date | null {
+    return epochSeconds === null ? null : new Date(epochSeconds * 1000);
+  }
 
   RestoringUids = new Set<string>();
   readonly DateFormat = 'dd MMM yyyy HH:mm:ss';

@@ -12,6 +12,7 @@ export interface DatasetRow extends RowDataPacket {
     processing_completed_on: Date | null;
     modified_on: Date | null;
     is_active: number;
+    auto_deletion_time: string | number | null;
 }
 
 export interface DatasetItem {
@@ -26,6 +27,7 @@ export interface DatasetItem {
     processingCompletedOn: Date | null;
     modifiedOn: Date | null;
     isActive: boolean;
+    autoDeletionTime: number | null;
 }
 
 export interface DatasetPage {
