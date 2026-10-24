@@ -13,6 +13,7 @@ import traceback
 from typing import Any, Callable
 
 from .dto import BaseDto, ErrorDto, SuccessDto
+from .enums import HttpStatusCode
 
 _FUNCTIONS: dict[str, Callable[..., Any]] = {}
 
@@ -31,14 +32,18 @@ def call(name: str, kwargs: dict[str, Any] | None = None) -> BaseDto:
     func = _FUNCTIONS.get(name)
 
     if func is None:
-        return ErrorDto(None, f"Unknown function '{name}'. Available: {', '.join(available()) or 'none'}", 404)
+        return ErrorDto(
+            None,
+            f"Unknown function '{name}'. Available: {', '.join(available()) or 'none'}",
+            HttpStatusCode.NOT_FOUND,
+        )
 
     arguments = kwargs or {}
 
     try:
         inspect.signature(func).bind(**arguments)
     except TypeError as error:
-        return ErrorDto(None, f"Invalid arguments for '{name}': {error}", 400)
+        return ErrorDto(None, f"Invalid arguments for '{name}': {error}", HttpStatusCode.BAD_REQUEST)
 
     try:
         result = func(**arguments)
@@ -46,8 +51,8 @@ def call(name: str, kwargs: dict[str, Any] | None = None) -> BaseDto:
         return ErrorDto(
             None,
             str(error) or type(error).__name__,
-            500,
+            HttpStatusCode.INTERNAL_SERVER_ERROR,
             {"type": type(error).__name__, "trace": traceback.format_exc(limit=5)},
         )
 
-    return result if isinstance(result, BaseDto) else SuccessDto(result, "OK", 200)
+    return result if isinstance(result, BaseDto) else SuccessDto(result, "OK", HttpStatusCode.OK)

@@ -15,6 +15,7 @@ from .DataReader import (
     SupportedExtensions,
 )
 from ..dto import BaseDto, ErrorDto, SuccessDto
+from ..enums import HttpStatusCode
 from ..registry import expose
 
 
@@ -25,13 +26,17 @@ def ConvertToParquet(SourcePath: str, TargetPath: str) -> BaseDto:
     Creates the target directory if it does not exist. The source file is left untouched.
     """
     if not os.path.isfile(SourcePath):
-        return ErrorDto(False, "Source file not found.", 404)
+        return ErrorDto(False, "Source file not found.", HttpStatusCode.NOT_FOUND)
 
     if not IsSupported(SourcePath):
-        return ErrorDto(False, f"Unsupported source file type '{GetExtension(SourcePath)}'. Supported: {', '.join(SupportedExtensions)}", 400)
+        return ErrorDto(
+            False,
+            f"Unsupported source file type '{GetExtension(SourcePath)}'. Supported: {', '.join(SupportedExtensions)}",
+            HttpStatusCode.BAD_REQUEST,
+        )
 
     if GetExtension(TargetPath) != ".parquet":
-        return ErrorDto(False, "Target file must end with '.parquet'.", 400)
+        return ErrorDto(False, "Target file must end with '.parquet'.", HttpStatusCode.BAD_REQUEST)
 
     try:
         os.makedirs(os.path.dirname(TargetPath) or ".", exist_ok=True)
@@ -44,6 +49,6 @@ def ConvertToParquet(SourcePath: str, TargetPath: str) -> BaseDto:
         Lazy.sink_parquet(TargetPath)
 
     except Exception as error:
-        return ErrorDto(False, f"Could not convert the file: {error}", 422)
+        return ErrorDto(False, f"Could not convert the file: {error}", HttpStatusCode.UNPROCESSABLE_ENTITY)
 
-    return SuccessDto(True, "File converted to Parquet.", 200)
+    return SuccessDto(True, "File converted to Parquet.", HttpStatusCode.OK)
