@@ -8,13 +8,16 @@ import { RunPython } from "../../python-manager/PythonManager";
 import { Logger } from "../../log/Logger";
 
 const RAW_UPLOAD_PATH = process.env.RAW_UPLOAD_PATH;
+const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
 const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
-// Metadata scans a whole file, so give it its own, much larger timeout than the default
-// per-request PYTHON_TIMEOUT_MS used by HTTP controllers. Override with DATASET_PROCESSING_TIMEOUT_MS.
 const ProcessingTimeoutMs = Number(process.env.DATASET_PROCESSING_TIMEOUT_MS) || 30 * 60 * 1000;
 
 if (!RAW_UPLOAD_PATH) {
     throw new Error("RAW_UPLOAD_PATH is not configured in .env");
+}
+
+if (!INGEST_UPLOAD_PATH) {
+    throw new Error("INGEST_UPLOAD_PATH is not configured in .env");
 }
 
 interface DatasetRow extends RowDataPacket {
@@ -36,8 +39,12 @@ interface FileMetadata {
 }
 
 
-function BuildFilePath(DatasetUid: string, Extension: string): string {
+function BuildRawFilePath(DatasetUid: string, Extension: string): string {
     return path.join(path.resolve(RAW_UPLOAD_PATH!), DatasetUid, `${UploadedFileName}${Extension}`);
+}
+
+function BuildIngestFilePath(DatasetUid: string): string {
+    return path.join(path.resolve(INGEST_UPLOAD_PATH!), DatasetUid, `${UploadedFileName}.parquet`);
 }
 
 
@@ -130,17 +137,33 @@ async function ProcessDataset(DatasetId: number): Promise<void> {
     );
 
     try {
-        const filePath = BuildFilePath(dataset.dataset_uid, dataset.extension);
-        const response = await RunPython<FileMetadata>("GetFileMetadata", { FilePath: filePath }, ProcessingTimeoutMs);
+        const sourcePath = BuildRawFilePath(dataset.dataset_uid, dataset.extension);
+        const targetPath = BuildIngestFilePath(dataset.dataset_uid);
 
-        if (!response.success || response.data === null || response.data === undefined) {
-            throw new Error(`Python returned error: ${response.message}`);
+        const metadataResponse = await RunPython<FileMetadata>(
+            "GetFileMetadata",
+            { FilePath: sourcePath },
+            ProcessingTimeoutMs
+        );
+
+        if (!metadataResponse.success || metadataResponse.data === null || metadataResponse.data === undefined) {
+            throw new Error(`Python returned error (GetFileMetadata): ${metadataResponse.message}`);
         }
 
-        await PersistMetadata(DatasetId, response.data);
+        const conversionResponse = await RunPython<{ targetPath: string; targetSize: number | null }>(
+            "ConvertToParquet",
+            { SourcePath: sourcePath, TargetPath: targetPath },
+            ProcessingTimeoutMs
+        );
+
+        if (!conversionResponse.success) {
+            throw new Error(`Python returned error (ConvertToParquet): ${conversionResponse.message}`);
+        }
+
+        await PersistMetadata(DatasetId, metadataResponse.data);
 
         await Logger.Info(
-            `Dataset ${DatasetId} processed (${response.data.rowCount} rows, ${response.data.columnInfo.length} columns).`
+            `Dataset ${DatasetId} processed (${metadataResponse.data.rowCount} rows, ${metadataResponse.data.columnInfo.length} columns, parquet at ${targetPath}).`
         );
     } catch (error) {
         await MarkFailed(DatasetId);

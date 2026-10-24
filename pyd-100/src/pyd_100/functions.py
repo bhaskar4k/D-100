@@ -8,31 +8,32 @@ import os
 
 from . import __version__
 from .dto import BaseDto, ErrorDto, SuccessDto
+from .enums import HttpStatusCode
 from .registry import expose
 
 
 @expose
 def ping() -> BaseDto:
     """Health check: proves the package is installed and callable."""
-    return SuccessDto({"package": "pyd-100", "version": __version__}, "pong", 200)
+    return SuccessDto({"package": "pyd-100", "version": __version__}, "pong", HttpStatusCode.OK)
 
 
 @expose
 def echo(text: str) -> BaseDto:
     """Returns the text unchanged (checks that Unicode survives the round trip)."""
-    return SuccessDto({"text": text, "length": len(text)}, "Echoed.", 200)
+    return SuccessDto({"text": text, "length": len(text)}, "Echoed.", HttpStatusCode.OK)
 
 
 @expose
 def add(a: float, b: float) -> BaseDto:
     """Adds two numbers (checks that arguments and results cross the boundary)."""
-    return SuccessDto({"a": a, "b": b, "sum": a + b}, "Added.", 200)
+    return SuccessDto({"a": a, "b": b, "sum": a + b}, "Added.", HttpStatusCode.OK)
 
 
 @expose
 def divide(a: float, b: float) -> BaseDto:
     """Divides a by b; dividing by zero returns an ErrorDto (checks the handled-error path)."""
     if b == 0:
-        return ErrorDto(None, "Cannot divide by zero.", 400, {"a": a, "b": b})
+        return ErrorDto(None, "Cannot divide by zero.", HttpStatusCode.BAD_REQUEST, {"a": a, "b": b})
 
-    return SuccessDto({"a": a, "b": b, "quotient": a / b}, "Divided.", 200)
+    return SuccessDto({"a": a, "b": b, "quotient": a / b}, "Divided.", HttpStatusCode.OK)

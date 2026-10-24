@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS T_COLUMN (
     nullable INT NOT NULL DEFAULT 0,
     unique_count BIGINT NOT NULL DEFAULT 0,
 
+    modified_on DATETIME(3) NULL DEFAULT NULL,
+
     PRIMARY KEY (id),
     KEY idx_t_column_dataset_id (dataset_id)
 );
