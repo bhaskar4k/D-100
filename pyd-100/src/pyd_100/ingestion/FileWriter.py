@@ -115,3 +115,73 @@ def DeleteColumnFromParquet(FilePath: str, ColumnName: str) -> BaseDto:
         "Column removed from file.",
         HttpStatusCode.OK,
     )
+
+
+@expose
+def RenameColumnInParquet(FilePath: str, OldName: str, NewName: str) -> BaseDto:
+    """Renames a column in the parquet at FilePath and rewrites it in place.
+
+    Writes to a sibling .tmp file first and then atomically replaces the original with
+    os.replace, so a crash mid-write cannot leave the file half-written. The temp file is
+    cleaned up on any failure path.
+    """
+    if not os.path.isfile(FilePath):
+        return ErrorDto(False, "File not found.", HttpStatusCode.NOT_FOUND)
+
+    if GetExtension(FilePath) != ".parquet":
+        return ErrorDto(False, "Only .parquet files are supported for column rename.", HttpStatusCode.BAD_REQUEST)
+
+    if not OldName or not OldName.strip():
+        return ErrorDto(False, "Current column name is required.", HttpStatusCode.BAD_REQUEST)
+
+    if not NewName or not NewName.strip():
+        return ErrorDto(False, "New column name is required.", HttpStatusCode.BAD_REQUEST)
+
+    if OldName == NewName:
+        return SuccessDto(
+            {"filePath": FilePath, "oldName": OldName, "newName": NewName},
+            "No change — the new name matches the current name.",
+            HttpStatusCode.OK,
+        )
+
+    TempPath = FilePath + ".tmp"
+
+    try:
+        Lazy = ReadFileAsPolarsLazyFrame(FilePath)
+        ColumnNames = Lazy.collect_schema().names()
+
+        if OldName not in ColumnNames:
+            return ErrorDto(
+                False,
+                f"Column '{OldName}' not found in file.",
+                HttpStatusCode.NOT_FOUND,
+            )
+
+        if NewName in ColumnNames:
+            return ErrorDto(
+                False,
+                f"Column '{NewName}' already exists in file.",
+                HttpStatusCode.BAD_REQUEST,
+            )
+
+        SaveLazyFrameAsParquet(Lazy.rename({OldName: NewName}), TempPath)
+        os.replace(TempPath, FilePath)
+
+    except Exception as error:
+        if os.path.exists(TempPath):
+            try:
+                os.remove(TempPath)
+            except OSError:
+                pass
+
+        return ErrorDto(
+            False,
+            f"Could not rename the column: {error}",
+            HttpStatusCode.UNPROCESSABLE_ENTITY,
+        )
+
+    return SuccessDto(
+        {"filePath": FilePath, "oldName": OldName, "newName": NewName},
+        "Column renamed in file.",
+        HttpStatusCode.OK,
+    )

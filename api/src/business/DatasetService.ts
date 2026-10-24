@@ -305,9 +305,11 @@ export class DatasetService {
     }
 
 
-    // Renames one column of a dataset. Returns an error message when the dataset or column
-    // doesn't exist, the dataset doesn't belong to the caller, is deleted, or the new name
-    // fails validation; null once column_name and modified_on have been updated.
+    // Renames one column of a dataset in both the DB and the INGEST parquet file. RAW stays
+    // untouched. The DB mutation runs in a transaction that only commits once the parquet
+    // rewrite (via a sibling .tmp + atomic rename) succeeds; if the file side fails, the DB
+    // side rolls back so neither layer ends up out of sync. Returns an error message on
+    // failure; null on success.
     static async UpdateColumnName(UserId: number, DatasetUid: string, ColumnId: number, NewName: string): Promise<string | null> {
         if (!DatasetUid || !IsValidUuid(DatasetUid)) {
             return "A valid dataset identifier is required.";
@@ -359,23 +361,65 @@ export class DatasetService {
             return "Dataset is not processed yet.";
         }
 
-        // Scoping the UPDATE to this dataset's id means a mismatched column id affects no rows,
-        // which the affectedRows check turns into a clear 'column not found' message.
-        const [result] = await pool.execute<ResultSetHeader>(
-            `UPDATE T_COLUMN SET column_name = ?, modified_on = NOW(3) WHERE id = ? AND dataset_id = ?`,
-            [trimmed, ColumnId, dataset.id]
+        const [columnLookup] = await pool.query<ColumnLookupRow[]>(
+            `SELECT column_name FROM T_COLUMN WHERE id = ? AND dataset_id = ? LIMIT 1`,
+            [ColumnId, dataset.id]
         );
 
-        if (result.affectedRows === 0) {
+        if (columnLookup.length === 0) {
             return "Column not found for this dataset.";
         }
 
-        await pool.execute(
-            `UPDATE T_DATASET SET modified_on = NOW(3) WHERE id = ?`,
-            [dataset.id]
-        );
+        const oldName = columnLookup[0].column_name;
 
-        return null;
+        if (oldName === trimmed) {
+            return null;
+        }
+
+        const ingestPath = BuildIngestFilePath(DatasetUid);
+
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // Scoping the UPDATE to this dataset's id means a mismatched column id affects no
+            // rows, which the affectedRows check turns into a clear 'column not found' message.
+            const [result] = await connection.execute<ResultSetHeader>(
+                `UPDATE T_COLUMN SET column_name = ?, modified_on = NOW(3) WHERE id = ? AND dataset_id = ?`,
+                [trimmed, ColumnId, dataset.id]
+            );
+
+            if (result.affectedRows === 0) {
+                await connection.rollback();
+                return "Column not found for this dataset.";
+            }
+
+            await connection.execute(
+                `UPDATE T_DATASET SET modified_on = NOW(3) WHERE id = ?`,
+                [dataset.id]
+            );
+
+            // Python runs AFTER the DB writes but BEFORE commit: if the file rewrite fails, the
+            // rollback below undoes the DB side so nothing is left out of sync.
+            const response = await RunPython<{ filePath: string; oldName: string; newName: string }>(
+                "RenameColumnInParquet",
+                { FilePath: ingestPath, OldName: oldName, NewName: trimmed },
+                PythonProcessingTimeoutMs
+            );
+
+            if (!response.success) {
+                await connection.rollback();
+                return response.message || "Could not rename the column in the file.";
+            }
+
+            await connection.commit();
+            return null;
+        } catch (error) {
+            try { await connection.rollback(); } catch { /* ignore */ }
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
 
