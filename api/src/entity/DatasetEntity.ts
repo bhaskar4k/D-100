@@ -56,6 +56,7 @@ export interface DatasetOwnerRow extends RowDataPacket {
     created_by: number;
     status: number;
     processing_status: number;
+    is_processed: number;
     is_active: number;
 }
 

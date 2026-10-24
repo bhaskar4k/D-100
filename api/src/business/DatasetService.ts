@@ -275,7 +275,7 @@ export class DatasetService {
         const pool = await ConnectionPool;
 
         const [rows] = await pool.query<DatasetOwnerRow[]>(
-            `SELECT id, created_by, status, processing_status, is_active
+            `SELECT id, created_by, status, processing_status, is_processed, is_active
              FROM T_DATASET
              WHERE dataset_uid = ?
              LIMIT 1`,
@@ -334,7 +334,7 @@ export class DatasetService {
         const pool = await ConnectionPool;
 
         const [datasetRows] = await pool.query<DatasetOwnerRow[]>(
-            `SELECT id, created_by, status, processing_status, is_active
+            `SELECT id, created_by, status, processing_status, is_processed, is_active
              FROM T_DATASET
              WHERE dataset_uid = ?
              LIMIT 1`,
@@ -353,6 +353,10 @@ export class DatasetService {
 
         if (dataset.is_active !== TrueFalse.True) {
             return "Dataset is deleted.";
+        }
+
+        if (dataset.is_processed !== TrueFalse.True) {
+            return "Dataset is not processed yet.";
         }
 
         // Scoping the UPDATE to this dataset's id means a mismatched column id affects no rows,
@@ -392,7 +396,7 @@ export class DatasetService {
         const pool = await ConnectionPool;
 
         const [datasetRows] = await pool.query<DatasetOwnerRow[]>(
-            `SELECT id, created_by, status, processing_status, is_active
+            `SELECT id, created_by, status, processing_status, is_processed, is_active
              FROM T_DATASET
              WHERE dataset_uid = ?
              LIMIT 1`,
@@ -411,6 +415,10 @@ export class DatasetService {
 
         if (dataset.is_active !== TrueFalse.True) {
             return "Dataset is deleted.";
+        }
+
+        if (dataset.is_processed !== TrueFalse.True) {
+            return "Dataset is not processed yet.";
         }
 
         const [columnRows] = await pool.query<ColumnLookupRow[]>(
