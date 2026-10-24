@@ -44,6 +44,7 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
   ColumnSearchText = '';
   MatProgressBar = false;
   RenamingColumnIds = new Set<number>();
+  DeletingColumnIds = new Set<number>();
 
   private readonly columnSearch$ = new Subject<string>();
   private routeSubscription?: Subscription;
@@ -136,6 +137,45 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
 
   BackToList(): void {
     this.router.navigate(['/datasets']);
+  }
+
+  OnDeleteColumn(column: DatasetColumnItem): void {
+    if (!this.Dataset || this.DeletingColumnIds.has(column.id)) {
+      return;
+    }
+
+    const datasetUid = this.Dataset.datasetUid;
+
+    const confirmed = window.confirm(`Delete column "${column.columnName}"? This also drops it from the ingested file.`);
+    if (!confirmed) {
+      return;
+    }
+
+    this.DeletingColumnIds.add(column.id);
+
+    this.datasetService.DeleteColumn(datasetUid, column.id).subscribe({
+      next: response => {
+        this.DeletingColumnIds.delete(column.id);
+
+        if (response.success) {
+          this.Load(datasetUid);
+        }
+
+        this.dialog.open(CustomAlertComponent, {
+          data: {
+            text: response.message,
+            type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+          }
+        });
+      },
+      error: () => {
+        this.DeletingColumnIds.delete(column.id);
+
+        this.dialog.open(CustomAlertComponent, {
+          data: { text: 'Failed to delete column.', type: ResponseTypeColor.ERROR }
+        });
+      }
+    });
   }
 
   OnEditColumn(column: DatasetColumnItem): void {

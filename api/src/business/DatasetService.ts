@@ -1,5 +1,6 @@
+import path from "path";
 import { validate as IsValidUuid } from "uuid";
-import { ResultSetHeader } from "mysql2";
+import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { ConnectionPool } from "../data-access-layer/database";
 import { FileUploadStatus } from "../enum/FileUploadStatus";
 import { DatasetProcessingStatus } from "../enum/DatasetProcessingStatus";
@@ -8,6 +9,24 @@ import { DatasetProcessingQueue, GetRabbitMqChannel } from "../config/RabbitMqCo
 import { StatusLabels } from "../enum/FileUploadStatus";
 import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow } from "../entity/DatasetEntity";
 import { TrueFalse } from "../enum/CommonEnum";
+import { RunPython } from "../python-manager/PythonManager";
+
+const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
+const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
+// Column removal rewrites the parquet, so match the processing job's longer timeout.
+const PythonProcessingTimeoutMs = Number(process.env.DATASET_PROCESSING_TIMEOUT_MS) || 30 * 60 * 1000;
+
+if (!INGEST_UPLOAD_PATH) {
+    throw new Error("INGEST_UPLOAD_PATH is not configured in .env");
+}
+
+function BuildIngestFilePath(DatasetUid: string): string {
+    return path.join(path.resolve(INGEST_UPLOAD_PATH!), DatasetUid, `${UploadedFileName}.parquet`);
+}
+
+interface ColumnLookupRow extends RowDataPacket {
+    column_name: string;
+}
 
 
 // Builds the WHERE clause for the owning user, plus an optional search over file name (with or
@@ -353,6 +372,94 @@ export class DatasetService {
         );
 
         return null;
+    }
+
+
+    // Removes one column from a dataset: the row from T_COLUMN and the matching column from the
+    // INGEST parquet file. RAW stays untouched. Both the DB mutation and the file rewrite must
+    // succeed or neither takes effect; the file side writes to a sibling .tmp first and renames
+    // atomically, and the DB mutation runs in a transaction that rolls back if the file rewrite
+    // fails. Returns an error message on failure; null on success.
+    static async DeleteColumn(UserId: number, DatasetUid: string, ColumnId: number): Promise<string | null> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        if (!Number.isFinite(ColumnId) || ColumnId <= 0) {
+            return "A valid column id is required.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [datasetRows] = await pool.query<DatasetOwnerRow[]>(
+            `SELECT id, created_by, status, processing_status, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (datasetRows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = datasetRows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active !== TrueFalse.True) {
+            return "Dataset is deleted.";
+        }
+
+        const [columnRows] = await pool.query<ColumnLookupRow[]>(
+            `SELECT column_name FROM T_COLUMN WHERE id = ? AND dataset_id = ? LIMIT 1`,
+            [ColumnId, dataset.id]
+        );
+
+        if (columnRows.length === 0) {
+            return "Column not found for this dataset.";
+        }
+
+        const columnName = columnRows[0].column_name;
+        const ingestPath = BuildIngestFilePath(DatasetUid);
+
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            await connection.execute(
+                `DELETE FROM T_COLUMN WHERE id = ? AND dataset_id = ?`,
+                [ColumnId, dataset.id]
+            );
+
+            await connection.execute(
+                `UPDATE T_DATASET SET modified_on = NOW(3) WHERE id = ?`,
+                [dataset.id]
+            );
+
+            // Python runs AFTER the DB writes but BEFORE commit: if the file rewrite fails, the
+            // rollback below undoes the DB side so nothing is left out of sync.
+            const response = await RunPython<{ filePath: string; columnName: string }>(
+                "DeleteColumnFromParquet",
+                { FilePath: ingestPath, ColumnName: columnName },
+                PythonProcessingTimeoutMs
+            );
+
+            if (!response.success) {
+                await connection.rollback();
+                return response.message || "Could not delete the column from the file.";
+            }
+
+            await connection.commit();
+            return null;
+        } catch (error) {
+            try { await connection.rollback(); } catch { /* ignore */ }
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
 

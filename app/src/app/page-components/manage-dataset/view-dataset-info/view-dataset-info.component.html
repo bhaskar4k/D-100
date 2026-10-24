@@ -169,9 +169,16 @@
                         <div class="app-table-actions">
                             <button type="button" class="app-table-action text-info" matTooltip="Rename column"
                                 matTooltipPosition="above" aria-label="Rename column"
-                                [disabled]="RenamingColumnIds.has(col.id) || MatProgressBar"
+                                [disabled]="RenamingColumnIds.has(col.id) || DeletingColumnIds.has(col.id) || MatProgressBar"
                                 (click)="OnEditColumn(col)">
                                 <i class="bi bi-pencil-square"></i>
+                            </button>
+
+                            <button type="button" class="app-table-action text-danger" matTooltip="Delete column"
+                                matTooltipPosition="above" aria-label="Delete column"
+                                [disabled]="DeletingColumnIds.has(col.id) || RenamingColumnIds.has(col.id) || MatProgressBar"
+                                (click)="OnDeleteColumn(col)">
+                                <i class="bi bi-trash3-fill"></i>
                             </button>
                         </div>
                     </td>

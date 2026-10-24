@@ -59,6 +59,33 @@ export class DatasetController {
     }
 
 
+    static async DeleteColumn(req: Request, res: Response): Promise<void> {
+        try {
+            await Logger.Info("DatasetDeleteColumn -> Called", req.UserData?.id);
+
+            const datasetUid = String(req.body?.datasetUid ?? "").trim();
+            const columnId = Number(req.body?.columnId);
+
+            const error = await DatasetService.DeleteColumn(Number(req.UserData!.id), datasetUid, columnId);
+
+            if (error) {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, error, HttpStatusCode.BAD_REQUEST));
+                return;
+            }
+
+            res.status(HttpStatusCode.OK).json(
+                new SuccessDto(true, "Column deleted successfully.", HttpStatusCode.OK)
+            );
+        } catch (error) {
+            await Logger.Error("Dataset DeleteColumn Error", error, req.UserData?.id);
+
+            res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
+                new ErrorDto(null, "An unexpected error occurred while deleting the column.", HttpStatusCode.INTERNAL_SERVER_ERROR)
+            );
+        }
+    }
+
+
     static async UpdateColumnName(req: Request, res: Response): Promise<void> {
         try {
             await Logger.Info("DatasetUpdateColumnName -> Called", req.UserData?.id);

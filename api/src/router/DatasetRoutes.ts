@@ -11,6 +11,7 @@ DatasetRouter.get("/GetDetails/:datasetUid", DatasetController.GetDetails);
 DatasetRouter.post("/Process", DatasetController.Process);
 DatasetRouter.post("/UpdateName", DatasetController.UpdateName);
 DatasetRouter.post("/UpdateColumnName", DatasetController.UpdateColumnName);
+DatasetRouter.post("/DeleteColumn", DatasetController.DeleteColumn);
 DatasetRouter.post("/Delete", DatasetController.Delete);
 
 export default DatasetRouter;

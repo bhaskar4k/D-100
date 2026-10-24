@@ -39,4 +39,8 @@ export class DatasetService {
     UpdateColumnName(datasetUid: string, columnId: number, newName: string): Observable<ApiResponseDto> {
         return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.UpdateColumnName, { datasetUid, columnId, newName });
     }
+
+    DeleteColumn(datasetUid: string, columnId: number): Observable<ApiResponseDto> {
+        return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.DeleteColumn, { datasetUid, columnId });
+    }
 }

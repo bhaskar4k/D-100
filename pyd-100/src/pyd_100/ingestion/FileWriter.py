@@ -8,6 +8,8 @@ pipeline consumes.
 
 import os
 
+import polars as pl
+
 from .DataReader import (
     GetExtension,
     IsSupported,
@@ -52,3 +54,63 @@ def ConvertToParquet(SourcePath: str, TargetPath: str) -> BaseDto:
         return ErrorDto(False, f"Could not convert the file: {error}", HttpStatusCode.UNPROCESSABLE_ENTITY)
 
     return SuccessDto(True, "File converted to Parquet.", HttpStatusCode.OK)
+
+
+@expose
+def DeleteColumnFromParquet(FilePath: str, ColumnName: str) -> BaseDto:
+    """Drops ColumnName from the parquet at FilePath and rewrites it in place.
+
+    Writes to a sibling .tmp file first and then atomically replaces the original with
+    os.replace, so a crash mid-write cannot leave the file half-written. The temp file is
+    cleaned up on any failure path.
+    """
+    if not os.path.isfile(FilePath):
+        return ErrorDto(False, "File not found.", HttpStatusCode.NOT_FOUND)
+
+    if GetExtension(FilePath) != ".parquet":
+        return ErrorDto(False, "Only .parquet files are supported for column removal.", HttpStatusCode.BAD_REQUEST)
+
+    if not ColumnName or not ColumnName.strip():
+        return ErrorDto(False, "Column name is required.", HttpStatusCode.BAD_REQUEST)
+
+    TempPath = FilePath + ".tmp"
+
+    try:
+        Lazy = pl.scan_parquet(FilePath)
+        Schema = Lazy.collect_schema()
+        ColumnNames = Schema.names()
+
+        if ColumnName not in ColumnNames:
+            return ErrorDto(
+                False,
+                f"Column '{ColumnName}' not found in file.",
+                HttpStatusCode.NOT_FOUND,
+            )
+
+        if len(ColumnNames) <= 1:
+            return ErrorDto(
+                False,
+                "Cannot delete the last remaining column.",
+                HttpStatusCode.BAD_REQUEST,
+            )
+
+        Lazy.drop(ColumnName).sink_parquet(TempPath)
+        os.replace(TempPath, FilePath)
+    except Exception as error:
+        if os.path.exists(TempPath):
+            try:
+                os.remove(TempPath)
+            except OSError:
+                pass
+
+        return ErrorDto(
+            False,
+            f"Could not drop the column: {error}",
+            HttpStatusCode.UNPROCESSABLE_ENTITY,
+        )
+
+    return SuccessDto(
+        {"filePath": FilePath, "columnName": ColumnName},
+        "Column removed from file.",
+        HttpStatusCode.OK,
+    )
