@@ -20,6 +20,20 @@ export class DatasetService {
         return this.http.get<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.GetAll, { params });
     }
 
+    GetDeleted(page: number, pageSize: number, search: string = ''): Observable<ApiResponseDto> {
+        let params = new HttpParams().set('page', page).set('pageSize', pageSize);
+
+        if (search) {
+            params = params.set('search', search);
+        }
+
+        return this.http.get<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.GetDeleted, { params });
+    }
+
+    Restore(datasetUid: string): Observable<ApiResponseDto> {
+        return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.Restore, { datasetUid });
+    }
+
     Process(datasetUid: string): Observable<ApiResponseDto> {
         return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.Process, { datasetUid });
     }

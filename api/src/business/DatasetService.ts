@@ -32,9 +32,9 @@ interface ColumnLookupRow extends RowDataPacket {
 // Builds the WHERE clause for the owning user, plus an optional search over file name (with or
 // without extension), extension and status label. Owner and is_active filters are always
 // present so one user never sees another user's datasets or soft-deleted rows.
-function BuildWhere(UserId: number, Search: string): { where: string; params: any[] } {
+function BuildWhere(UserId: number, Search: string, IsActive: TrueFalse = TrueFalse.True): { where: string; params: any[] } {
     const clauses: string[] = ["created_by = ?", "is_active = ?"];
-    const params: any[] = [UserId, TrueFalse.True];
+    const params: any[] = [UserId, IsActive];
 
     if (!Search) {
         return { where: `WHERE ${clauses.join(" AND ")}`, params };
@@ -64,12 +64,24 @@ function BuildWhere(UserId: number, Search: string): { where: string; params: an
 
 export class DatasetService {
     // Get all datasets for a user. Returns a page of datasets, along with the total number of
-    // datasets and the total number of pages. Returns an error message when the user doesn't exist, 
+    // datasets and the total number of pages. Returns an error message when the user doesn't exist,
     // doesn't belong to the caller, or the page number is out of range; null when the page is empty.
     static async GetDatasets(UserId: number, Page: number, PageSize: number, Search: string = ""): Promise<DatasetPage> {
+        return DatasetService.GetDatasetsByActive(UserId, Page, PageSize, Search, TrueFalse.True);
+    }
+
+
+    // Same shape as GetDatasets but returns only soft-deleted (is_active = 0) rows, used by the
+    // "Deleted datasets" view and the restore workflow.
+    static async GetDeletedDatasets(UserId: number, Page: number, PageSize: number, Search: string = ""): Promise<DatasetPage> {
+        return DatasetService.GetDatasetsByActive(UserId, Page, PageSize, Search, TrueFalse.False);
+    }
+
+
+    private static async GetDatasetsByActive(UserId: number, Page: number, PageSize: number, Search: string, IsActive: TrueFalse): Promise<DatasetPage> {
         try {
             const pool = await ConnectionPool;
-            const { where, params } = BuildWhere(UserId, Search);
+            const { where, params } = BuildWhere(UserId, Search, IsActive);
 
             const [countRows] = await pool.query<DatasetCountRow[]>(
                 `SELECT COUNT(*) AS total FROM T_DATASET ${where}`,
@@ -563,6 +575,47 @@ export class DatasetService {
         await pool.execute(
             `UPDATE T_DATASET SET is_active = ? WHERE id = ?`,
             [TrueFalse.False, dataset.id]
+        );
+
+        return null;
+    }
+
+
+    // Restores a soft-deleted dataset (is_active flipped back to 1). Returns an error message
+    // when the dataset doesn't exist, doesn't belong to the caller, or isn't currently deleted;
+    // null once is_active and modified_on have been updated.
+    static async Restore(UserId: number, DatasetUid: string): Promise<string | null> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [rows] = await pool.query<DatasetOwnerRow[]>(
+            `SELECT id, created_by, status, processing_status, is_processed, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (rows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = rows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active === TrueFalse.True) {
+            return "Dataset is already active.";
+        }
+
+        await pool.execute(
+            `UPDATE T_DATASET SET is_active = ?, modified_on = NOW(3) WHERE id = ?`,
+            [TrueFalse.True, dataset.id]
         );
 
         return null;
