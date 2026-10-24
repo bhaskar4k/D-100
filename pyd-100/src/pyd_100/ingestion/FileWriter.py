@@ -8,8 +8,6 @@ pipeline consumes.
 
 import os
 
-import polars as pl
-
 from .DataReader import (
     GetExtension,
     IsSupported,
@@ -76,7 +74,7 @@ def DeleteColumnFromParquet(FilePath: str, ColumnName: str) -> BaseDto:
     TempPath = FilePath + ".tmp"
 
     try:
-        Lazy = pl.scan_parquet(FilePath)
+        Lazy = ReadFileAsPolarsLazyFrame(FilePath)
         Schema = Lazy.collect_schema()
         ColumnNames = Schema.names()
 
