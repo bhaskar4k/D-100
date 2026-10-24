@@ -1,0 +1,21 @@
+<div class="card shadow border rounded-3 border-secondary-subtle p-0 overflow-hidden mx-auto text-body bg-body"
+    data-bs-theme="dark" style="width: 520px; max-width: 100%;">
+
+    <h2 class="card-title h5 border-bottom border-secondary-subtle m-0 p-3 bg-body-tertiary fw-bold rounded-top-3">
+        <span [class]="headerClass">
+            <i [class]="iconClass + ' me-2'"></i>{{ title }}
+        </span>
+    </h2>
+
+    <div class="card-body p-4">
+        <p class="m-0 fs-6 lh-base" [innerHTML]="message"></p>
+    </div>
+
+    <div
+        class="border-top border-secondary-subtle bg-body-tertiary p-3 m-0 d-flex justify-content-end gap-2 rounded-bottom-3">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="OnReject()">{{ cancelLabel }}</button>
+        <button type="button" [class]="confirmButtonClass + ' btn-sm'" (click)="OnApprove()">
+            {{ confirmLabel }}
+        </button>
+    </div>
+</div>

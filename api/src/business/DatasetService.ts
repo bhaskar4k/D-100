@@ -1,4 +1,6 @@
+import path from "path";
 import { validate as IsValidUuid } from "uuid";
+import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { ConnectionPool } from "../data-access-layer/database";
 import { FileUploadStatus } from "../enum/FileUploadStatus";
 import { DatasetProcessingStatus } from "../enum/DatasetProcessingStatus";
@@ -7,6 +9,24 @@ import { DatasetProcessingQueue, GetRabbitMqChannel } from "../config/RabbitMqCo
 import { StatusLabels } from "../enum/FileUploadStatus";
 import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow } from "../entity/DatasetEntity";
 import { TrueFalse } from "../enum/CommonEnum";
+import { RunPython } from "../python-manager/PythonManager";
+
+const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
+const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
+// Column removal rewrites the parquet, so match the processing job's longer timeout.
+const PythonProcessingTimeoutMs = Number(process.env.DATASET_PROCESSING_TIMEOUT_MS) || 30 * 60 * 1000;
+
+if (!INGEST_UPLOAD_PATH) {
+    throw new Error("INGEST_UPLOAD_PATH is not configured in .env");
+}
+
+function BuildIngestFilePath(DatasetUid: string): string {
+    return path.join(path.resolve(INGEST_UPLOAD_PATH!), DatasetUid, `${UploadedFileName}.parquet`);
+}
+
+interface ColumnLookupRow extends RowDataPacket {
+    column_name: string;
+}
 
 
 // Builds the WHERE clause for the owning user, plus an optional search over file name (with or
@@ -43,6 +63,9 @@ function BuildWhere(UserId: number, Search: string): { where: string; params: an
 
 
 export class DatasetService {
+    // Get all datasets for a user. Returns a page of datasets, along with the total number of
+    // datasets and the total number of pages. Returns an error message when the user doesn't exist, 
+    // doesn't belong to the caller, or the page number is out of range; null when the page is empty.
     static async GetDatasets(UserId: number, Page: number, PageSize: number, Search: string = ""): Promise<DatasetPage> {
         try {
             const pool = await ConnectionPool;
@@ -186,7 +209,7 @@ export class DatasetService {
         }
 
         const [columnRows] = await pool.query<DatasetColumnRow[]>(
-            `SELECT id, column_name, type, nullable, unique_count
+            `SELECT id, column_name, type, nullable, unique_count, modified_on
              FROM T_COLUMN
              WHERE dataset_id = ?
              ORDER BY id ASC`,
@@ -214,12 +237,16 @@ export class DatasetService {
             createdBy: Number(row.created_by)
         };
 
+        // Every column in this dataset was ingested in the same processing run, so each column's
+        // created_on is the dataset's processing_completed_on.
         const columns: DatasetColumnItem[] = columnRows.map((Column) => ({
             id: Number(Column.id),
             columnName: Column.column_name,
             type: Column.type,
             nullable: Column.nullable === TrueFalse.True,
-            uniqueCount: Number(Column.unique_count)
+            uniqueCount: Number(Column.unique_count),
+            createdOn: row.processing_completed_on,
+            modifiedOn: Column.modified_on
         }));
 
         return { dataset, columns };
@@ -252,7 +279,7 @@ export class DatasetService {
         const pool = await ConnectionPool;
 
         const [rows] = await pool.query<DatasetOwnerRow[]>(
-            `SELECT id, created_by, status, processing_status, is_active
+            `SELECT id, created_by, status, processing_status, is_processed, is_active
              FROM T_DATASET
              WHERE dataset_uid = ?
              LIMIT 1`,
@@ -279,6 +306,216 @@ export class DatasetService {
         );
 
         return null;
+    }
+
+
+    // Renames one column of a dataset in both the DB and the INGEST parquet file. RAW stays
+    // untouched. The DB mutation runs in a transaction that only commits once the parquet
+    // rewrite (via a sibling .tmp + atomic rename) succeeds; if the file side fails, the DB
+    // side rolls back so neither layer ends up out of sync. Returns an error message on
+    // failure; null on success.
+    static async UpdateColumnName(UserId: number, DatasetUid: string, ColumnId: number, NewName: string): Promise<string | null> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        if (!Number.isFinite(ColumnId) || ColumnId <= 0) {
+            return "A valid column id is required.";
+        }
+
+        const trimmed = (NewName ?? "").trim();
+
+        if (trimmed.length === 0) {
+            return "Column name is required.";
+        }
+
+        if (trimmed.length > 500) {
+            return "Column name must be 500 characters or fewer.";
+        }
+
+        if (/[\x00-\x1f]/.test(trimmed)) {
+            return "Column name contains invalid characters.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [datasetRows] = await pool.query<DatasetOwnerRow[]>(
+            `SELECT id, created_by, status, processing_status, is_processed, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (datasetRows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = datasetRows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active !== TrueFalse.True) {
+            return "Dataset is deleted.";
+        }
+
+        if (dataset.is_processed !== TrueFalse.True) {
+            return "Dataset is not processed yet.";
+        }
+
+        const [columnLookup] = await pool.query<ColumnLookupRow[]>(
+            `SELECT column_name FROM T_COLUMN WHERE id = ? AND dataset_id = ? LIMIT 1`,
+            [ColumnId, dataset.id]
+        );
+
+        if (columnLookup.length === 0) {
+            return "Column not found for this dataset.";
+        }
+
+        const oldName = columnLookup[0].column_name;
+
+        if (oldName === trimmed) {
+            return null;
+        }
+
+        const ingestPath = BuildIngestFilePath(DatasetUid);
+
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // Scoping the UPDATE to this dataset's id means a mismatched column id affects no
+            // rows, which the affectedRows check turns into a clear 'column not found' message.
+            const [result] = await connection.execute<ResultSetHeader>(
+                `UPDATE T_COLUMN SET column_name = ?, modified_on = NOW(3) WHERE id = ? AND dataset_id = ?`,
+                [trimmed, ColumnId, dataset.id]
+            );
+
+            if (result.affectedRows === 0) {
+                await connection.rollback();
+                return "Column not found for this dataset.";
+            }
+
+            await connection.execute(
+                `UPDATE T_DATASET SET modified_on = NOW(3) WHERE id = ?`,
+                [dataset.id]
+            );
+
+            // Python runs AFTER the DB writes but BEFORE commit: if the file rewrite fails, the
+            // rollback below undoes the DB side so nothing is left out of sync.
+            const response = await RunPython<{ filePath: string; oldName: string; newName: string }>(
+                "RenameColumnInParquet",
+                { FilePath: ingestPath, OldName: oldName, NewName: trimmed },
+                PythonProcessingTimeoutMs
+            );
+
+            if (!response.success) {
+                await connection.rollback();
+                return response.message || "Could not rename the column in the file.";
+            }
+
+            await connection.commit();
+            return null;
+        } catch (error) {
+            try { await connection.rollback(); } catch { /* ignore */ }
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
+
+    // Removes one column from a dataset: the row from T_COLUMN and the matching column from the
+    // INGEST parquet file. RAW stays untouched. Both the DB mutation and the file rewrite must
+    // succeed or neither takes effect; the file side writes to a sibling .tmp first and renames
+    // atomically, and the DB mutation runs in a transaction that rolls back if the file rewrite
+    // fails. Returns an error message on failure; null on success.
+    static async DeleteColumn(UserId: number, DatasetUid: string, ColumnId: number): Promise<string | null> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        if (!Number.isFinite(ColumnId) || ColumnId <= 0) {
+            return "A valid column id is required.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [datasetRows] = await pool.query<DatasetOwnerRow[]>(
+            `SELECT id, created_by, status, processing_status, is_processed, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (datasetRows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = datasetRows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active !== TrueFalse.True) {
+            return "Dataset is deleted.";
+        }
+
+        if (dataset.is_processed !== TrueFalse.True) {
+            return "Dataset is not processed yet.";
+        }
+
+        const [columnRows] = await pool.query<ColumnLookupRow[]>(
+            `SELECT column_name FROM T_COLUMN WHERE id = ? AND dataset_id = ? LIMIT 1`,
+            [ColumnId, dataset.id]
+        );
+
+        if (columnRows.length === 0) {
+            return "Column not found for this dataset.";
+        }
+
+        const columnName = columnRows[0].column_name;
+        const ingestPath = BuildIngestFilePath(DatasetUid);
+
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            await connection.execute(
+                `DELETE FROM T_COLUMN WHERE id = ? AND dataset_id = ?`,
+                [ColumnId, dataset.id]
+            );
+
+            await connection.execute(
+                `UPDATE T_DATASET SET modified_on = NOW(3) WHERE id = ?`,
+                [dataset.id]
+            );
+
+            // Python runs AFTER the DB writes but BEFORE commit: if the file rewrite fails, the
+            // rollback below undoes the DB side so nothing is left out of sync.
+            const response = await RunPython<{ filePath: string; columnName: string }>(
+                "DeleteColumnFromParquet",
+                { FilePath: ingestPath, ColumnName: columnName },
+                PythonProcessingTimeoutMs
+            );
+
+            if (!response.success) {
+                await connection.rollback();
+                return response.message || "Could not delete the column from the file.";
+            }
+
+            await connection.commit();
+            return null;
+        } catch (error) {
+            try { await connection.rollback(); } catch { /* ignore */ }
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
 

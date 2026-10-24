@@ -15,6 +15,8 @@ import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
 import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
+import { CustomDialogComponent, CustomDialogData } from '../../../page-components-shared/custom-dialog/custom-dialog.component';
+import { EditColumnNameComponent, EditColumnNameDialogData, EditColumnNameDialogResult } from '../edit-column-name/edit-column-name.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -29,7 +31,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   styleUrl: './view-dataset-info.component.css'
 })
 export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
-  readonly ColumnColumns = ['id', 'columnName', 'type', 'nullable', 'uniqueCount'];
+  readonly ColumnColumns = ['id', 'columnName', 'type', 'nullable', 'uniqueCount', 'createdOn', 'modifiedOn', 'action'];
   readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
   readonly ReadableSize = GetReadableFileSize;
   readonly FileIcon = GetFileIconByExtension;
@@ -42,6 +44,8 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
   ColumnDataSource = new MatTableDataSource<DatasetColumnItem>([]);
   ColumnSearchText = '';
   MatProgressBar = false;
+  RenamingColumnIds = new Set<number>();
+  DeletingColumnIds = new Set<number>();
 
   private readonly columnSearch$ = new Subject<string>();
   private routeSubscription?: Subscription;
@@ -79,6 +83,8 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
         case 'type': return DATA_TYPE_LABEL[data.type]?.label ?? '';
         case 'nullable': return data.nullable ? 1 : 0;
         case 'uniqueCount': return data.uniqueCount;
+        case 'createdOn': return data.createdOn ? new Date(data.createdOn).getTime() : 0;
+        case 'modifiedOn': return data.modifiedOn ? new Date(data.modifiedOn).getTime() : 0;
         default: return '';
       }
     };
@@ -134,6 +140,116 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
 
   BackToList(): void {
     this.router.navigate(['/datasets']);
+  }
+
+  OnDeleteColumn(column: DatasetColumnItem): void {
+    if (!this.Dataset || this.DeletingColumnIds.has(column.id)) {
+      return;
+    }
+
+    const datasetUid = this.Dataset.datasetUid;
+
+    const confirmRef = this.dialog.open<CustomDialogComponent, CustomDialogData, boolean>(
+      CustomDialogComponent,
+      {
+        data: {
+          title: 'Delete column',
+          message: `Are you sure you want to delete column <strong>${column.columnName}</strong>?<br>This also drops it from the processed file.
+          <br>This cannot be undone.
+          <br>Although, you can bring it back from the unprocessed file.`,
+          confirmLabel: 'Delete',
+          cancelLabel: 'Cancel',
+          iconClass: 'bi bi-trash3-fill',
+          type: ResponseTypeColor.ERROR
+        }
+      }
+    );
+
+    confirmRef.afterClosed().subscribe((approved) => {
+      if (!approved) {
+        return;
+      }
+
+      this.DeletingColumnIds.add(column.id);
+      this.MatProgressBar = true;
+
+      this.datasetService.DeleteColumn(datasetUid, column.id).subscribe({
+        next: response => {
+          this.DeletingColumnIds.delete(column.id);
+          this.MatProgressBar = false;
+
+          if (response.success) {
+            this.Load(datasetUid);
+          }
+
+          this.dialog.open(CustomAlertComponent, {
+            data: {
+              text: response.message,
+              type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+            }
+          });
+        },
+        error: () => {
+          this.DeletingColumnIds.delete(column.id);
+          this.MatProgressBar = false;
+
+          this.dialog.open(CustomAlertComponent, {
+            data: { text: 'Failed to delete column.', type: ResponseTypeColor.ERROR }
+          });
+        }
+      });
+    });
+  }
+
+  OnEditColumn(column: DatasetColumnItem): void {
+    if (!this.Dataset || this.RenamingColumnIds.has(column.id)) {
+      return;
+    }
+
+    const datasetUid = this.Dataset.datasetUid;
+
+    const dialogRef = this.dialog.open<EditColumnNameComponent, EditColumnNameDialogData, EditColumnNameDialogResult>(
+      EditColumnNameComponent,
+      {
+        data: { datasetUid, columnId: column.id, columnName: column.columnName },
+        autoFocus: 'first-tabbable'
+      }
+    );
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result || !result.newName || result.newName === column.columnName) {
+        return;
+      }
+
+      this.RenamingColumnIds.add(column.id);
+      this.MatProgressBar = true;
+
+      this.datasetService.UpdateColumnName(datasetUid, column.id, result.newName).subscribe({
+        next: response => {
+          this.RenamingColumnIds.delete(column.id);
+          this.MatProgressBar = false;
+
+          if (response.success) {
+            this.Load(datasetUid);
+          }
+
+          this.dialog.open(CustomAlertComponent, {
+            data: {
+              text: response.message,
+              type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+            }
+          });
+        },
+        error: () => {
+          this.RenamingColumnIds.delete(column.id);
+          this.MatProgressBar = false;
+
+          this.dialog.open(CustomAlertComponent, {
+            data: { text: 'Failed to rename column.', type: ResponseTypeColor.ERROR }
+          });
+        }
+      });
+    });
   }
 
   private Load(datasetUid: string): void {
