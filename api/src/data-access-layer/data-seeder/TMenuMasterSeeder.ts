@@ -36,7 +36,25 @@ const menuItems: MenuSeed[] = [
         icon: "bi bi-table",
         label: "Datasets",
         parentLabel: null,
-        route: "/datasets",
+        route: null,
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 1,
+        icon: "bi bi-collection",
+        label: "Active Datasets",
+        parentLabel: "Datasets",
+        route: "/datasets/active",
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 2,
+        icon: "bi bi-trash3",
+        label: "Deleted Datasets",
+        parentLabel: "Datasets",
+        route: "/datasets/deleted",
         access_type: MenuAccessType.Authenticated
     },
     {

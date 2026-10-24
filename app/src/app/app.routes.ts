@@ -31,9 +31,10 @@ export const routes: Routes = [
         canActivate: [AuthGuard],
         children: [
           { path: 'upload', component: UploadComponent },
-          { path: 'datasets', component: ViewDatasetGridComponent },
+          { path: 'datasets', redirectTo: 'datasets/active', pathMatch: 'full' },
+          { path: 'datasets/active', component: ViewDatasetGridComponent },
+          { path: 'datasets/deleted', component: ViewDeletedDatasetGridComponent },
           { path: 'datasets/view', component: ViewDatasetInfoComponent },
-          { path: 'deleted-datasets', component: ViewDeletedDatasetGridComponent },
           { path: 'logout', component: LogoutComponent }
         ]
       },
