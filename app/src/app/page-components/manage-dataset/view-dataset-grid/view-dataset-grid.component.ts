@@ -13,7 +13,7 @@ import { DATASET_PROCESSING_STATUS_LABEL, DatasetProcessingStatus } from '../../
 import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
-import { EditDatasetNameComponent, EditDatasetNameDialogData, EditDatasetNameDialogResult } from '../../../page-components-shared/edit-dataset-name/edit-dataset-name.component';
+import { EditDatasetNameComponent, EditDatasetNameDialogData, EditDatasetNameDialogResult } from '../edit-dataset-name/edit-dataset-name.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
 

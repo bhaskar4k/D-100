@@ -15,7 +15,7 @@ import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
 import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
-import { EditColumnNameComponent, EditColumnNameDialogData, EditColumnNameDialogResult } from '../../../page-components-shared/edit-column-name/edit-column-name.component';
+import { EditColumnNameComponent, EditColumnNameDialogData, EditColumnNameDialogResult } from '../edit-column-name/edit-column-name.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
