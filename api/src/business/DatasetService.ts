@@ -7,34 +7,29 @@ import { DatasetProcessingStatus } from "../enum/DatasetProcessingStatus";
 import { DatasetCountRow, DatasetPage, DatasetRow } from "../entity/DatasetEntity";
 import { DatasetProcessingQueue, GetRabbitMqChannel } from "../config/RabbitMqConfig";
 import { StatusLabels } from "../enum/FileUploadStatus";
-import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow } from "../entity/DatasetEntity";
+import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow, ColumnLookupRow } from "../entity/DatasetEntity";
 import { TrueFalse } from "../enum/CommonEnum";
 import { RunPython } from "../python-manager/PythonManager";
+import { BuildIngestFilePath } from "../util/UploadUtil";
+
 
 const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
 const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
-// Column removal rewrites the parquet, so match the processing job's longer timeout.
 const PythonProcessingTimeoutMs = Number(process.env.DATASET_PROCESSING_TIMEOUT_MS) || 30 * 60 * 1000;
+const AutoDeletionDays = Number(process.env.AUTO_DELETION_TIME_IN_DAYS) || 30;
+const SecondsPerDay = 24 * 60 * 60;
 
 if (!INGEST_UPLOAD_PATH) {
     throw new Error("INGEST_UPLOAD_PATH is not configured in .env");
-}
-
-function BuildIngestFilePath(DatasetUid: string): string {
-    return path.join(path.resolve(INGEST_UPLOAD_PATH!), DatasetUid, `${UploadedFileName}.parquet`);
-}
-
-interface ColumnLookupRow extends RowDataPacket {
-    column_name: string;
 }
 
 
 // Builds the WHERE clause for the owning user, plus an optional search over file name (with or
 // without extension), extension and status label. Owner and is_active filters are always
 // present so one user never sees another user's datasets or soft-deleted rows.
-function BuildWhere(UserId: number, Search: string): { where: string; params: any[] } {
+function BuildWhere(UserId: number, Search: string, IsActive: TrueFalse = TrueFalse.True): { where: string; params: any[] } {
     const clauses: string[] = ["created_by = ?", "is_active = ?"];
-    const params: any[] = [UserId, TrueFalse.True];
+    const params: any[] = [UserId, IsActive];
 
     if (!Search) {
         return { where: `WHERE ${clauses.join(" AND ")}`, params };
@@ -64,12 +59,24 @@ function BuildWhere(UserId: number, Search: string): { where: string; params: an
 
 export class DatasetService {
     // Get all datasets for a user. Returns a page of datasets, along with the total number of
-    // datasets and the total number of pages. Returns an error message when the user doesn't exist, 
+    // datasets and the total number of pages. Returns an error message when the user doesn't exist,
     // doesn't belong to the caller, or the page number is out of range; null when the page is empty.
     static async GetDatasets(UserId: number, Page: number, PageSize: number, Search: string = ""): Promise<DatasetPage> {
+        return DatasetService.GetDatasetsByActive(UserId, Page, PageSize, Search, TrueFalse.True);
+    }
+
+
+    // Same shape as GetDatasets but returns only soft-deleted (is_active = 0) rows, used by the
+    // "Deleted datasets" view and the restore workflow.
+    static async GetDeletedDatasets(UserId: number, Page: number, PageSize: number, Search: string = ""): Promise<DatasetPage> {
+        return DatasetService.GetDatasetsByActive(UserId, Page, PageSize, Search, TrueFalse.False);
+    }
+
+
+    private static async GetDatasetsByActive(UserId: number, Page: number, PageSize: number, Search: string, IsActive: TrueFalse): Promise<DatasetPage> {
         try {
             const pool = await ConnectionPool;
-            const { where, params } = BuildWhere(UserId, Search);
+            const { where, params } = BuildWhere(UserId, Search, IsActive);
 
             const [countRows] = await pool.query<DatasetCountRow[]>(
                 `SELECT COUNT(*) AS total FROM T_DATASET ${where}`,
@@ -77,12 +84,15 @@ export class DatasetService {
             );
 
             const [rows] = await pool.query<DatasetRow[]>(
-                `SELECT dataset_uid, filename, extension, filesize, status, created_on,
-                        is_processed, processing_status, processing_completed_on,
-                        modified_on, is_active
+                `SELECT T_DATASET.dataset_uid, T_DATASET.filename, T_DATASET.extension,
+                        T_DATASET.filesize, T_DATASET.status, T_DATASET.created_on,
+                        T_DATASET.is_processed, T_DATASET.processing_status,
+                        T_DATASET.processing_completed_on, T_DATASET.modified_on,
+                        T_DATASET.is_active, T_DELETED_DATASET.auto_deletion_time
                  FROM T_DATASET
+                 LEFT JOIN T_DELETED_DATASET ON T_DELETED_DATASET.dataset_id = T_DATASET.id
                  ${where}
-                 ORDER BY id DESC
+                 ORDER BY T_DATASET.id DESC
                  LIMIT ? OFFSET ?`,
                 [...params, PageSize, (Page - 1) * PageSize]
             );
@@ -99,7 +109,8 @@ export class DatasetService {
                     processingStatus: row.processing_status,
                     processingCompletedOn: row.processing_completed_on,
                     modifiedOn: row.modified_on,
-                    isActive: row.is_active === TrueFalse.True ? true : false
+                    isActive: row.is_active === TrueFalse.True ? true : false,
+                    autoDeletionTime: row.auto_deletion_time === null ? null : Number(row.auto_deletion_time)
                 })),
                 total: Number(countRows[0].total),
                 page: Page,
@@ -380,7 +391,7 @@ export class DatasetService {
             return null;
         }
 
-        const ingestPath = BuildIngestFilePath(DatasetUid);
+        const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
         const connection = await pool.getConnection();
         try {
@@ -479,7 +490,7 @@ export class DatasetService {
         }
 
         const columnName = columnRows[0].column_name;
-        const ingestPath = BuildIngestFilePath(DatasetUid);
+        const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
         const connection = await pool.getConnection();
         try {
@@ -560,11 +571,92 @@ export class DatasetService {
             return "Dataset is currently being processed. Try again once it finishes.";
         }
 
-        await pool.execute(
-            `UPDATE T_DATASET SET is_active = ? WHERE id = ?`,
-            [TrueFalse.False, dataset.id]
+        // UNIX epoch (seconds) at which a cleanup job may permanently remove the dataset.
+        const autoDeletionTime = Math.floor(Date.now() / 1000) + AutoDeletionDays * SecondsPerDay;
+
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            await connection.execute(
+                `UPDATE T_DATASET SET is_active = ? WHERE id = ?`,
+                [TrueFalse.False, dataset.id]
+            );
+
+            // ON DUPLICATE KEY: a dataset deleted → restored → deleted again just refreshes the
+            // auto-deletion deadline instead of leaving a stale row behind.
+            await connection.execute(
+                `INSERT INTO T_DELETED_DATASET (dataset_id, auto_deletion_time)
+                 VALUES (?, ?)
+                 ON DUPLICATE KEY UPDATE auto_deletion_time = VALUES(auto_deletion_time)`,
+                [dataset.id, autoDeletionTime]
+            );
+
+            await connection.commit();
+            return null;
+        } catch (error) {
+            try { await connection.rollback(); } catch { /* ignore */ }
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
+
+    // Restores a soft-deleted dataset (is_active flipped back to 1). Returns an error message
+    // when the dataset doesn't exist, doesn't belong to the caller, or isn't currently deleted;
+    // null once is_active and modified_on have been updated.
+    static async Restore(UserId: number, DatasetUid: string): Promise<string | null> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [rows] = await pool.query<DatasetOwnerRow[]>(
+            `SELECT id, created_by, status, processing_status, is_processed, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
         );
 
-        return null;
+        if (rows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = rows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active === TrueFalse.True) {
+            return "Dataset is already active.";
+        }
+
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            await connection.execute(
+                `UPDATE T_DATASET SET is_active = ?, modified_on = NOW(3) WHERE id = ?`,
+                [TrueFalse.True, dataset.id]
+            );
+
+            // Cancels the pending auto-deletion the Delete flow queued.
+            await connection.execute(
+                `DELETE FROM T_DELETED_DATASET WHERE dataset_id = ?`,
+                [dataset.id]
+            );
+
+            await connection.commit();
+            return null;
+        } catch (error) {
+            try { await connection.rollback(); } catch { /* ignore */ }
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 }

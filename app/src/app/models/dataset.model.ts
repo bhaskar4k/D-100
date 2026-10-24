@@ -10,6 +10,7 @@ export interface DatasetItem {
     processingCompletedOn: string | null;
     modifiedOn: string | null;
     isActive: boolean;
+    autoDeletionTime: number | null;
 }
 
 export interface DatasetPage {

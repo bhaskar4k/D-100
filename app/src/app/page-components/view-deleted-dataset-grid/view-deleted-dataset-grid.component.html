@@ -1,0 +1,118 @@
+<div class="page-loader" *ngIf="MatProgressBar">
+    <mat-spinner diameter="50"></mat-spinner>
+</div>
+
+<div class="card shadow-sm m-3 p-3">
+    <div class="app-page-header">
+        <h4 class="app-page-title">Deleted Datasets</h4>
+
+        <div class="app-page-actions">
+            <button type="button" class="app-icon-button" matTooltip="Refresh" matTooltipPosition="above"
+                [disabled]="MatProgressBar" (click)="OnRefresh()">
+                <i class="bi bi-arrow-clockwise" [class.spin]="MatProgressBar"></i>
+            </button>
+
+            <div class="app-table-search">
+                <i class="bi bi-search"></i>
+                <input #searchInput type="text" placeholder="Search deleted datasets..." autocomplete="off"
+                    [value]="SearchText" (input)="OnSearch(searchInput.value)" />
+                @if (SearchText) {
+                <button type="button" class="app-table-search-clear" aria-label="Clear search"
+                    (click)="searchInput.value = ''; OnSearch('')"><i class="bi bi-x-lg"></i></button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="app-table-container">
+        <div class="app-table-scroll app-scroll-thin">
+            <table mat-table class="app-table" [dataSource]="Datasets">
+
+                <ng-container matColumnDef="fileName">
+                    <th mat-header-cell *matHeaderCellDef>File Name</th>
+                    <td mat-cell *matCellDef="let row">{{ row.fileName }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="extension">
+                    <th mat-header-cell *matHeaderCellDef>Extension</th>
+                    <td mat-cell *matCellDef="let row">
+                        @let f = FileIcon(row.extension);
+                        <span class="app-badge file-badge">
+                            <i class="bi" [class]="f.icon + ' ' + f.color"></i>
+                            {{ row.extension }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="fileSize">
+                    <th mat-header-cell *matHeaderCellDef>File Size</th>
+                    <td mat-cell *matCellDef="let row">{{ ReadableSize(row.fileSize) }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Upload Status</th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="app-badge" [class]="GetStatus(row.status).color">{{ GetStatus(row.status).label
+                            }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="uploadedOn">
+                    <th mat-header-cell *matHeaderCellDef>Uploaded On</th>
+                    <td mat-cell *matCellDef="let row">{{ row.uploadedOn | date: DateFormat }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="isProcessed">
+                    <th mat-header-cell *matHeaderCellDef>Is Processed</th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="app-badge" [class]="row.isProcessed ? 'status-yes' : 'status-no'">{{
+                            row.isProcessed ? 'Yes' : 'No' }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="modifiedOn">
+                    <th mat-header-cell *matHeaderCellDef>Modified On</th>
+                    <td mat-cell *matCellDef="let row">{{ row.modifiedOn ? (row.modifiedOn | date: DateFormat) : '-' }}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="autoDeletingOn">
+                    <th mat-header-cell *matHeaderCellDef>Auto Deleting On</th>
+                    <td mat-cell *matCellDef="let row">
+                        @let deleteAt = ToDate(row.autoDeletionTime);
+                        {{ deleteAt ? (deleteAt | date: DateFormat) : '-' }}
+                        @if (row.autoDeletionTime !== null) {
+                        <span class="text-muted ms-1">({{ TimeLeft(row.autoDeletionTime) }})</span>
+                        }
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="action">
+                    <th mat-header-cell *matHeaderCellDef>Action</th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="app-table-actions">
+                            <button type="button" class="app-table-action text-success" matTooltip="Restore dataset"
+                                matTooltipPosition="above" aria-label="Restore dataset"
+                                [disabled]="RestoringUids.has(row.datasetUid) || MatProgressBar"
+                                (click)="OnRestore(row)">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="DisplayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: DisplayedColumns"></tr>
+
+                <tr class="mat-mdc-no-data-row" *matNoDataRow>
+                    <td class="mat-mdc-cell" [attr.colspan]="DisplayedColumns.length">
+                        {{ SearchText ? 'No deleted datasets match your search.' : 'No deleted datasets.' }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <mat-paginator [length]="Total" [pageIndex]="PageIndex" [pageSize]="PageSize"
+            [pageSizeOptions]="PageSizeOptions" showFirstLastButtons (page)="OnPageChange($event)"></mat-paginator>
+    </div>
+</div>

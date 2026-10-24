@@ -33,6 +33,54 @@ export class DatasetController {
     }
 
 
+    static async GetDeleted(req: Request, res: Response): Promise<void> {
+        try {
+            await Logger.Info("GetDeletedDatasets -> Called", req.UserData?.id);
+
+            const page = Math.max(1, Math.floor(Number(req.query.page)) || 1);
+            const pageSize = Math.min(MaxPageSize, Math.max(1, Math.floor(Number(req.query.pageSize)) || DefaultPageSize));
+
+            const search = String(req.query.search ?? "").trim().slice(0, MaxSearchLength);
+
+            const result = await DatasetService.GetDeletedDatasets(Number(req.UserData!.id), page, pageSize, search);
+
+            res.status(HttpStatusCode.OK).json(new SuccessDto(result, "Deleted datasets retrieved successfully.", HttpStatusCode.OK));
+        } catch (error) {
+            await Logger.Error("GetDeleted Datasets Error", error, req.UserData?.id);
+
+            res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
+                new ErrorDto(null, "An unexpected error occurred to get deleted datasets.", HttpStatusCode.INTERNAL_SERVER_ERROR)
+            );
+        }
+    }
+
+
+    static async Restore(req: Request, res: Response): Promise<void> {
+        try {
+            await Logger.Info("DatasetRestore -> Called", req.UserData?.id);
+
+            const datasetUid = String(req.body?.datasetUid ?? "").trim();
+
+            const error = await DatasetService.Restore(Number(req.UserData!.id), datasetUid);
+
+            if (error) {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, error, HttpStatusCode.BAD_REQUEST));
+                return;
+            }
+
+            res.status(HttpStatusCode.OK).json(
+                new SuccessDto(true, "Dataset restored successfully.", HttpStatusCode.OK)
+            );
+        } catch (error) {
+            await Logger.Error("Dataset Restore Error", error, req.UserData?.id);
+
+            res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
+                new ErrorDto(null, "An unexpected error occurred while restoring the dataset.", HttpStatusCode.INTERNAL_SERVER_ERROR)
+            );
+        }
+    }
+
+
     static async GetDetails(req: Request, res: Response): Promise<void> {
         try {
             await Logger.Info("GetDatasetDetails -> Called", req.UserData?.id);

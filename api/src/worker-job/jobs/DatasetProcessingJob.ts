@@ -6,6 +6,7 @@ import { DatasetProcessingStatus } from "../../enum/DatasetProcessingStatus";
 import { TrueFalse } from "../../enum/CommonEnum";
 import { RunPython } from "../../python-manager/PythonManager";
 import { Logger } from "../../log/Logger";
+import { BuildRawFilePath, BuildIngestFilePath } from "../../util/UploadUtil";
 
 const RAW_UPLOAD_PATH = process.env.RAW_UPLOAD_PATH;
 const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
@@ -38,14 +39,6 @@ interface FileMetadata {
     columnInfo: ColumnMetadata[];
 }
 
-
-function BuildRawFilePath(DatasetUid: string, Extension: string): string {
-    return path.join(path.resolve(RAW_UPLOAD_PATH!), DatasetUid, `${UploadedFileName}${Extension}`);
-}
-
-function BuildIngestFilePath(DatasetUid: string): string {
-    return path.join(path.resolve(INGEST_UPLOAD_PATH!), DatasetUid, `${UploadedFileName}.parquet`);
-}
 
 
 async function MarkFailed(DatasetId: number): Promise<void> {
@@ -137,8 +130,8 @@ async function ProcessDataset(DatasetId: number): Promise<void> {
     );
 
     try {
-        const sourcePath = BuildRawFilePath(dataset.dataset_uid, dataset.extension);
-        const targetPath = BuildIngestFilePath(dataset.dataset_uid);
+        const sourcePath = BuildRawFilePath(dataset.dataset_uid, RAW_UPLOAD_PATH!, UploadedFileName, dataset.extension);
+        const targetPath = BuildIngestFilePath(dataset.dataset_uid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
         const metadataResponse = await RunPython<FileMetadata>(
             "GetFileMetadata",

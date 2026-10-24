@@ -20,12 +20,14 @@ export const Endpoints = {
     },
     Dataset: {
         GetAll: "Dataset/GetAll",
+        GetDeleted: "Dataset/GetDeleted",
         GetDetails: "Dataset/GetDetails",
         Process: "Dataset/Process",
         UpdateName: "Dataset/UpdateName",
         UpdateColumnName: "Dataset/UpdateColumnName",
         DeleteColumn: "Dataset/DeleteColumn",
         Delete: "Dataset/Delete",
+        Restore: "Dataset/Restore",
     },
     Upload: {
         Initiate: "Upload/Initiate",
