@@ -53,7 +53,7 @@ export class DatasetController {
             await Logger.Error("Get Dataset Details Error", error, req.UserData?.id);
 
             res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
-                new ErrorDto(null, "An unexpected error occurred while fetching the dataset.", HttpStatusCode.INTERNAL_SERVER_ERROR)
+                new ErrorDto(null, "An unexpected error occurred while fetching the dataset details.", HttpStatusCode.INTERNAL_SERVER_ERROR)
             );
         }
     }
@@ -75,7 +75,7 @@ export class DatasetController {
             }
 
             res.status(HttpStatusCode.OK).json(
-                new SuccessDto(true, "Column name updated successfully.", HttpStatusCode.OK)
+                new SuccessDto(true, "Column name has been successfully updated.", HttpStatusCode.OK)
             );
         } catch (error) {
             await Logger.Error("Dataset UpdateColumnName Error", error, req.UserData?.id);
@@ -102,7 +102,7 @@ export class DatasetController {
             }
 
             res.status(HttpStatusCode.OK).json(
-                new SuccessDto(true, "Dataset name updated successfully.", HttpStatusCode.OK)
+                new SuccessDto(true, "Dataset name has been successfully updated.", HttpStatusCode.OK)
             );
         } catch (error) {
             await Logger.Error("Dataset UpdateName Error", error, req.UserData?.id);

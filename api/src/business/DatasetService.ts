@@ -44,6 +44,9 @@ function BuildWhere(UserId: number, Search: string): { where: string; params: an
 
 
 export class DatasetService {
+    // Get all datasets for a user. Returns a page of datasets, along with the total number of
+    // datasets and the total number of pages. Returns an error message when the user doesn't exist, 
+    // doesn't belong to the caller, or the page number is out of range; null when the page is empty.
     static async GetDatasets(UserId: number, Page: number, PageSize: number, Search: string = ""): Promise<DatasetPage> {
         try {
             const pool = await ConnectionPool;
