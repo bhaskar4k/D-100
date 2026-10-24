@@ -1,0 +1,35 @@
+.edit-name-field {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    background-color: #161b22;
+    overflow: hidden;
+    transition: border-color 0.2s ease-in-out;
+}
+
+.edit-name-field:focus-within {
+    border-color: var(--bs-primary);
+}
+
+.edit-name-field .form-control {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+}
+
+.edit-name-field .form-control:focus {
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+.edit-name-extension {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 0.8125rem;
+    color: #9ca3af;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    user-select: none;
+}

@@ -22,6 +22,7 @@ export const Endpoints = {
         GetAll: "Dataset/GetAll",
         GetDetails: "Dataset/GetDetails",
         Process: "Dataset/Process",
+        UpdateName: "Dataset/UpdateName",
         Delete: "Dataset/Delete",
     },
     Upload: {

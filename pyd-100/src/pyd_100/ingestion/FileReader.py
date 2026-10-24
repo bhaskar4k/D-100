@@ -9,6 +9,7 @@ from .DataReader import (
     SupportedExtensions,
 )
 from ..dto import BaseDto, ErrorDto, SuccessDto
+from ..enums import HttpStatusCode
 from ..enums.data_type import FromPolarsDtype
 from ..registry import expose
 
@@ -27,13 +28,13 @@ def GetFileMetadata(FilePath: str) -> BaseDto:
     Everything is computed over the whole file in one pass, never from a sample.
     """
     if not os.path.isfile(FilePath):
-        return ErrorDto(None, "File not found.", 404, {"FilePath": FilePath})
+        return ErrorDto(None, "File not found.", HttpStatusCode.NOT_FOUND, {"FilePath": FilePath})
 
     if not IsSupported(FilePath):
         return ErrorDto(
             None,
             f"Unsupported file type '{GetExtension(FilePath)}'. Supported: {', '.join(SupportedExtensions)}",
-            400,
+            HttpStatusCode.BAD_REQUEST,
             {"FilePath": FilePath},
         )
 
@@ -42,7 +43,7 @@ def GetFileMetadata(FilePath: str) -> BaseDto:
         Schema = Lazy.collect_schema()
 
         if len(Schema) == 0:
-            return ErrorDto(None, "The file has no columns.", 422, {"FilePath": FilePath})
+            return ErrorDto(None, "The file has no columns.", HttpStatusCode.UNPROCESSABLE_ENTITY, {"FilePath": FilePath})
 
         # Columns are addressed by position (pl.nth), so unusual names (duplicates, regex-like
         # names such as "^a$", empty names) can never be misread as something else.
@@ -57,7 +58,7 @@ def GetFileMetadata(FilePath: str) -> BaseDto:
         return ErrorDto(
             None,
             f"Could not read the file: {error}",
-            422,
+            HttpStatusCode.UNPROCESSABLE_ENTITY,
             {"FilePath": FilePath, "type": type(error).__name__},
         )
 
@@ -71,4 +72,4 @@ def GetFileMetadata(FilePath: str) -> BaseDto:
         for Index, (Name, Dtype) in enumerate(Schema.items())
     ]
 
-    return SuccessDto({"rowCount": Counts[0], "columnInfo": ColumnInfo}, "File metadata retrieved.", 200)
+    return SuccessDto({"rowCount": Counts[0], "columnInfo": ColumnInfo}, "File metadata retrieved.", HttpStatusCode.OK)

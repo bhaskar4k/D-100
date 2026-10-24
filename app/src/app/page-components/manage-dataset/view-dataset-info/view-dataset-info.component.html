@@ -101,6 +101,11 @@
         </div>
 
         <div class="app-detail-cell">
+            <div class="app-detail-label">Modified On</div>
+            <div class="app-detail-value">{{ D.modifiedOn ? (D.modifiedOn | date: DateFormat) : '-' }}</div>
+        </div>
+
+        <div class="app-detail-cell">
             <div class="app-detail-label">Dataset ID</div>
             <div class="app-detail-value app-detail-mono">{{ D.datasetUid }}</div>
         </div>

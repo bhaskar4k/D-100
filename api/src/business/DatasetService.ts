@@ -55,7 +55,8 @@ export class DatasetService {
 
             const [rows] = await pool.query<DatasetRow[]>(
                 `SELECT dataset_uid, filename, extension, filesize, status, created_on,
-                        is_processed, processing_status, processing_completed_on, is_active
+                        is_processed, processing_status, processing_completed_on,
+                        modified_on, is_active
                  FROM T_DATASET
                  ${where}
                  ORDER BY id DESC
@@ -74,6 +75,7 @@ export class DatasetService {
                     isProcessed: row.is_processed === TrueFalse.True ? true : false,
                     processingStatus: row.processing_status,
                     processingCompletedOn: row.processing_completed_on,
+                    modifiedOn: row.modified_on,
                     isActive: row.is_active === TrueFalse.True ? true : false
                 })),
                 total: Number(countRows[0].total),
@@ -162,7 +164,7 @@ export class DatasetService {
                     initiated_on, upload_completed_on, uploading_time,
                     row_count, is_processed, processing_status,
                     processing_initiated_on, processing_completed_on, processing_time,
-                    created_by, created_on, is_active
+                    created_by, created_on, modified_on, is_active
              FROM T_DATASET
              WHERE dataset_uid = ?
              LIMIT 1`,
@@ -207,6 +209,7 @@ export class DatasetService {
             processingInitiatedOn: row.processing_initiated_on,
             processingCompletedOn: row.processing_completed_on,
             processingTime: row.processing_time === null ? null : Number(row.processing_time),
+            modifiedOn: row.modified_on,
             isActive: row.is_active === TrueFalse.True,
             createdBy: Number(row.created_by)
         };
@@ -220,6 +223,62 @@ export class DatasetService {
         }));
 
         return { dataset, columns };
+    }
+
+
+    // Renames a dataset. Returns an error message when the dataset doesn't exist, doesn't belong
+    // to the caller, is deleted, or when the new name fails validation; null once filename and
+    // modified_on have been updated.
+    static async UpdateName(UserId: number, DatasetUid: string, NewName: string): Promise<string | null> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        const trimmed = (NewName ?? "").trim();
+
+        if (trimmed.length === 0) {
+            return "Dataset name is required.";
+        }
+
+        if (trimmed.length > 255) {
+            return "Dataset name must be 255 characters or fewer.";
+        }
+
+        // Disallow path separators or control chars — the filename is used later for file paths.
+        if (/[\\/:*?"<>|\x00-\x1f]/.test(trimmed)) {
+            return "Dataset name contains invalid characters.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [rows] = await pool.query<DatasetOwnerRow[]>(
+            `SELECT id, created_by, status, processing_status, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (rows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = rows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active !== TrueFalse.True) {
+            return "Dataset is deleted.";
+        }
+
+        await pool.execute(
+            `UPDATE T_DATASET SET filename = ?, modified_on = NOW(3) WHERE id = ?`,
+            [trimmed, dataset.id]
+        );
+
+        return null;
     }
 
 
