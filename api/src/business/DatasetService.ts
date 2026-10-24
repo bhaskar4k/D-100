@@ -7,28 +7,20 @@ import { DatasetProcessingStatus } from "../enum/DatasetProcessingStatus";
 import { DatasetCountRow, DatasetPage, DatasetRow } from "../entity/DatasetEntity";
 import { DatasetProcessingQueue, GetRabbitMqChannel } from "../config/RabbitMqConfig";
 import { StatusLabels } from "../enum/FileUploadStatus";
-import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow } from "../entity/DatasetEntity";
+import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow, ColumnLookupRow } from "../entity/DatasetEntity";
 import { TrueFalse } from "../enum/CommonEnum";
 import { RunPython } from "../python-manager/PythonManager";
+import { BuildIngestFilePath } from "../util/UploadUtil";
+
 
 const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
 const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
-// Column removal rewrites the parquet, so match the processing job's longer timeout.
 const PythonProcessingTimeoutMs = Number(process.env.DATASET_PROCESSING_TIMEOUT_MS) || 30 * 60 * 1000;
-// Days from a soft-delete to the row being purged by a future cleanup job.
 const AutoDeletionDays = Number(process.env.AUTO_DELETION_TIME_IN_DAYS) || 30;
 const SecondsPerDay = 24 * 60 * 60;
 
 if (!INGEST_UPLOAD_PATH) {
     throw new Error("INGEST_UPLOAD_PATH is not configured in .env");
-}
-
-function BuildIngestFilePath(DatasetUid: string): string {
-    return path.join(path.resolve(INGEST_UPLOAD_PATH!), DatasetUid, `${UploadedFileName}.parquet`);
-}
-
-interface ColumnLookupRow extends RowDataPacket {
-    column_name: string;
 }
 
 
@@ -395,7 +387,7 @@ export class DatasetService {
             return null;
         }
 
-        const ingestPath = BuildIngestFilePath(DatasetUid);
+        const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
         const connection = await pool.getConnection();
         try {
@@ -494,7 +486,7 @@ export class DatasetService {
         }
 
         const columnName = columnRows[0].column_name;
-        const ingestPath = BuildIngestFilePath(DatasetUid);
+        const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
         const connection = await pool.getConnection();
         try {
