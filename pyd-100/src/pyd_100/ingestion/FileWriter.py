@@ -19,6 +19,16 @@ from ..enums import HttpStatusCode
 from ..registry import expose
 
 
+def SaveLazyFrameAsParquet(Lazy, TargetPath: str) -> None:
+    """Streams a polars LazyFrame to TargetPath as parquet, creating the parent directory.
+
+    Centralized so every parquet write in the pipeline (initial conversion, column removal,
+    future transforms) uses the same options and never materializes the frame in memory.
+    """
+    os.makedirs(os.path.dirname(TargetPath) or ".", exist_ok=True)
+    Lazy.sink_parquet(TargetPath)
+
+
 @expose
 def ConvertToParquet(SourcePath: str, TargetPath: str) -> BaseDto:
     """
@@ -39,15 +49,7 @@ def ConvertToParquet(SourcePath: str, TargetPath: str) -> BaseDto:
         return ErrorDto(False, "Target file must end with '.parquet'.", HttpStatusCode.BAD_REQUEST)
 
     try:
-        os.makedirs(os.path.dirname(TargetPath) or ".", exist_ok=True)
-
-        Lazy = ReadFileAsPolarsLazyFrame(SourcePath)
-
-        # sink_parquet streams CSV/Parquet sources straight to disk without materializing them
-        # in memory. Excel files are already materialized (polars has no scanner for them), so
-        # the wrapping LazyFrame simply writes what is already in memory.
-        Lazy.sink_parquet(TargetPath)
-
+        SaveLazyFrameAsParquet(ReadFileAsPolarsLazyFrame(SourcePath), TargetPath)
     except Exception as error:
         return ErrorDto(False, f"Could not convert the file: {error}", HttpStatusCode.UNPROCESSABLE_ENTITY)
 
@@ -92,8 +94,9 @@ def DeleteColumnFromParquet(FilePath: str, ColumnName: str) -> BaseDto:
                 HttpStatusCode.BAD_REQUEST,
             )
 
-        Lazy.drop(ColumnName).sink_parquet(TempPath)
+        SaveLazyFrameAsParquet(Lazy.drop(ColumnName), TempPath)
         os.replace(TempPath, FilePath)
+        
     except Exception as error:
         if os.path.exists(TempPath):
             try:
