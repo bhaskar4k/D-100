@@ -81,6 +81,9 @@
                     <td mat-cell *matCellDef="let row">
                         @let deleteAt = ToDate(row.autoDeletionTime);
                         {{ deleteAt ? (deleteAt | date: DateFormat) : '-' }}
+                        @if (row.autoDeletionTime !== null) {
+                        <span class="text-muted ms-1">({{ TimeLeft(row.autoDeletionTime) }})</span>
+                        }
                     </td>
                 </ng-container>
 
