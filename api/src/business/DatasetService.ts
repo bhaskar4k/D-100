@@ -84,12 +84,15 @@ export class DatasetService {
             );
 
             const [rows] = await pool.query<DatasetRow[]>(
-                `SELECT dataset_uid, filename, extension, filesize, status, created_on,
-                        is_processed, processing_status, processing_completed_on,
-                        modified_on, is_active
+                `SELECT T_DATASET.dataset_uid, T_DATASET.filename, T_DATASET.extension,
+                        T_DATASET.filesize, T_DATASET.status, T_DATASET.created_on,
+                        T_DATASET.is_processed, T_DATASET.processing_status,
+                        T_DATASET.processing_completed_on, T_DATASET.modified_on,
+                        T_DATASET.is_active, T_DELETED_DATASET.auto_deletion_time
                  FROM T_DATASET
+                 LEFT JOIN T_DELETED_DATASET ON T_DELETED_DATASET.dataset_id = T_DATASET.id
                  ${where}
-                 ORDER BY id DESC
+                 ORDER BY T_DATASET.id DESC
                  LIMIT ? OFFSET ?`,
                 [...params, PageSize, (Page - 1) * PageSize]
             );
@@ -106,7 +109,8 @@ export class DatasetService {
                     processingStatus: row.processing_status,
                     processingCompletedOn: row.processing_completed_on,
                     modifiedOn: row.modified_on,
-                    isActive: row.is_active === TrueFalse.True ? true : false
+                    isActive: row.is_active === TrueFalse.True ? true : false,
+                    autoDeletionTime: row.auto_deletion_time === null ? null : Number(row.auto_deletion_time)
                 })),
                 total: Number(countRows[0].total),
                 page: Page,

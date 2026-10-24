@@ -29,11 +29,45 @@ export class ViewDeletedDatasetGridComponent implements OnInit, OnDestroy {
     'status',
     'uploadedOn',
     'isProcessed',
-    'processingStatus',
-    'processedOn',
     'modifiedOn',
+    'autoDeletingOn',
     'action'
   ];
+
+  // Server stores auto_deletion_time as UNIX seconds; UI needs a JS Date for the date pipe.
+  ToDate(epochSeconds: number | null): Date | null {
+    return epochSeconds === null ? null : new Date(epochSeconds * 1000);
+  }
+
+  // Compact "time left" badge next to the auto-deletion date: picks the two largest non-zero
+  // units from months / days / hours / minutes / seconds, e.g. "29d 4h left", "7h 12m left".
+  // Snapshot only — recomputed on each refresh / page change, not ticking live.
+  TimeLeft(epochSeconds: number | null): string {
+    if (epochSeconds === null) return '';
+
+    let remaining = epochSeconds - Math.floor(Date.now() / 1000);
+    if (remaining <= 0) return 'overdue';
+
+    const units: Array<{ label: string; secs: number }> = [
+      { label: 'mo', secs: 30 * 86400 },
+      { label: 'd', secs: 86400 },
+      { label: 'h', secs: 3600 },
+      { label: 'm', secs: 60 },
+      { label: 's', secs: 1 },
+    ];
+
+    const parts: string[] = [];
+    for (const u of units) {
+      const value = Math.floor(remaining / u.secs);
+      if (value > 0) {
+        parts.push(`${value}${u.label}`);
+        remaining -= value * u.secs;
+        if (parts.length === 2) break;
+      }
+    }
+
+    return parts.length ? `${parts.join(' ')} left` : '< 1s left';
+  }
 
   RestoringUids = new Set<string>();
   readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
