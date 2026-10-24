@@ -56,6 +56,7 @@ export interface DatasetOwnerRow extends RowDataPacket {
     created_by: number;
     status: number;
     processing_status: number;
+    is_processed: number;
     is_active: number;
 }
 
@@ -87,6 +88,7 @@ export interface DatasetColumnRow extends RowDataPacket {
     type: number;
     nullable: number;
     unique_count: string | number;
+    modified_on: Date | null;
 }
 
 export interface DatasetColumnItem {
@@ -95,6 +97,8 @@ export interface DatasetColumnItem {
     type: number;
     nullable: boolean;
     uniqueCount: number;
+    createdOn: Date | null;
+    modifiedOn: Date | null;
 }
 
 export interface DatasetDetailItem {

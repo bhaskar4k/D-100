@@ -13,7 +13,8 @@ import { DATASET_PROCESSING_STATUS_LABEL, DatasetProcessingStatus } from '../../
 import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
-import { EditDatasetNameComponent, EditDatasetNameDialogData, EditDatasetNameDialogResult } from '../../../page-components-shared/edit-dataset-name/edit-dataset-name.component';
+import { CustomDialogComponent, CustomDialogData } from '../../../page-components-shared/custom-dialog/custom-dialog.component';
+import { EditDatasetNameComponent, EditDatasetNameDialogData, EditDatasetNameDialogResult } from '../edit-dataset-name/edit-dataset-name.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -137,10 +138,12 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
       }
 
       this.RenamingUids.add(row.datasetUid);
+      this.MatProgressBar = true;
 
       this.datasetService.UpdateName(row.datasetUid, result.newName).subscribe({
         next: response => {
           this.RenamingUids.delete(row.datasetUid);
+          this.MatProgressBar = false;
           this.Load();
 
           this.dialog.open(CustomAlertComponent, {
@@ -152,6 +155,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.RenamingUids.delete(row.datasetUid);
+          this.MatProgressBar = false;
 
           this.dialog.open(CustomAlertComponent, {
             data: { text: 'Failed to rename dataset.', type: ResponseTypeColor.ERROR }
@@ -166,32 +170,50 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const confirmed = window.confirm(`Delete dataset "${fileName}${extension}"?`);
-    if (!confirmed) {
-      return;
-    }
-
-    this.DeletingUids.add(datasetUid);
-
-    this.datasetService.Delete(datasetUid).subscribe({
-      next: response => {
-        this.DeletingUids.delete(datasetUid);
-        this.Load();
-
-        this.dialog.open(CustomAlertComponent, {
-          data: {
-            text: response.message,
-            type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
-          }
-        });
-      },
-      error: () => {
-        this.DeletingUids.delete(datasetUid);
-
-        this.dialog.open(CustomAlertComponent, {
-          data: { text: 'Failed to delete dataset.', type: ResponseTypeColor.ERROR }
-        });
+    const confirmRef = this.dialog.open<CustomDialogComponent, CustomDialogData, boolean>(
+      CustomDialogComponent,
+      {
+        data: {
+          title: 'Delete dataset',
+          message: `Are you sure you want to delete <strong>${fileName}${extension}</strong>?`,
+          confirmLabel: 'Delete',
+          cancelLabel: 'Cancel',
+          iconClass: 'bi bi-trash3-fill',
+          type: ResponseTypeColor.ERROR
+        }
       }
+    );
+
+    confirmRef.afterClosed().subscribe((approved) => {
+      if (!approved) {
+        return;
+      }
+
+      this.DeletingUids.add(datasetUid);
+      this.MatProgressBar = true;
+
+      this.datasetService.Delete(datasetUid).subscribe({
+        next: response => {
+          this.DeletingUids.delete(datasetUid);
+          this.MatProgressBar = false;
+          this.Load();
+
+          this.dialog.open(CustomAlertComponent, {
+            data: {
+              text: response.message,
+              type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+            }
+          });
+        },
+        error: () => {
+          this.DeletingUids.delete(datasetUid);
+          this.MatProgressBar = false;
+
+          this.dialog.open(CustomAlertComponent, {
+            data: { text: 'Failed to delete dataset.', type: ResponseTypeColor.ERROR }
+          });
+        }
+      });
     });
   }
 
@@ -201,10 +223,12 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
     }
 
     this.ProcessingUids.add(datasetUid);
+    this.MatProgressBar = true;
 
     this.datasetService.Process(datasetUid).subscribe({
       next: response => {
         this.ProcessingUids.delete(datasetUid);
+        this.MatProgressBar = false;
         this.Load();
 
         this.dialog.open(CustomAlertComponent, {
@@ -216,6 +240,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.ProcessingUids.delete(datasetUid);
+        this.MatProgressBar = false;
 
         this.dialog.open(CustomAlertComponent, {
           data: { text: 'Failed to queue dataset for processing.', type: ResponseTypeColor.ERROR }
