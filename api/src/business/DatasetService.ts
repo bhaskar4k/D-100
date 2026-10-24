@@ -209,7 +209,7 @@ export class DatasetService {
         }
 
         const [columnRows] = await pool.query<DatasetColumnRow[]>(
-            `SELECT id, column_name, type, nullable, unique_count
+            `SELECT id, column_name, type, nullable, unique_count, modified_on
              FROM T_COLUMN
              WHERE dataset_id = ?
              ORDER BY id ASC`,
@@ -237,12 +237,16 @@ export class DatasetService {
             createdBy: Number(row.created_by)
         };
 
+        // Every column in this dataset was ingested in the same processing run, so each column's
+        // created_on is the dataset's processing_completed_on.
         const columns: DatasetColumnItem[] = columnRows.map((Column) => ({
             id: Number(Column.id),
             columnName: Column.column_name,
             type: Column.type,
             nullable: Column.nullable === TrueFalse.True,
-            uniqueCount: Number(Column.unique_count)
+            uniqueCount: Number(Column.unique_count),
+            createdOn: row.processing_completed_on,
+            modifiedOn: Column.modified_on
         }));
 
         return { dataset, columns };
