@@ -15,6 +15,9 @@ const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
 const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
 // Column removal rewrites the parquet, so match the processing job's longer timeout.
 const PythonProcessingTimeoutMs = Number(process.env.DATASET_PROCESSING_TIMEOUT_MS) || 30 * 60 * 1000;
+// Days from a soft-delete to the row being purged by a future cleanup job.
+const AutoDeletionDays = Number(process.env.AUTO_DELETION_TIME_IN_DAYS) || 30;
+const SecondsPerDay = 24 * 60 * 60;
 
 if (!INGEST_UPLOAD_PATH) {
     throw new Error("INGEST_UPLOAD_PATH is not configured in .env");
@@ -572,12 +575,35 @@ export class DatasetService {
             return "Dataset is currently being processed. Try again once it finishes.";
         }
 
-        await pool.execute(
-            `UPDATE T_DATASET SET is_active = ? WHERE id = ?`,
-            [TrueFalse.False, dataset.id]
-        );
+        // UNIX epoch (seconds) at which a cleanup job may permanently remove the dataset.
+        const autoDeletionTime = Math.floor(Date.now() / 1000) + AutoDeletionDays * SecondsPerDay;
 
-        return null;
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            await connection.execute(
+                `UPDATE T_DATASET SET is_active = ? WHERE id = ?`,
+                [TrueFalse.False, dataset.id]
+            );
+
+            // ON DUPLICATE KEY: a dataset deleted → restored → deleted again just refreshes the
+            // auto-deletion deadline instead of leaving a stale row behind.
+            await connection.execute(
+                `INSERT INTO T_DELETED_DATASET (dataset_id, auto_deletion_time)
+                 VALUES (?, ?)
+                 ON DUPLICATE KEY UPDATE auto_deletion_time = VALUES(auto_deletion_time)`,
+                [dataset.id, autoDeletionTime]
+            );
+
+            await connection.commit();
+            return null;
+        } catch (error) {
+            try { await connection.rollback(); } catch { /* ignore */ }
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
 
@@ -613,11 +639,28 @@ export class DatasetService {
             return "Dataset is already active.";
         }
 
-        await pool.execute(
-            `UPDATE T_DATASET SET is_active = ?, modified_on = NOW(3) WHERE id = ?`,
-            [TrueFalse.True, dataset.id]
-        );
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
 
-        return null;
+            await connection.execute(
+                `UPDATE T_DATASET SET is_active = ?, modified_on = NOW(3) WHERE id = ?`,
+                [TrueFalse.True, dataset.id]
+            );
+
+            // Cancels the pending auto-deletion the Delete flow queued.
+            await connection.execute(
+                `DELETE FROM T_DELETED_DATASET WHERE dataset_id = ?`,
+                [dataset.id]
+            );
+
+            await connection.commit();
+            return null;
+        } catch (error) {
+            try { await connection.rollback(); } catch { /* ignore */ }
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 }
