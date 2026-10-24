@@ -164,7 +164,7 @@ export class DatasetService {
                     initiated_on, upload_completed_on, uploading_time,
                     row_count, is_processed, processing_status,
                     processing_initiated_on, processing_completed_on, processing_time,
-                    created_by, created_on, is_active
+                    created_by, created_on, modified_on, is_active
              FROM T_DATASET
              WHERE dataset_uid = ?
              LIMIT 1`,
@@ -209,6 +209,7 @@ export class DatasetService {
             processingInitiatedOn: row.processing_initiated_on,
             processingCompletedOn: row.processing_completed_on,
             processingTime: row.processing_time === null ? null : Number(row.processing_time),
+            modifiedOn: row.modified_on,
             isActive: row.is_active === TrueFalse.True,
             createdBy: Number(row.created_by)
         };

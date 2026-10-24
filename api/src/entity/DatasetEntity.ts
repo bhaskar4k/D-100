@@ -77,6 +77,7 @@ export interface DatasetDetailRow extends RowDataPacket {
     processing_time: string | number | null;
     created_by: number;
     created_on: Date;
+    modified_on: Date | null;
     is_active: number;
 }
 
@@ -112,6 +113,7 @@ export interface DatasetDetailItem {
     processingInitiatedOn: Date | null;
     processingCompletedOn: Date | null;
     processingTime: number | null;
+    modifiedOn: Date | null;
     isActive: boolean;
     createdBy: number;
 }

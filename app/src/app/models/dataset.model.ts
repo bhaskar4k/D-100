@@ -43,6 +43,7 @@ export interface DatasetDetailItem {
     processingInitiatedOn: string | null;
     processingCompletedOn: string | null;
     processingTime: number | null;
+    modifiedOn: string | null;
     isActive: boolean;
     createdBy: number;
 }
