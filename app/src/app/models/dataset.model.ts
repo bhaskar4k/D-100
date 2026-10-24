@@ -8,6 +8,7 @@ export interface DatasetItem {
     isProcessed: boolean;
     processingStatus: number;
     processingCompletedOn: string | null;
+    modifiedOn: string | null;
     isActive: boolean;
 }
 

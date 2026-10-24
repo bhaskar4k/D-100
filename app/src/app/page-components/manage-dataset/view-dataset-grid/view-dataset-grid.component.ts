@@ -33,6 +33,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
     'isProcessed',
     'processingStatus',
     'processedOn',
+    'modifiedOn',
     'action'
   ];
 

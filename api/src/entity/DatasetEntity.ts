@@ -10,6 +10,7 @@ export interface DatasetRow extends RowDataPacket {
     is_processed: number;
     processing_status: number;
     processing_completed_on: Date | null;
+    modified_on: Date | null;
     is_active: number;
 }
 
@@ -23,6 +24,7 @@ export interface DatasetItem {
     isProcessed: boolean;
     processingStatus: number;
     processingCompletedOn: Date | null;
+    modifiedOn: Date | null;
     isActive: boolean;
 }
 

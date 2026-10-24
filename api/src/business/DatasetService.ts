@@ -55,7 +55,8 @@ export class DatasetService {
 
             const [rows] = await pool.query<DatasetRow[]>(
                 `SELECT dataset_uid, filename, extension, filesize, status, created_on,
-                        is_processed, processing_status, processing_completed_on, is_active
+                        is_processed, processing_status, processing_completed_on,
+                        modified_on, is_active
                  FROM T_DATASET
                  ${where}
                  ORDER BY id DESC
@@ -74,6 +75,7 @@ export class DatasetService {
                     isProcessed: row.is_processed === TrueFalse.True ? true : false,
                     processingStatus: row.processing_status,
                     processingCompletedOn: row.processing_completed_on,
+                    modifiedOn: row.modified_on,
                     isActive: row.is_active === TrueFalse.True ? true : false
                 })),
                 total: Number(countRows[0].total),
