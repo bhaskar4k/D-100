@@ -223,6 +223,62 @@ export class DatasetService {
     }
 
 
+    // Renames a dataset. Returns an error message when the dataset doesn't exist, doesn't belong
+    // to the caller, is deleted, or when the new name fails validation; null once filename and
+    // modified_on have been updated.
+    static async UpdateName(UserId: number, DatasetUid: string, NewName: string): Promise<string | null> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        const trimmed = (NewName ?? "").trim();
+
+        if (trimmed.length === 0) {
+            return "Dataset name is required.";
+        }
+
+        if (trimmed.length > 255) {
+            return "Dataset name must be 255 characters or fewer.";
+        }
+
+        // Disallow path separators or control chars — the filename is used later for file paths.
+        if (/[\\/:*?"<>|\x00-\x1f]/.test(trimmed)) {
+            return "Dataset name contains invalid characters.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [rows] = await pool.query<DatasetOwnerRow[]>(
+            `SELECT id, created_by, status, processing_status, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (rows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = rows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active !== TrueFalse.True) {
+            return "Dataset is deleted.";
+        }
+
+        await pool.execute(
+            `UPDATE T_DATASET SET filename = ?, modified_on = NOW(3) WHERE id = ?`,
+            [trimmed, dataset.id]
+        );
+
+        return null;
+    }
+
+
     // Soft-deletes a dataset (is_active = 0). Returns an error message when the dataset doesn't
     // exist, doesn't belong to the caller, is already deleted, or is currently being processed;
     // null once is_active has been flipped off. Hard delete would strand the raw file and any

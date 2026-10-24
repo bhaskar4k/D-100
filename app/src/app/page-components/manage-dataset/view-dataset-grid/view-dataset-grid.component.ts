@@ -13,6 +13,7 @@ import { DATASET_PROCESSING_STATUS_LABEL, DatasetProcessingStatus } from '../../
 import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
+import { EditDatasetNameComponent, EditDatasetNameDialogData, EditDatasetNameDialogResult } from '../../../page-components-shared/edit-dataset-name/edit-dataset-name.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -37,6 +38,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
 
   ProcessingUids = new Set<string>();
   DeletingUids = new Set<string>();
+  RenamingUids = new Set<string>();
   readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
   readonly ReadableSize = GetReadableFileSize;
   readonly FileIcon = GetFileIconByExtension;
@@ -113,6 +115,49 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
 
   OnInfo(datasetUid: string): void {
     this.router.navigate(['/datasets/view'], { queryParams: { id: datasetUid } });
+  }
+
+  OnEdit(row: DatasetItem): void {
+    if (this.RenamingUids.has(row.datasetUid)) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open<EditDatasetNameComponent, EditDatasetNameDialogData, EditDatasetNameDialogResult>(
+      EditDatasetNameComponent,
+      {
+        data: { datasetUid: row.datasetUid, fileName: row.fileName, extension: row.extension },
+        autoFocus: 'first-tabbable'
+      }
+    );
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result || !result.newName || result.newName === row.fileName) {
+        return;
+      }
+
+      this.RenamingUids.add(row.datasetUid);
+
+      this.datasetService.UpdateName(row.datasetUid, result.newName).subscribe({
+        next: response => {
+          this.RenamingUids.delete(row.datasetUid);
+          this.Load();
+
+          this.dialog.open(CustomAlertComponent, {
+            data: {
+              text: response.message,
+              type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+            }
+          });
+        },
+        error: () => {
+          this.RenamingUids.delete(row.datasetUid);
+
+          this.dialog.open(CustomAlertComponent, {
+            data: { text: 'Failed to rename dataset.', type: ResponseTypeColor.ERROR }
+          });
+        }
+      });
+    });
   }
 
   OnDelete(datasetUid: string, fileName: string, extension: string): void {
