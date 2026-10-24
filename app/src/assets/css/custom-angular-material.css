@@ -1,8 +1,16 @@
 .cdk-overlay-container .mat-mdc-tooltip .mdc-tooltip__surface {
     background: #161b22 !important;
     color: #f0f6fc !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border: 2px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: 8px !important;
+    /* MDC's default (padding + line-height) draws the text off-center, so the bottom gap
+       looks smaller than the top. Normalize both with symmetric vertical padding and a
+       1-line-height box. */
+    padding: 6px 10px 8px 10px !important;
+    line-height: 1 !important;
+    min-height: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
 }
 
 /* Removes default styling wrapper defaults for ALL dialogs across the app */
