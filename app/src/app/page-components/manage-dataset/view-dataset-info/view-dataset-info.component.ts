@@ -69,14 +69,14 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
       const text = filter.trim().toLowerCase();
       if (!text) return true;
 
-      const typeLabel = (DATA_TYPE_LABEL[data.type] ?? '').toLowerCase();
+      const typeLabel = (DATA_TYPE_LABEL[data.type]?.label ?? '').toLowerCase();
       return data.columnName.toLowerCase().includes(text) || typeLabel.includes(text);
     };
 
     this.ColumnDataSource.sortingDataAccessor = (data, sortHeaderId) => {
       switch (sortHeaderId) {
         case 'columnName': return data.columnName.toLowerCase();
-        case 'type': return DATA_TYPE_LABEL[data.type] ?? '';
+        case 'type': return DATA_TYPE_LABEL[data.type]?.label ?? '';
         case 'nullable': return data.nullable ? 1 : 0;
         case 'uniqueCount': return data.uniqueCount;
         default: return '';
@@ -123,8 +123,8 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
     return DATASET_PROCESSING_STATUS_LABEL[status] ?? { label: 'Unknown', color: 'status-init' };
   }
 
-  GetTypeLabel(type: number): string {
-    return DATA_TYPE_LABEL[type] ?? 'Unknown';
+  GetType(type: number): { label: string; color: string } {
+    return DATA_TYPE_LABEL[type] ?? { label: 'Unknown', color: 'type-unknown' };
   }
 
   OnColumnSearch(value: string): void {
