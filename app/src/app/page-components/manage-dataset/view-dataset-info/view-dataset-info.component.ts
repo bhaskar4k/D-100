@@ -15,6 +15,7 @@ import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
 import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
+import { CustomDialogComponent, CustomDialogData } from '../../../page-components-shared/custom-dialog/custom-dialog.component';
 import { EditColumnNameComponent, EditColumnNameDialogData, EditColumnNameDialogResult } from '../edit-column-name/edit-column-name.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -146,35 +147,51 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
 
     const datasetUid = this.Dataset.datasetUid;
 
-    const confirmed = window.confirm(`Delete column "${column.columnName}"? This also drops it from the ingested file.`);
-    if (!confirmed) {
-      return;
-    }
-
-    this.DeletingColumnIds.add(column.id);
-
-    this.datasetService.DeleteColumn(datasetUid, column.id).subscribe({
-      next: response => {
-        this.DeletingColumnIds.delete(column.id);
-
-        if (response.success) {
-          this.Load(datasetUid);
+    const confirmRef = this.dialog.open<CustomDialogComponent, CustomDialogData, boolean>(
+      CustomDialogComponent,
+      {
+        data: {
+          title: 'Delete column',
+          message: `Are you sure you want to delete column <strong>${column.columnName}</strong>?<br>This also drops it from the processed file.
+          <br>This cannot be undone.
+          <br>Although, you can bring it back from the unprocessed file.`,
+          confirmLabel: 'Delete',
+          cancelLabel: 'Cancel',
+          type: ResponseTypeColor.ERROR
         }
-
-        this.dialog.open(CustomAlertComponent, {
-          data: {
-            text: response.message,
-            type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
-          }
-        });
-      },
-      error: () => {
-        this.DeletingColumnIds.delete(column.id);
-
-        this.dialog.open(CustomAlertComponent, {
-          data: { text: 'Failed to delete column.', type: ResponseTypeColor.ERROR }
-        });
       }
+    );
+
+    confirmRef.afterClosed().subscribe((approved) => {
+      if (!approved) {
+        return;
+      }
+
+      this.DeletingColumnIds.add(column.id);
+
+      this.datasetService.DeleteColumn(datasetUid, column.id).subscribe({
+        next: response => {
+          this.DeletingColumnIds.delete(column.id);
+
+          if (response.success) {
+            this.Load(datasetUid);
+          }
+
+          this.dialog.open(CustomAlertComponent, {
+            data: {
+              text: response.message,
+              type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+            }
+          });
+        },
+        error: () => {
+          this.DeletingColumnIds.delete(column.id);
+
+          this.dialog.open(CustomAlertComponent, {
+            data: { text: 'Failed to delete column.', type: ResponseTypeColor.ERROR }
+          });
+        }
+      });
     });
   }
 

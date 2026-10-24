@@ -13,6 +13,7 @@ import { DATASET_PROCESSING_STATUS_LABEL, DatasetProcessingStatus } from '../../
 import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
+import { CustomDialogComponent, CustomDialogData } from '../../../page-components-shared/custom-dialog/custom-dialog.component';
 import { EditDatasetNameComponent, EditDatasetNameDialogData, EditDatasetNameDialogResult } from '../edit-dataset-name/edit-dataset-name.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -166,32 +167,46 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const confirmed = window.confirm(`Delete dataset "${fileName}${extension}"?`);
-    if (!confirmed) {
-      return;
-    }
-
-    this.DeletingUids.add(datasetUid);
-
-    this.datasetService.Delete(datasetUid).subscribe({
-      next: response => {
-        this.DeletingUids.delete(datasetUid);
-        this.Load();
-
-        this.dialog.open(CustomAlertComponent, {
-          data: {
-            text: response.message,
-            type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
-          }
-        });
-      },
-      error: () => {
-        this.DeletingUids.delete(datasetUid);
-
-        this.dialog.open(CustomAlertComponent, {
-          data: { text: 'Failed to delete dataset.', type: ResponseTypeColor.ERROR }
-        });
+    const confirmRef = this.dialog.open<CustomDialogComponent, CustomDialogData, boolean>(
+      CustomDialogComponent,
+      {
+        data: {
+          title: 'Delete dataset',
+          message: `Are you sure you want to delete <strong>${fileName}${extension}</strong>?`,
+          confirmLabel: 'Delete',
+          cancelLabel: 'Cancel',
+          type: ResponseTypeColor.ERROR
+        }
       }
+    );
+
+    confirmRef.afterClosed().subscribe((approved) => {
+      if (!approved) {
+        return;
+      }
+
+      this.DeletingUids.add(datasetUid);
+
+      this.datasetService.Delete(datasetUid).subscribe({
+        next: response => {
+          this.DeletingUids.delete(datasetUid);
+          this.Load();
+
+          this.dialog.open(CustomAlertComponent, {
+            data: {
+              text: response.message,
+              type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+            }
+          });
+        },
+        error: () => {
+          this.DeletingUids.delete(datasetUid);
+
+          this.dialog.open(CustomAlertComponent, {
+            data: { text: 'Failed to delete dataset.', type: ResponseTypeColor.ERROR }
+          });
+        }
+      });
     });
   }
 
