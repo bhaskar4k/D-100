@@ -122,7 +122,7 @@ export class DatasetController {
             }
 
             res.status(HttpStatusCode.OK).json(
-                new SuccessDto(true, "Column deleted successfully.", HttpStatusCode.OK)
+                new SuccessDto(true, "Column has been successfully deleted.", HttpStatusCode.OK)
             );
         } catch (error) {
             await Logger.Error("Dataset DeleteColumn Error", error, req.UserData?.id);
