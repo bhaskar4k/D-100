@@ -15,6 +15,7 @@ import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
 import { CustomDialogComponent, CustomDialogData } from '../../../page-components-shared/custom-dialog/custom-dialog.component';
 import { EditDatasetNameComponent, EditDatasetNameDialogData, EditDatasetNameDialogResult } from '../edit-dataset-name/edit-dataset-name.component';
+import { PreviewDatasetComponent, PreviewDatasetDialogData } from '../../../page-components-shared/preview-dataset/preview-dataset.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -117,6 +118,21 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
 
   OnInfo(datasetUid: string): void {
     this.router.navigate(['/datasets/view'], { queryParams: { id: datasetUid } });
+  }
+
+  CanPreview(row: DatasetItem): boolean {
+    return row.isActive && row.isProcessed;
+  }
+
+  OnPreview(row: DatasetItem): void {
+    this.dialog.open<PreviewDatasetComponent, PreviewDatasetDialogData>(
+      PreviewDatasetComponent,
+      {
+        data: { datasetUid: row.datasetUid, fileName: row.fileName, extension: row.extension },
+        autoFocus: 'first-tabbable',
+        panelClass: 'preview-dataset-dialog'
+      }
+    );
   }
 
   OnEdit(row: DatasetItem): void {

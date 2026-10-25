@@ -22,6 +22,7 @@ export const Endpoints = {
         GetAll: "Dataset/GetAll",
         GetDeleted: "Dataset/GetDeleted",
         GetDetails: "Dataset/GetDetails",
+        Preview: "Dataset/Preview",
         Process: "Dataset/Process",
         UpdateName: "Dataset/UpdateName",
         UpdateColumnName: "Dataset/UpdateColumnName",

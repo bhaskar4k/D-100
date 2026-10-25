@@ -7,7 +7,7 @@ import { DatasetProcessingStatus } from "../enum/DatasetProcessingStatus";
 import { DatasetCountRow, DatasetPage, DatasetRow } from "../entity/DatasetEntity";
 import { DatasetProcessingQueue, GetRabbitMqChannel } from "../config/RabbitMqConfig";
 import { StatusLabels } from "../enum/FileUploadStatus";
-import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow, ColumnLookupRow } from "../entity/DatasetEntity";
+import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow, ColumnLookupRow, DatasetPreviewResult, DatasetPreviewColumn } from "../entity/DatasetEntity";
 import { TrueFalse } from "../enum/CommonEnum";
 import { RunPython } from "../python-manager/PythonManager";
 import { BuildIngestFilePath } from "../util/UploadUtil";
@@ -18,6 +18,7 @@ const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
 const PythonProcessingTimeoutMs = Number(process.env.DATASET_PROCESSING_TIMEOUT_MS) || 30 * 60 * 1000;
 const AutoDeletionDays = Number(process.env.AUTO_DELETION_TIME_IN_DAYS) || 30;
 const SecondsPerDay = 24 * 60 * 60;
+const TopNRowDatasetPreview = Math.max(1, Number(process.env.TOP_N_ROW_DATASET_PREVIEW) || 1000);
 
 if (!INGEST_UPLOAD_PATH) {
     throw new Error("INGEST_UPLOAD_PATH is not configured in .env");
@@ -261,6 +262,89 @@ export class DatasetService {
         }));
 
         return { dataset, columns };
+    }
+
+
+    // Reads the first TOP_N_ROW_DATASET_PREVIEW rows out of the dataset's INGEST parquet and
+    // pairs them with the dataset's column metadata from T_COLUMN. The slice happens on the
+    // Python side (LazyFrame.head before collect), so the file size does not matter for memory.
+    // Returns an error message when the dataset doesn't exist, doesn't belong to the caller,
+    // is deleted, is not yet processed, or when the file read fails.
+    static async Preview(UserId: number, DatasetUid: string): Promise<DatasetPreviewResult | string> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [datasetRows] = await pool.query<DatasetDetailRow[]>(
+            `SELECT id, dataset_uid, filename, extension, created_by,
+                    is_processed, processing_status, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (datasetRows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = datasetRows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active !== TrueFalse.True) {
+            return "Dataset is deleted.";
+        }
+
+        if (dataset.is_processed !== TrueFalse.True) {
+            return "Dataset is not processed yet.";
+        }
+
+        const [columnRows] = await pool.query<DatasetColumnRow[]>(
+            `SELECT id, column_name, type, nullable, unique_count, modified_on
+             FROM T_COLUMN
+             WHERE dataset_id = ?
+             ORDER BY id ASC`,
+            [dataset.id]
+        );
+
+        if (columnRows.length === 0) {
+            return "No columns are available for this dataset.";
+        }
+
+        const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
+
+        const response = await RunPython<{ columns: string[]; rows: Record<string, unknown>[]; rowCount: number }>(
+            "PreviewDataset",
+            { FilePath: ingestPath, TopN: TopNRowDatasetPreview },
+            PythonProcessingTimeoutMs
+        );
+
+        if (!response.success || !response.data) {
+            return response.message || "Could not read the dataset file.";
+        }
+
+        const columns: DatasetPreviewColumn[] = columnRows.map((Column) => ({
+            id: Number(Column.id),
+            columnName: Column.column_name,
+            type: Column.type,
+            nullable: Column.nullable === TrueFalse.True,
+            uniqueCount: Number(Column.unique_count)
+        }));
+
+        return {
+            datasetUid: dataset.dataset_uid,
+            fileName: dataset.filename,
+            extension: dataset.extension,
+            columns,
+            rows: response.data.rows,
+            rowCount: response.data.rowCount,
+            topN: TopNRowDatasetPreview
+        };
     }
 
 

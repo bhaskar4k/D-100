@@ -14,6 +14,9 @@ from ..enums.data_type import FromPolarsDtype
 from ..registry import expose
 
 
+MaxPreviewRowCount = 10000
+
+
 @expose
 def GetFileMetadata(FilePath: str) -> BaseDto:
     """Exact metadata of a data file, shaped like the API's DatafileMetadata:
@@ -73,3 +76,49 @@ def GetFileMetadata(FilePath: str) -> BaseDto:
     ]
 
     return SuccessDto({"rowCount": Counts[0], "columnInfo": ColumnInfo}, "File metadata retrieved.", HttpStatusCode.OK)
+
+
+@expose
+def PreviewDataset(FilePath: str, TopN: int) -> BaseDto:
+    """Returns the first TopN rows of the file at FilePath as JSON-friendly records.
+
+    The LazyFrame is sliced before collect so only TopN rows are materialized, which
+    keeps the preview cheap for very large files. Each row is a dict keyed by column
+    name; values are plain Python scalars that the __main__ JSON writer handles via
+    its str() fallback for date / datetime / decimal / bytes.
+    """
+    if not os.path.isfile(FilePath):
+        return ErrorDto(None, "File not found.", HttpStatusCode.NOT_FOUND, {"FilePath": FilePath})
+
+    if not IsSupported(FilePath):
+        return ErrorDto(
+            None,
+            f"Unsupported file type '{GetExtension(FilePath)}'. Supported: {', '.join(SupportedExtensions)}",
+            HttpStatusCode.BAD_REQUEST,
+            {"FilePath": FilePath},
+        )
+
+    if not isinstance(TopN, int) or TopN <= 0:
+        return ErrorDto(None, "TopN must be a positive integer.", HttpStatusCode.BAD_REQUEST)
+
+    # Clamp defensively so a mis-configured env var can't materialize an unbounded slice.
+    Limit = min(TopN, MaxPreviewRowCount)
+
+    try:
+        Lazy = ReadFileAsPolarsLazyFrame(FilePath)
+        Frame = Lazy.head(Limit).collect()
+        Columns = Frame.columns
+        Rows = Frame.to_dicts()
+    except Exception as error:  # noqa: BLE001 - unreadable/corrupt files are a client problem, not a crash
+        return ErrorDto(
+            None,
+            f"Could not read the file: {error}",
+            HttpStatusCode.UNPROCESSABLE_ENTITY,
+            {"FilePath": FilePath, "type": type(error).__name__},
+        )
+
+    return SuccessDto(
+        {"columns": Columns, "rows": Rows, "rowCount": len(Rows)},
+        "Preview rows retrieved.",
+        HttpStatusCode.OK,
+    )

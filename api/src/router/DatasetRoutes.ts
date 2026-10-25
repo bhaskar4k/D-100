@@ -9,6 +9,7 @@ DatasetRouter.use(JwtMiddleWare);
 DatasetRouter.get("/GetAll", DatasetController.GetAll);
 DatasetRouter.get("/GetDeleted", DatasetController.GetDeleted);
 DatasetRouter.get("/GetDetails/:datasetUid", DatasetController.GetDetails);
+DatasetRouter.get("/Preview/:datasetUid", DatasetController.Preview);
 DatasetRouter.post("/Process", DatasetController.Process);
 DatasetRouter.post("/UpdateName", DatasetController.UpdateName);
 DatasetRouter.post("/UpdateColumnName", DatasetController.UpdateColumnName);

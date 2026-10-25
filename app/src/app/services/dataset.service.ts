@@ -46,6 +46,10 @@ export class DatasetService {
         return this.http.get<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.GetDetails + '/' + encodeURIComponent(datasetUid));
     }
 
+    Preview(datasetUid: string): Observable<ApiResponseDto> {
+        return this.http.get<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.Preview + '/' + encodeURIComponent(datasetUid));
+    }
+
     UpdateName(datasetUid: string, newName: string): Observable<ApiResponseDto> {
         return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.UpdateName, { datasetUid, newName });
     }

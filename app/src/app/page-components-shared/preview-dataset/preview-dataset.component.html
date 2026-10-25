@@ -1,0 +1,80 @@
+<div class="card shadow border rounded-3 border-secondary-subtle p-0 overflow-hidden mx-auto text-body bg-body preview-dialog"
+    data-bs-theme="dark">
+
+    <h2
+        class="card-title h5 border-bottom border-secondary-subtle m-0 p-3 bg-body-tertiary fw-bold rounded-top-3 d-flex align-items-center justify-content-between">
+        <span class="text-primary">
+            <i class="bi bi-table me-2"></i>
+            Preview Dataset
+            @if (Preview && Preview.fileName) {
+            <span class="text-muted fw-normal ms-2 small">{{ Preview.fileName }}{{ Preview.extension }}</span>
+            }
+        </span>
+        <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="OnClose()"></button>
+    </h2>
+
+    <div class="card-body p-0 preview-body">
+        @if (Loading) {
+        <div class="preview-state">
+            <mat-spinner diameter="40"></mat-spinner>
+            <span class="mt-3 text-muted small">Loading preview...</span>
+        </div>
+        } @else if (ErrorMessage) {
+        <div class="preview-state">
+            <i class="bi bi-exclamation-triangle-fill text-danger fs-2"></i>
+            <span class="mt-2 text-danger">{{ ErrorMessage }}</span>
+        </div>
+        } @else if (Preview) {
+        <div
+            class="preview-info px-3 pt-3 pb-2 d-flex align-items-center justify-content-between flex-wrap gap-2 small text-muted">
+            <span>
+                Showing top <strong class="text-body">{{ Preview.rowCount }}</strong>
+                of up to <strong class="text-body">{{ Preview.topN }}</strong> rows ·
+                <strong class="text-body">{{ Preview.columns.length }}</strong> columns
+            </span>
+        </div>
+
+        <div class="preview-table-wrapper app-scroll-thin">
+            <table mat-table class="app-table preview-table" [dataSource]="Rows">
+                @for (column of Preview.columns; track column.id) {
+                <ng-container [matColumnDef]="column.columnName">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="preview-th">
+                            <span class="preview-th-name" [matTooltip]="column.columnName" matTooltipPosition="above">{{
+                                column.columnName }}</span>
+                            <span class="app-badge preview-type-badge" [class]="ResolveType(column.type).color">
+                                {{ ResolveType(column.type).label }}
+                            </span>
+                        </div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        @if (IsNullish(row, column.columnName)) {
+                        <span class="preview-null">null</span>
+                        } @else {
+                        <span class="preview-cell" [matTooltip]="CellValue(row, column.columnName)"
+                            matTooltipPosition="above">
+                            {{ CellValue(row, column.columnName) }}
+                        </span>
+                        }
+                    </td>
+                </ng-container>
+                }
+
+                <tr mat-header-row *matHeaderRowDef="DisplayedColumns; sticky: true"></tr>
+                <tr mat-row *matRowDef="let row; columns: DisplayedColumns"></tr>
+
+                <tr class="mat-mdc-no-data-row" *matNoDataRow>
+                    <td class="mat-mdc-cell" [attr.colspan]="DisplayedColumns.length || 1">
+                        The dataset has no rows to preview.
+                    </td>
+                </tr>
+            </table>
+        </div>
+        }
+    </div>
+
+    <div
+        class="border-top border-secondary-subtle bg-body-tertiary p-3 m-0 d-flex justify-content-end gap-2 rounded-bottom-3">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="OnClose()">Close</button>
+    </div>
+</div>

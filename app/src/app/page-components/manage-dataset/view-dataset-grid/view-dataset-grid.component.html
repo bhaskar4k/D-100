@@ -100,6 +100,13 @@
                                 <i class="bi bi-clipboard-data"></i>
                             </button>
 
+                            <button type="button" class="app-table-action text-primary"
+                                matTooltip="Preview dataset rows" matTooltipPosition="above"
+                                aria-label="Preview dataset" *ngIf="CanPreview(row)" [disabled]="MatProgressBar"
+                                (click)="OnPreview(row)">
+                                <i class="bi bi-eye-fill"></i>
+                            </button>
+
                             <button type="button" class="app-table-action text-success" matTooltip="Rename dataset"
                                 matTooltipPosition="above" aria-label="Rename dataset"
                                 [disabled]="RenamingUids.has(row.datasetUid) || MatProgressBar" (click)="OnEdit(row)">

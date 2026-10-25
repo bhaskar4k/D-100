@@ -1,0 +1,77 @@
+.preview-dialog {
+    width: min(92vw, 1200px);
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+
+.preview-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.preview-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+}
+
+.preview-info {
+    flex: 0 0 auto;
+}
+
+.preview-table-wrapper {
+    flex: 1 1 auto;
+    min-height: 240px;
+    max-height: 65vh;
+    overflow: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.preview-table {
+    width: 100%;
+}
+
+.preview-table th,
+.preview-table td {
+    white-space: nowrap;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.preview-th {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preview-th-name {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 240px;
+}
+
+.preview-type-badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+}
+
+.preview-cell {
+    display: inline-block;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.preview-null {
+    color: #6c757d;
+    font-style: italic;
+}

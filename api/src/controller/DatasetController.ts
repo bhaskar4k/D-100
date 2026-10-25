@@ -107,6 +107,32 @@ export class DatasetController {
     }
 
 
+    static async Preview(req: Request, res: Response): Promise<void> {
+        try {
+            await Logger.Info("PreviewDataset -> Called", req.UserData?.id);
+
+            const datasetUid = String(req.params.datasetUid ?? "").trim();
+
+            const result = await DatasetService.Preview(Number(req.UserData!.id), datasetUid);
+
+            if (typeof result === "string") {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, result, HttpStatusCode.BAD_REQUEST));
+                return;
+            }
+
+            res.status(HttpStatusCode.OK).json(
+                new SuccessDto(result, "Dataset preview retrieved successfully.", HttpStatusCode.OK)
+            );
+        } catch (error) {
+            await Logger.Error("Preview Dataset Error", error, req.UserData?.id);
+
+            res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
+                new ErrorDto(null, "An unexpected error occurred while fetching the dataset preview.", HttpStatusCode.INTERNAL_SERVER_ERROR)
+            );
+        }
+    }
+
+
     static async DeleteColumn(req: Request, res: Response): Promise<void> {
         try {
             await Logger.Info("DatasetDeleteColumn -> Called", req.UserData?.id);

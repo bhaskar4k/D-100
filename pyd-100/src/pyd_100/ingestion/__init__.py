@@ -1,2 +1,2 @@
-from .FileReader import GetFileMetadata
+from .FileReader import GetFileMetadata, PreviewDataset
 from .FileWriter import ConvertToParquet, DeleteColumnFromParquet, RenameColumnInParquet

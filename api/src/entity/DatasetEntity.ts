@@ -132,3 +132,21 @@ export interface DatasetDetailResult {
 export interface ColumnLookupRow extends RowDataPacket {
     column_name: string;
 }
+
+export interface DatasetPreviewColumn {
+    id: number;
+    columnName: string;
+    type: number;
+    nullable: boolean;
+    uniqueCount: number;
+}
+
+export interface DatasetPreviewResult {
+    datasetUid: string;
+    fileName: string;
+    extension: string;
+    columns: DatasetPreviewColumn[];
+    rows: Record<string, unknown>[];
+    rowCount: number;
+    topN: number;
+}
