@@ -1,0 +1,162 @@
+.preview-dialog {
+    width: min(max-content, 80vw);
+    min-width: min(560px, 90vw);
+    max-width: 80vw;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+
+.preview-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.preview-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px;
+    min-height: 140px;
+    text-align: center;
+}
+
+.preview-state ::ng-deep .mat-mdc-progress-spinner circle {
+    stroke: var(--bs-primary);
+}
+
+.preview-info {
+    flex: 0 0 auto;
+    color: #9ca3af;
+}
+
+.preview-info strong {
+    color: #e5e7eb;
+}
+
+.preview-table-wrapper {
+    flex: 1 1 auto;
+    min-height: 240px;
+    max-height: 65vh;
+    overflow: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: #0d1117;
+}
+
+.preview-table {
+    width: 100%;
+    background-color: transparent !important;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Sticky header: solid background with a crisp bottom border so rows do not bleed through. */
+.preview-table th.mat-mdc-header-cell {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #050810;
+    color: #ffffff;
+    text-align: center;
+    vertical-align: middle;
+    padding: 10px 14px;
+    font-size: 0.75rem;
+    text-transform: none;
+    letter-spacing: 0;
+    border-bottom: 2px solid rgba(59, 130, 246, 0.35);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    white-space: nowrap;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.preview-table th.mat-mdc-header-cell:last-child {
+    border-right: 0;
+}
+
+/* Data cells: center aligned, compact, with a soft right divider between columns. */
+.preview-table td.mat-mdc-cell {
+    padding: 8px 14px;
+    font-size: 0.8125rem;
+    color: #e5e7eb;
+    text-align: center;
+    vertical-align: middle;
+    max-width: 360px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
+    background-color: transparent;
+}
+
+.preview-table td.mat-mdc-cell:last-child {
+    border-right: 0;
+}
+
+.preview-table td.preview-cell-numeric,
+.preview-table th.preview-cell-numeric {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Zebra striping over the shared dark background. */
+.preview-table tr.mat-mdc-row {
+    background-color: transparent;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.preview-table tr.mat-mdc-row:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.015);
+}
+
+.preview-table tr.mat-mdc-row:nth-of-type(even) {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.preview-table tr.mat-mdc-row:hover {
+    background-color: rgba(59, 130, 246, 0.14);
+}
+
+.preview-table tr.mat-mdc-no-data-row td.mat-mdc-cell {
+    padding: 32px 16px;
+    text-align: center;
+    color: #9ca3af;
+    border-right: 0;
+}
+
+.preview-th {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preview-th-name {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+    color: #ffffff;
+}
+
+.preview-type-badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.preview-cell {
+    display: inline-block;
+    max-width: 360px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.preview-null {
+    color: #6b7280;
+    font-style: italic;
+}

@@ -11,6 +11,18 @@
         </h4>
 
         <div class="app-page-actions">
+            <button type="button" class="app-icon-button text-primary" matTooltip="Preview top N rows"
+                matTooltipPosition="above" aria-label="Preview dataset" *ngIf="CanPreview(D)"
+                [disabled]="MatProgressBar" (click)="OnPreview(D)">
+                <i class="bi bi-eye-fill"></i>
+            </button>
+
+            <button type="button" class="app-icon-button text-info" matTooltip="Download dataset"
+                matTooltipPosition="above" aria-label="Download dataset" *ngIf="CanDownload(D)"
+                [disabled]="Downloading || MatProgressBar" (click)="OnDownload(D)">
+                <i class="bi bi-cloud-arrow-down-fill"></i>
+            </button>
+
             <button type="button" class="app-icon-button" matTooltip="Back to datasets" matTooltipPosition="above"
                 (click)="BackToList()">
                 <i class="bi bi-arrow-left"></i>

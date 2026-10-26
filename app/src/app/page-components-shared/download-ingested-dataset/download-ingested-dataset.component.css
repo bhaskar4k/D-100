@@ -1,0 +1,62 @@
+.download-dialog {
+    width: 600px;
+    max-width: 100%;
+}
+
+.format-option {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    background-color: #161b22;
+    color: #e5e7eb;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+}
+
+.format-option:hover {
+    border-color: rgba(59, 130, 246, 0.5);
+    background-color: rgba(59, 130, 246, 0.08);
+}
+
+.format-option-selected {
+    border-color: var(--bs-primary) !important;
+    background-color: rgba(59, 130, 246, 0.14) !important;
+}
+
+.format-option>.bi {
+    flex: 0 0 auto;
+}
+
+.format-option-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.format-option-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+.format-option-description {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    line-height: 1.45;
+}
+
+.format-option-check {
+    font-size: 1.2rem;
+    color: #6b7280;
+    flex: 0 0 auto;
+}
+
+.format-option-selected .format-option-check {
+    color: var(--bs-primary);
+}
