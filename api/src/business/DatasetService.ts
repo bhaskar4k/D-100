@@ -338,7 +338,8 @@ export class DatasetService {
         );
 
         if (!response.success || !response.data) {
-            return response.message || "Could not read the dataset file.";
+            await Logger.Error("Preview Python Error", new Error(response.message), UserId);
+            return "Could not read the dataset file. Please try again.";
         }
 
         const columns: DatasetPreviewColumn[] = columnRows.map((Column) => ({
@@ -422,11 +423,7 @@ export class DatasetService {
         );
 
         if (!response.success || !response.data) {
-            await Logger.Error(
-                "PrepareDownloadIngestedDataset Python Error",
-                new Error(response.message),
-                UserId
-            );
+            await Logger.Error("PrepareDownloadIngestedDataset Python Error", new Error(response.message), UserId);
             return "Could not prepare the dataset for download. Please try again.";
         }
 
@@ -758,7 +755,8 @@ export class DatasetService {
 
             if (!response.success) {
                 await connection.rollback();
-                return response.message || "Could not rename the column in the file.";
+                await Logger.Error("UpdateColumnName Python Error", new Error(response.message), UserId);
+                return "Could not rename the column in the file. Please try again.";
             }
 
             await connection.commit();
@@ -850,7 +848,8 @@ export class DatasetService {
 
             if (!response.success) {
                 await connection.rollback();
-                return response.message || "Could not delete the column from the file.";
+                await Logger.Error("DeleteColumn Python Error", new Error(response.message), UserId);
+                return "Could not delete the column from the file. Please try again.";
             }
 
             await connection.commit();
