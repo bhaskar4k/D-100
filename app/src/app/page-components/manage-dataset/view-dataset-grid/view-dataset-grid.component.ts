@@ -16,6 +16,8 @@ import { CustomAlertComponent } from '../../../page-components-shared/custom-ale
 import { CustomDialogComponent, CustomDialogData } from '../../../page-components-shared/custom-dialog/custom-dialog.component';
 import { EditDatasetNameComponent, EditDatasetNameDialogData, EditDatasetNameDialogResult } from '../edit-dataset-name/edit-dataset-name.component';
 import { PreviewDatasetComponent, PreviewDatasetDialogData } from '../../../page-components-shared/preview-dataset/preview-dataset.component';
+import { DownloadDatasetFormatComponent, DownloadDatasetFormatDialogData, DownloadDatasetFormatDialogResult } from '../download-dataset-format/download-dataset-format.component';
+import { DatasetDownloadPlan } from '../../../models/dataset.model';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -42,6 +44,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
   ProcessingUids = new Set<string>();
   DeletingUids = new Set<string>();
   RenamingUids = new Set<string>();
+  DownloadingUids = new Set<string>();
   readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
   readonly ReadableSize = GetReadableFileSize;
   readonly FileIcon = GetFileIconByExtension;
@@ -122,6 +125,98 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
 
   CanPreview(row: DatasetItem): boolean {
     return row.isActive && row.isProcessed;
+  }
+
+  CanDownload(row: DatasetItem): boolean {
+    return row.isActive && row.isProcessed;
+  }
+
+  OnDownload(row: DatasetItem): void {
+    if (this.DownloadingUids.has(row.datasetUid)) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open<DownloadDatasetFormatComponent, DownloadDatasetFormatDialogData, DownloadDatasetFormatDialogResult>(
+      DownloadDatasetFormatComponent,
+      {
+        data: { datasetUid: row.datasetUid, fileName: row.fileName, extension: row.extension },
+        autoFocus: 'first-tabbable'
+      }
+    );
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result) {
+        return;
+      }
+
+      this.StartDownload(row, result.downloadedFileType);
+    });
+  }
+
+  private StartDownload(row: DatasetItem, downloadedFileType: number): void {
+    this.DownloadingUids.add(row.datasetUid);
+    this.MatProgressBar = true;
+
+    this.datasetService.PrepareDownload(row.datasetUid, downloadedFileType).subscribe({
+      next: response => {
+        if (!response.success) {
+          this.DownloadingUids.delete(row.datasetUid);
+          this.MatProgressBar = false;
+          this.dialog.open(CustomAlertComponent, {
+            data: { text: response.message, type: ResponseTypeColor.ERROR }
+          });
+          return;
+        }
+
+        const plan = response.data as DatasetDownloadPlan;
+        this.StreamDownload(row.datasetUid, plan.suggestedDownloadName);
+      },
+      error: () => {
+        this.DownloadingUids.delete(row.datasetUid);
+        this.MatProgressBar = false;
+        this.dialog.open(CustomAlertComponent, {
+          data: { text: 'Failed to prepare the download.', type: ResponseTypeColor.ERROR }
+        });
+      }
+    });
+  }
+
+  private StreamDownload(datasetUid: string, suggestedName: string): void {
+    this.datasetService.DownloadBlob(datasetUid).subscribe({
+      next: response => {
+        this.DownloadingUids.delete(datasetUid);
+        this.MatProgressBar = false;
+
+        if (!response.body) {
+          this.dialog.open(CustomAlertComponent, {
+            data: { text: 'Download returned no file.', type: ResponseTypeColor.ERROR }
+          });
+          return;
+        }
+
+        // Prefer the server's Content-Disposition filename when present so the UI shows what
+        // the backend decided (handles the Excel-zip case). Falls back to the suggested name.
+        const header = response.headers.get('Content-Disposition') ?? '';
+        const match = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(header);
+        const fileName = decodeURIComponent(match?.[1] ?? match?.[2] ?? suggestedName).trim();
+
+        const url = URL.createObjectURL(response.body);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = fileName;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.DownloadingUids.delete(datasetUid);
+        this.MatProgressBar = false;
+        this.dialog.open(CustomAlertComponent, {
+          data: { text: 'Failed to download the dataset.', type: ResponseTypeColor.ERROR }
+        });
+      }
+    });
   }
 
   OnPreview(row: DatasetItem): void {

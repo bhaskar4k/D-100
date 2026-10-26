@@ -150,3 +150,14 @@ export interface DatasetPreviewResult {
     rowCount: number | null;
     topN: number;
 }
+
+// Result of a PrepareDownload call: tells the UI what the follow-up Download endpoint will
+// deliver (a single CSV / parquet, or a zip of Excel chunks) and under what name.
+export interface DatasetDownloadPlan {
+    datasetUid: string;
+    downloadedFileType: number;
+    format: "excel" | "csv" | "parquet";
+    files: string[];
+    suggestedDownloadName: string;
+    isArchive: boolean;
+}

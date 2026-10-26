@@ -73,3 +73,12 @@ export interface DatasetPreviewResult {
     rowCount: number | null;
     topN: number;
 }
+
+export interface DatasetDownloadPlan {
+    datasetUid: string;
+    downloadedFileType: number;
+    format: 'excel' | 'csv' | 'parquet';
+    files: string[];
+    suggestedDownloadName: string;
+    isArchive: boolean;
+}

@@ -1,3 +1,4 @@
+import fs from "fs";
 import path from "path";
 import { validate as IsValidUuid } from "uuid";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
@@ -7,10 +8,11 @@ import { DatasetProcessingStatus } from "../enum/DatasetProcessingStatus";
 import { DatasetCountRow, DatasetPage, DatasetRow } from "../entity/DatasetEntity";
 import { DatasetProcessingQueue, GetRabbitMqChannel } from "../config/RabbitMqConfig";
 import { StatusLabels } from "../enum/FileUploadStatus";
-import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow, ColumnLookupRow, DatasetPreviewResult, DatasetPreviewColumn } from "../entity/DatasetEntity";
+import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow, ColumnLookupRow, DatasetPreviewResult, DatasetPreviewColumn, DatasetDownloadPlan } from "../entity/DatasetEntity";
 import { TrueFalse } from "../enum/CommonEnum";
+import { DownloadedFileType } from "../enum/DownloadedFileType";
 import { RunPython } from "../python-manager/PythonManager";
-import { BuildIngestFilePath } from "../util/UploadUtil";
+import { BuildDownloadFolderPath, BuildIngestFilePath, SanitizeDownloadBaseName } from "../util/UploadUtil";
 
 
 const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
@@ -19,6 +21,11 @@ const PythonProcessingTimeoutMs = Number(process.env.DATASET_PROCESSING_TIMEOUT_
 const AutoDeletionDays = Number(process.env.AUTO_DELETION_TIME_IN_DAYS) || 30;
 const SecondsPerDay = 24 * 60 * 60;
 const TopNRowDatasetPreview = Math.max(1, Number(process.env.TOP_N_ROW_DATASET_PREVIEW) || 1000);
+const DOWNLOAD_TEMP_PATH = process.env.DOWNLOAD_TEMP_PATH;
+
+if (!DOWNLOAD_TEMP_PATH) {
+    throw new Error("DOWNLOAD_TEMP_PATH is not configured in .env");
+}
 
 if (!INGEST_UPLOAD_PATH) {
     throw new Error("INGEST_UPLOAD_PATH is not configured in .env");
@@ -345,6 +352,180 @@ export class DatasetService {
             rowCount: dataset.row_count === null ? null : Number(dataset.row_count),
             topN: TopNRowDatasetPreview
         };
+    }
+
+
+    // Validates ownership + processing state, then asks the pyd-100 side to write the download
+    // artifact(s) into a dedicated scratch folder for this (user, dataset). Returns a plan the
+    // UI uses to trigger the follow-up GET /Dataset/Download/:datasetUid call. Returns an error
+    // message when the dataset is missing, deleted, not processed, or when Python fails.
+    static async PrepareDownload(UserId: number, DatasetUid: string, DownloadedFileTypeValue: number): Promise<DatasetDownloadPlan | string> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        if (DownloadedFileTypeValue !== DownloadedFileType.Excel
+            && DownloadedFileTypeValue !== DownloadedFileType.CSV
+            && DownloadedFileTypeValue !== DownloadedFileType.Parquet) {
+            return "Invalid download file type.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [rows] = await pool.query<DatasetDetailRow[]>(
+            `SELECT id, dataset_uid, filename, extension, created_by,
+                    is_processed, processing_status, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (rows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = rows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active !== TrueFalse.True) {
+            return "Dataset is deleted.";
+        }
+
+        if (dataset.is_processed !== TrueFalse.True) {
+            return "Dataset is not processed yet.";
+        }
+
+        const generatedFileName = SanitizeDownloadBaseName(dataset.filename);
+        const destinationFolderPath = BuildDownloadFolderPath(DOWNLOAD_TEMP_PATH!, UserId, DatasetUid);
+        const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
+
+        const response = await RunPython<{ files: string[]; format: "excel" | "csv" | "parquet" }>(
+            "GenerateDownloadableDatasetFile",
+            {
+                IngestDatasetFilepath: ingestPath,
+                DestinationFolderpath: destinationFolderPath,
+                GeneratedFileName: generatedFileName,
+                DownloadedFileType: DownloadedFileTypeValue
+            },
+            PythonProcessingTimeoutMs
+        );
+
+        if (!response.success || !response.data) {
+            return response.message || "Could not generate the download file.";
+        }
+
+        const isArchive = response.data.format === "excel";
+        const suggestedDownloadName = isArchive ? `${generatedFileName}.zip` : response.data.files[0];
+
+        return {
+            datasetUid: dataset.dataset_uid,
+            downloadedFileType: DownloadedFileTypeValue,
+            format: response.data.format,
+            files: response.data.files,
+            suggestedDownloadName,
+            isArchive
+        };
+    }
+
+
+    // Looks at the scratch folder a prior PrepareDownload populated and returns the plan the
+    // controller needs to stream it: either the single generated file (CSV / Parquet) or the
+    // full list of files to zip (Excel). Does not read the files themselves — the controller
+    // is responsible for streaming. Returns an error message when the dataset is missing,
+    // deleted, not processed, or when the scratch folder is empty.
+    static async ResolveDownload(UserId: number, DatasetUid: string): Promise<DatasetDownloadPlan | string> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [rows] = await pool.query<DatasetDetailRow[]>(
+            `SELECT id, dataset_uid, filename, extension, created_by,
+                    is_processed, processing_status, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (rows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = rows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active !== TrueFalse.True) {
+            return "Dataset is deleted.";
+        }
+
+        if (dataset.is_processed !== TrueFalse.True) {
+            return "Dataset is not processed yet.";
+        }
+
+        const destinationFolderPath = BuildDownloadFolderPath(DOWNLOAD_TEMP_PATH!, UserId, DatasetUid);
+        const generatedFileName = SanitizeDownloadBaseName(dataset.filename);
+
+        let entries: string[];
+        try {
+            entries = (await fs.promises.readdir(destinationFolderPath)).sort();
+        } catch {
+            return "Download has not been prepared. Please try again.";
+        }
+
+        if (entries.length === 0) {
+            return "Download has not been prepared. Please try again.";
+        }
+
+        // Reconstruct the plan from what Python wrote: a single .csv or .parquet means a direct
+        // stream; otherwise (one or more .xlsx chunks) means zip the folder on the fly.
+        const csvMatch = entries.find((Name) => Name.toLowerCase().endsWith(".csv"));
+        const parquetMatch = entries.find((Name) => Name.toLowerCase().endsWith(".parquet"));
+
+        if (csvMatch) {
+            return {
+                datasetUid: dataset.dataset_uid,
+                downloadedFileType: DownloadedFileType.CSV,
+                format: "csv",
+                files: [csvMatch],
+                suggestedDownloadName: csvMatch,
+                isArchive: false
+            };
+        }
+
+        if (parquetMatch) {
+            return {
+                datasetUid: dataset.dataset_uid,
+                downloadedFileType: DownloadedFileType.Parquet,
+                format: "parquet",
+                files: [parquetMatch],
+                suggestedDownloadName: parquetMatch,
+                isArchive: false
+            };
+        }
+
+        return {
+            datasetUid: dataset.dataset_uid,
+            downloadedFileType: DownloadedFileType.Excel,
+            format: "excel",
+            files: entries.filter((Name) => Name.toLowerCase().endsWith(".xlsx")),
+            suggestedDownloadName: `${generatedFileName}.zip`,
+            isArchive: true
+        };
+    }
+
+
+    // Exposed so the controller can turn a DatasetDownloadPlan back into a concrete folder.
+    static GetDownloadFolderPath(UserId: number, DatasetUid: string): string {
+        return BuildDownloadFolderPath(DOWNLOAD_TEMP_PATH!, UserId, DatasetUid);
     }
 
 

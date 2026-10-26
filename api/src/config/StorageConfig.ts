@@ -4,7 +4,8 @@ import "dotenv/config";
 
 const Folders = [
     { name: "RAW", env: "RAW_UPLOAD_PATH" },
-    { name: "INGEST", env: "INGEST_UPLOAD_PATH" }
+    { name: "INGEST", env: "INGEST_UPLOAD_PATH" },
+    { name: "DOWNLOAD", env: "DOWNLOAD_TEMP_PATH" }
 ];
 
 

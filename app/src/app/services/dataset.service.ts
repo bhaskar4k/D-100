@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Endpoints, GetBaseURL } from '../endpoints/endpoint';
 import { ApiResponseDto } from '../models/dto.model';
@@ -48,6 +48,20 @@ export class DatasetService {
 
     Preview(datasetUid: string): Observable<ApiResponseDto> {
         return this.http.get<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.Preview + '/' + encodeURIComponent(datasetUid));
+    }
+
+    PrepareDownload(datasetUid: string, downloadedFileType: number): Observable<ApiResponseDto> {
+        return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.PrepareDownload, { datasetUid, downloadedFileType });
+    }
+
+    // The GET /Dataset/Download endpoint streams a single file (CSV / Parquet) or a zip of
+    // Excel chunks. We use HttpClient so the JWT interceptor attaches the Bearer header, and
+    // ask for a blob so the browser can save the response regardless of content type.
+    DownloadBlob(datasetUid: string): Observable<HttpResponse<Blob>> {
+        return this.http.get(
+            GetBaseURL() + Endpoints.Dataset.Download + '/' + encodeURIComponent(datasetUid),
+            { observe: 'response', responseType: 'blob' }
+        );
     }
 
     UpdateName(datasetUid: string, newName: string): Observable<ApiResponseDto> {
