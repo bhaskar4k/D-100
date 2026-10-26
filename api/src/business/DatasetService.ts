@@ -424,7 +424,7 @@ export class DatasetService {
         if (!response.success || !response.data) {
             await Logger.Error(
                 "PrepareDownloadIngestedDataset Python Error",
-                { message: response.message, extraData: response.extraData, datasetUid: DatasetUid },
+                new Error(response.message),
                 UserId
             );
             return "Could not prepare the dataset for download. Please try again.";
