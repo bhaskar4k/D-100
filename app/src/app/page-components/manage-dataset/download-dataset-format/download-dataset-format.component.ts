@@ -27,16 +27,16 @@ interface FormatOption {
   styleUrl: './download-dataset-format.component.css'
 })
 export class DownloadDatasetFormatComponent {
-  // Excel is the user-facing default per the feature spec; CSV / Parquet are offered for
-  // callers who want a single-file export or a columnar re-ingest.
-  Selected: number = DownloadedFileType.Excel;
+  // CSV is the user-facing default: a single file, universally supported, and avoids the
+  // Excel chunk-and-zip step. Users can still pick Excel or Parquet in one click.
+  Selected: number = DownloadedFileType.CSV;
 
   readonly Formats: FormatOption[] = [
     {
       value: DownloadedFileType.Excel,
       label: DOWNLOADED_FILE_TYPE_LABEL[DownloadedFileType.Excel].label,
       icon: DOWNLOADED_FILE_TYPE_LABEL[DownloadedFileType.Excel].icon,
-      description: 'Multiple .xlsx workbooks (1 million rows each) delivered as a zip.'
+      description: 'Multiple .xlsx workbooks (1 million rows each) delivered as a zip. Slower than CSV and Parquet on large datasets.'
     },
     {
       value: DownloadedFileType.CSV,

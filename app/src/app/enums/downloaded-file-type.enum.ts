@@ -10,5 +10,5 @@ export enum DownloadedFileType {
 export const DOWNLOADED_FILE_TYPE_LABEL: Record<number, { label: string; extension: string; icon: string }> = {
     [DownloadedFileType.Excel]: { label: 'Excel', extension: '.xlsx', icon: 'bi-file-earmark-excel-fill text-success' },
     [DownloadedFileType.CSV]: { label: 'CSV', extension: '.csv', icon: 'bi-filetype-csv text-primary' },
-    [DownloadedFileType.Parquet]: { label: 'Parquet', extension: '.parquet', icon: 'bi-filetype-pq text-warning' },
+    [DownloadedFileType.Parquet]: { label: 'Parquet', extension: '.parquet', icon: 'bi-file-earmark-binary-fill text-warning' },
 };
