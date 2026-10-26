@@ -18,3 +18,14 @@ export function BuildRawFilePath(DatasetUid: string, RAW_UPLOAD_PATH: string, Up
 export function BuildIngestFilePath(DatasetUid: string, INGEST_UPLOAD_PATH: string, UploadedFileName: string): string {
     return path.join(path.resolve(INGEST_UPLOAD_PATH!), DatasetUid, `${UploadedFileName}.parquet`);
 }
+
+
+export function BuildDownloadFolderPath(DOWNLOAD_TEMP_PATH: string, UserId: number, DatasetUid: string): string {
+    return path.join(path.resolve(DOWNLOAD_TEMP_PATH!), String(UserId), String(DatasetUid), "IngestedDataset");
+}
+
+
+export function SanitizeDownloadBaseName(RawName: string): string {
+    const Cleaned = (RawName ?? "").trim().replace(/[\\/:*?"<>|\x00-\x1f]/g, "_");
+    return Cleaned.length > 0 ? Cleaned : "dataset";
+}

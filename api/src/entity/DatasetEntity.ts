@@ -132,3 +132,41 @@ export interface DatasetDetailResult {
 export interface ColumnLookupRow extends RowDataPacket {
     column_name: string;
 }
+
+export interface DatasetPreviewColumn {
+    id: number;
+    columnName: string;
+    type: number;
+    nullable: boolean;
+    uniqueCount: number;
+}
+
+export interface DatasetPreviewResult {
+    datasetUid: string;
+    fileName: string;
+    extension: string;
+    columns: DatasetPreviewColumn[];
+    rows: Record<string, unknown>[];
+    rowCount: number | null;
+    topN: number;
+}
+
+// Result of a PrepareDownload call: tells the UI what the follow-up Download endpoint will
+// deliver (a single CSV / parquet, or a zip of Excel chunks) and under what name.
+export interface DatasetDownloadPlan {
+    datasetUid: string;
+    downloadedFileType: number;
+    format: "excel" | "csv" | "parquet";
+    files: string[];
+    suggestedDownloadName: string;
+    isArchive: boolean;
+}
+
+// Lookup result for a raw-file download: the on-disk path to stream and the user-facing
+// name to send on Content-Disposition. Separate from DatasetDownloadPlan because the raw
+// path never involves chunking or zipping.
+export interface DatasetRawDownloadPlan {
+    datasetUid: string;
+    filePath: string;
+    suggestedDownloadName: string;
+}

@@ -1,22 +1,25 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { HttpResponse } from '@angular/common/http';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
-import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Observable, Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { DatasetService } from '../../../services/dataset.service';
-import { DatasetColumnItem, DatasetDetailItem } from '../../../models/dataset.model';
-import { FILE_UPLOAD_STATUS_LABEL } from '../../../enums/file-upload-status.enum';
+import { DatasetColumnItem, DatasetDetailItem, DatasetDownloadPlan } from '../../../models/dataset.model';
+import { FILE_UPLOAD_STATUS_LABEL, FileUploadStatus } from '../../../enums/file-upload-status.enum';
 import { DATASET_PROCESSING_STATUS_LABEL } from '../../../enums/dataset-processing-status.enum';
 import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
 import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
 import { CustomDialogComponent, CustomDialogData } from '../../../page-components-shared/custom-dialog/custom-dialog.component';
+import { PreviewDatasetComponent, PreviewDatasetDialogData } from '../../../page-components-shared/preview-dataset/preview-dataset.component';
 import { EditColumnNameComponent, EditColumnNameDialogData, EditColumnNameDialogResult } from '../edit-column-name/edit-column-name.component';
+import { DownloadIngestedDatasetComponent, DownloadIngestedDatasetFormatDialogData, DownloadIngestedDatasetFormatDialogResult } from '../../../page-components-shared/download-ingested-dataset/download-ingested-dataset.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -46,6 +49,7 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
   MatProgressBar = false;
   RenamingColumnIds = new Set<number>();
   DeletingColumnIds = new Set<number>();
+  Downloading = false;
 
   private readonly columnSearch$ = new Subject<string>();
   private routeSubscription?: Subscription;
@@ -140,6 +144,137 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
 
   BackToList(): void {
     this.router.navigate(['/datasets']);
+  }
+
+  CanPreview(dataset: DatasetDetailItem): boolean {
+    return dataset.isActive && dataset.isProcessed;
+  }
+
+  OnPreview(dataset: DatasetDetailItem): void {
+    this.dialog.open<PreviewDatasetComponent, PreviewDatasetDialogData>(
+      PreviewDatasetComponent,
+      {
+        data: { datasetUid: dataset.datasetUid, fileName: dataset.fileName, extension: dataset.extension },
+        autoFocus: 'first-tabbable',
+        panelClass: 'preview-dataset-dialog',
+        maxWidth: '80vw',
+        width: 'min(max-content, 80vw)',
+        minWidth: 'min(560px, 90vw)'
+      }
+    );
+  }
+
+  CanDownload(dataset: DatasetDetailItem): boolean {
+    // Processed datasets re-export in any format from the parquet mirror; unprocessed ones
+    // whose upload is complete can still be downloaded as the raw file the user sent.
+    return dataset.isActive && dataset.status === FileUploadStatus.COMPLETED;
+  }
+
+  OnDownload(dataset: DatasetDetailItem): void {
+    if (this.Downloading) {
+      return;
+    }
+
+    if (!dataset.isProcessed) {
+      // No parquet mirror exists yet, so there is nothing to re-encode — just stream the
+      // original uploaded file. Skip the format picker.
+      this.StartRawDatasetDownload(dataset);
+      return;
+    }
+
+    const dialogRef = this.dialog.open<DownloadIngestedDatasetComponent, DownloadIngestedDatasetFormatDialogData, DownloadIngestedDatasetFormatDialogResult>(
+      DownloadIngestedDatasetComponent,
+      {
+        data: { datasetUid: dataset.datasetUid, fileName: dataset.fileName, extension: dataset.extension },
+        autoFocus: 'first-tabbable'
+      }
+    );
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result) {
+        return;
+      }
+
+      this.StartIngestedDatasetDownload(dataset, result.downloadedFileType);
+    });
+  }
+
+  private StartIngestedDatasetDownload(dataset: DatasetDetailItem, downloadedFileType: number): void {
+    this.Downloading = true;
+    this.MatProgressBar = true;
+
+    this.datasetService.PrepareDownloadIngestedDataset(dataset.datasetUid, downloadedFileType).subscribe({
+      next: response => {
+        if (!response.success) {
+          this.Downloading = false;
+          this.MatProgressBar = false;
+          this.dialog.open(CustomAlertComponent, {
+            data: { text: response.message, type: ResponseTypeColor.ERROR }
+          });
+          return;
+        }
+
+        const plan = response.data as DatasetDownloadPlan;
+        this.StreamBlob(
+          this.datasetService.DownloadIngestedDatasetBlob(dataset.datasetUid),
+          plan.suggestedDownloadName
+        );
+      },
+      error: () => {
+        this.Downloading = false;
+        this.MatProgressBar = false;
+        this.dialog.open(CustomAlertComponent, {
+          data: { text: 'Failed to prepare the download.', type: ResponseTypeColor.ERROR }
+        });
+      }
+    });
+  }
+
+  private StartRawDatasetDownload(dataset: DatasetDetailItem): void {
+    this.Downloading = true;
+    this.MatProgressBar = true;
+    this.StreamBlob(
+      this.datasetService.DownloadRawDatasetBlob(dataset.datasetUid),
+      `${dataset.fileName}${dataset.extension}`
+    );
+  }
+
+  private StreamBlob(request$: Observable<HttpResponse<Blob>>, suggestedName: string): void {
+    request$.subscribe({
+      next: response => {
+        this.Downloading = false;
+        this.MatProgressBar = false;
+
+        if (!response.body) {
+          this.dialog.open(CustomAlertComponent, {
+            data: { text: 'Download returned no file.', type: ResponseTypeColor.ERROR }
+          });
+          return;
+        }
+
+        // Prefer the server's Content-Disposition filename when present so the UI shows what
+        // the backend decided (handles the Excel-zip case). Falls back to the suggested name.
+        const header = response.headers.get('Content-Disposition') ?? '';
+        const match = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(header);
+        const fileName = decodeURIComponent(match?.[1] ?? match?.[2] ?? suggestedName).trim();
+
+        const url = URL.createObjectURL(response.body);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = fileName;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.Downloading = false;
+        this.MatProgressBar = false;
+        this.dialog.open(CustomAlertComponent, {
+          data: { text: 'Failed to download the dataset.', type: ResponseTypeColor.ERROR }
+        });
+      }
+    });
   }
 
   OnDeleteColumn(column: DatasetColumnItem): void {

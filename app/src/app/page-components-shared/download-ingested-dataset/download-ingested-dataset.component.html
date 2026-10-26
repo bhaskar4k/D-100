@@ -1,0 +1,47 @@
+<div class="download-dialog card shadow border rounded-3 border-secondary-subtle p-0 overflow-hidden mx-auto text-body bg-body"
+    data-bs-theme="dark">
+
+    <h2
+        class="card-title h5 border-bottom border-secondary-subtle m-0 px-4 py-3 bg-body-tertiary fw-bold rounded-top-3 d-flex align-items-center">
+        <span class="text-primary">
+            <i class="bi bi-download me-2"></i>Download Dataset
+        </span>
+        <span class="text-muted fw-normal ms-2 small text-truncate">{{ data.fileName }}{{ data.extension }}</span>
+    </h2>
+
+    <div class="card-body px-4 py-4">
+        <p class="small text-muted mb-3">Pick the format you want the dataset exported to.</p>
+
+        <div class="alert alert-warning py-2 px-3 small d-flex align-items-start gap-2 mb-4">
+            <i class="bi bi-info-circle-fill mt-1"></i>
+            <span>
+                Excel downloads are noticeably slower than CSV and Parquet because the dataset is
+                split into one-million-row workbooks and then zipped. Prefer CSV or Parquet for
+                large datasets.
+            </span>
+        </div>
+
+        <div class="d-flex flex-column gap-3">
+            @for (format of Formats; track format.value) {
+            <button type="button" class="format-option" [class.format-option-selected]="Selected === format.value"
+                (click)="OnSelect(format.value)">
+                <i class="bi fs-3" [class]="format.icon"></i>
+                <div class="format-option-body">
+                    <div class="format-option-label">{{ format.label }}</div>
+                    <div class="format-option-description">{{ format.description }}</div>
+                </div>
+                <i class="bi format-option-check" [class.bi-check-circle-fill]="Selected === format.value"
+                    [class.bi-circle]="Selected !== format.value"></i>
+            </button>
+            }
+        </div>
+    </div>
+
+    <div
+        class="border-top border-secondary-subtle bg-body-tertiary px-4 py-3 m-0 d-flex justify-content-end gap-2 rounded-bottom-3">
+        <button type="button" class="btn btn-sm btn-secondary px-3" (click)="OnCancel()">Cancel</button>
+        <button type="button" class="btn btn-sm btn-primary px-3" (click)="OnDownload()">
+            <i class="bi bi-download me-1"></i>Download
+        </button>
+    </div>
+</div>
