@@ -18,7 +18,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 48px 24px;
+    gap: 10px;
+    padding: 24px;
+    min-height: 140px;
+    text-align: center;
+}
+
+.preview-state ::ng-deep .mat-mdc-progress-spinner circle {
+    stroke: var(--bs-primary);
 }
 
 .preview-info {
