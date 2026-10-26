@@ -20,22 +20,25 @@ const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
 const RAW_UPLOAD_PATH = process.env.RAW_UPLOAD_PATH;
 const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
 
-if (!RAW_UPLOAD_PATH) {
-    throw new Error("RAW_UPLOAD_PATH is not configured in .env");
-}
+
 const PythonProcessingTimeoutMs = Number(process.env.DATASET_PROCESSING_TIMEOUT_MS) || 30 * 60 * 1000;
 const AutoDeletionDays = Number(process.env.AUTO_DELETION_TIME_IN_DAYS) || 30;
 const SecondsPerDay = 24 * 60 * 60;
 const TopNRowDatasetPreview = Math.max(1, Number(process.env.TOP_N_ROW_DATASET_PREVIEW) || 1000);
 const DOWNLOAD_TEMP_PATH = process.env.DOWNLOAD_TEMP_PATH;
 
-if (!DOWNLOAD_TEMP_PATH) {
-    throw new Error("DOWNLOAD_TEMP_PATH is not configured in .env");
+if (!RAW_UPLOAD_PATH) {
+    throw new Error("RAW_UPLOAD_PATH is not configured in .env");
 }
 
 if (!INGEST_UPLOAD_PATH) {
     throw new Error("INGEST_UPLOAD_PATH is not configured in .env");
 }
+
+if (!DOWNLOAD_TEMP_PATH) {
+    throw new Error("DOWNLOAD_TEMP_PATH is not configured in .env");
+}
+
 
 
 // Builds the WHERE clause for the owning user, plus an optional search over file name (with or
