@@ -182,7 +182,7 @@ export class DatasetService {
 
         await pool.execute(
             `UPDATE T_DATASET
-             SET processing_status = ?, processing_initiated_on = NOW(3),
+             SET processing_status = ?, processing_initiated_on = NULL,
                  processing_completed_on = NULL, processing_time = NULL
              WHERE id = ?`,
             [DatasetProcessingStatus.IN_QUEUE, dataset.id]

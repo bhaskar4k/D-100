@@ -125,7 +125,9 @@ async function ProcessDataset(DatasetId: number): Promise<void> {
     const dataset = rows[0];
 
     await pool.execute(
-        `UPDATE T_DATASET SET processing_status = ? WHERE id = ?`,
+        `UPDATE T_DATASET
+         SET processing_status = ?, processing_initiated_on = NOW(3)
+         WHERE id = ?`,
         [DatasetProcessingStatus.PROCESSING, DatasetId]
     );
 
