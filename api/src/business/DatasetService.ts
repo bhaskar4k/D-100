@@ -279,7 +279,7 @@ export class DatasetService {
 
         const [datasetRows] = await pool.query<DatasetDetailRow[]>(
             `SELECT id, dataset_uid, filename, extension, created_by,
-                    is_processed, processing_status, is_active
+                    is_processed, processing_status, is_active, row_count
              FROM T_DATASET
              WHERE dataset_uid = ?
              LIMIT 1`,
@@ -318,7 +318,7 @@ export class DatasetService {
 
         const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
-        const response = await RunPython<{ columns: string[]; rows: Record<string, unknown>[]; rowCount: number }>(
+        const response = await RunPython<Record<string, unknown>[]>(
             "PreviewDataset",
             { FilePath: ingestPath, TopN: TopNRowDatasetPreview },
             PythonProcessingTimeoutMs
@@ -341,8 +341,8 @@ export class DatasetService {
             fileName: dataset.filename,
             extension: dataset.extension,
             columns,
-            rows: response.data.rows,
-            rowCount: response.data.rowCount,
+            rows: response.data,
+            rowCount: dataset.row_count === null ? null : Number(dataset.row_count),
             topN: TopNRowDatasetPreview
         };
     }

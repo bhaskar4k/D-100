@@ -28,8 +28,12 @@
         <div
             class="preview-info px-3 pt-3 pb-2 d-flex align-items-center justify-content-between flex-wrap gap-2 small text-muted">
             <span>
-                Showing top <strong class="text-body">{{ Preview.rowCount }}</strong>
-                of up to <strong class="text-body">{{ Preview.topN }}</strong> rows ·
+                Showing <strong class="text-body">{{ Rows.length }}</strong>
+                @if (Preview.rowCount !== null) {
+                of <strong class="text-body">{{ Preview.rowCount }}</strong>
+                }
+                row{{ Rows.length === 1 ? '' : 's' }}
+                (top <strong class="text-body">{{ Preview.topN }}</strong> cap) ·
                 <strong class="text-body">{{ Preview.columns.length }}</strong> columns
             </span>
         </div>

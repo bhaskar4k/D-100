@@ -88,14 +88,13 @@ def PreviewDataset(FilePath: str, TopN: int) -> BaseDto:
     its str() fallback for date / datetime / decimal / bytes.
     """
     if not os.path.isfile(FilePath):
-        return ErrorDto(None, "File not found.", HttpStatusCode.NOT_FOUND, {"FilePath": FilePath})
+        return ErrorDto(None, "File not found.", HttpStatusCode.NOT_FOUND)
 
     if not IsSupported(FilePath):
         return ErrorDto(
             None,
             f"Unsupported file type '{GetExtension(FilePath)}'. Supported: {', '.join(SupportedExtensions)}",
             HttpStatusCode.BAD_REQUEST,
-            {"FilePath": FilePath},
         )
 
     if not isinstance(TopN, int) or TopN <= 0:
@@ -105,20 +104,12 @@ def PreviewDataset(FilePath: str, TopN: int) -> BaseDto:
     Limit = min(TopN, MaxPreviewRowCount)
 
     try:
-        Lazy = ReadFileAsPolarsLazyFrame(FilePath)
-        Frame = Lazy.head(Limit).collect()
-        Columns = Frame.columns
-        Rows = Frame.to_dicts()
+        Rows = ReadFileAsPolarsLazyFrame(FilePath).head(Limit).collect().to_dicts()
     except Exception as error:  # noqa: BLE001 - unreadable/corrupt files are a client problem, not a crash
         return ErrorDto(
             None,
             f"Could not read the file: {error}",
             HttpStatusCode.UNPROCESSABLE_ENTITY,
-            {"FilePath": FilePath, "type": type(error).__name__},
         )
 
-    return SuccessDto(
-        {"columns": Columns, "rows": Rows, "rowCount": len(Rows)},
-        "Preview rows retrieved.",
-        HttpStatusCode.OK,
-    )
+    return SuccessDto(Rows, "Preview rows retrieved.", HttpStatusCode.OK)

@@ -70,6 +70,6 @@ export interface DatasetPreviewResult {
     extension: string;
     columns: DatasetPreviewColumn[];
     rows: Record<string, unknown>[];
-    rowCount: number;
+    rowCount: number | null;
     topN: number;
 }
