@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { Request, Response } from "express";
-import archiver from "archiver";
+import archiver = require("archiver");
 import { DatasetService } from "../business/DatasetService";
 import { SuccessDto } from "../dto/SuccessDto";
 import { ErrorDto } from "../dto/ErrorDto";
