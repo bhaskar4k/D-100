@@ -1,6 +1,6 @@
 .preview-dialog {
-    width: min(92vw, 1200px);
-    max-width: 100%;
+    width: min(max-content, 80vw);
+    max-width: 80vw;
     display: flex;
     flex-direction: column;
     max-height: 90vh;

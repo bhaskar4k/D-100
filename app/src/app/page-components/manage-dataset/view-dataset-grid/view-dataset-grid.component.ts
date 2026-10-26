@@ -130,7 +130,9 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
       {
         data: { datasetUid: row.datasetUid, fileName: row.fileName, extension: row.extension },
         autoFocus: 'first-tabbable',
-        panelClass: 'preview-dataset-dialog'
+        panelClass: 'preview-dataset-dialog',
+        maxWidth: '80vw',
+        width: 'min(max-content, 80vw)'
       }
     );
   }
