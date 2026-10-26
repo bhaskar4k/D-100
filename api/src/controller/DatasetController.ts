@@ -8,7 +8,7 @@ import { ErrorDto } from "../dto/ErrorDto";
 import { HttpStatusCode } from "../enum/HttpStatusCode";
 import { Logger } from "../log/Logger";
 
-const DefaultPageSize = 10;
+const DefaultPageSize = 5;
 const MaxPageSize = 100;
 const MaxSearchLength = 100;
 
