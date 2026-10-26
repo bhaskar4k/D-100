@@ -1,15 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { DOWNLOADED_FILE_TYPE_LABEL, DownloadedFileType } from '../../../enums/downloaded-file-type.enum';
+import { DOWNLOADED_FILE_TYPE_LABEL, DownloadedFileType } from '../../enums/downloaded-file-type.enum';
 
-export interface DownloadDatasetFormatDialogData {
+export interface DownloadIngestedDatasetFormatDialogData {
   datasetUid: string;
   fileName: string;
   extension: string;
 }
 
-export interface DownloadDatasetFormatDialogResult {
+export interface DownloadIngestedDatasetFormatDialogResult {
   downloadedFileType: number;
 }
 
@@ -21,12 +21,12 @@ interface FormatOption {
 }
 
 @Component({
-  selector: 'app-download-dataset-format',
+  selector: 'app-download-ingested-dataset',
   imports: [CommonModule, MatDialogModule],
-  templateUrl: './download-dataset-format.component.html',
-  styleUrl: './download-dataset-format.component.css'
+  templateUrl: './download-ingested-dataset.component.html',
+  styleUrl: './download-ingested-dataset.component.css'
 })
-export class DownloadDatasetFormatComponent {
+export class DownloadIngestedDatasetComponent {
   // CSV is the user-facing default: a single file, universally supported, and avoids the
   // Excel chunk-and-zip step. Users can still pick Excel or Parquet in one click.
   Selected: number = DownloadedFileType.CSV;
@@ -53,8 +53,8 @@ export class DownloadDatasetFormatComponent {
   ];
 
   constructor(
-    @Inject(MAT_DIALOG_DATA) public data: DownloadDatasetFormatDialogData,
-    private dialogRef: MatDialogRef<DownloadDatasetFormatComponent, DownloadDatasetFormatDialogResult | undefined>
+    @Inject(MAT_DIALOG_DATA) public data: DownloadIngestedDatasetFormatDialogData,
+    private dialogRef: MatDialogRef<DownloadIngestedDatasetComponent, DownloadIngestedDatasetFormatDialogResult | undefined>
   ) { }
 
   OnSelect(value: number): void {

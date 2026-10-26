@@ -17,7 +17,7 @@ import { CustomAlertComponent } from '../../../page-components-shared/custom-ale
 import { CustomDialogComponent, CustomDialogData } from '../../../page-components-shared/custom-dialog/custom-dialog.component';
 import { EditDatasetNameComponent, EditDatasetNameDialogData, EditDatasetNameDialogResult } from '../edit-dataset-name/edit-dataset-name.component';
 import { PreviewDatasetComponent, PreviewDatasetDialogData } from '../../../page-components-shared/preview-dataset/preview-dataset.component';
-import { DownloadDatasetFormatComponent, DownloadDatasetFormatDialogData, DownloadDatasetFormatDialogResult } from '../download-dataset-format/download-dataset-format.component';
+import { DownloadIngestedDatasetComponent, DownloadIngestedDatasetFormatDialogData, DownloadIngestedDatasetFormatDialogResult } from '../../../page-components-shared/download-ingested-dataset/download-ingested-dataset.component';
 import { DatasetDownloadPlan } from '../../../models/dataset.model';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -146,8 +146,8 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const dialogRef = this.dialog.open<DownloadDatasetFormatComponent, DownloadDatasetFormatDialogData, DownloadDatasetFormatDialogResult>(
-      DownloadDatasetFormatComponent,
+    const dialogRef = this.dialog.open<DownloadIngestedDatasetComponent, DownloadIngestedDatasetFormatDialogData, DownloadIngestedDatasetFormatDialogResult>(
+      DownloadIngestedDatasetComponent,
       {
         data: { datasetUid: row.datasetUid, fileName: row.fileName, extension: row.extension },
         autoFocus: 'first-tabbable'
