@@ -50,25 +50,28 @@ export class DatasetService {
         return this.http.get<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.Preview + '/' + encodeURIComponent(datasetUid));
     }
 
-    PrepareDownload(datasetUid: string, downloadedFileType: number): Observable<ApiResponseDto> {
-        return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.PrepareDownload, { datasetUid, downloadedFileType });
+    PrepareDownloadIngestedDataset(datasetUid: string, downloadedFileType: number): Observable<ApiResponseDto> {
+        return this.http.post<ApiResponseDto>(
+            GetBaseURL() + Endpoints.Dataset.PrepareDownloadIngestedDataset,
+            { datasetUid, downloadedFileType }
+        );
     }
 
-    // The GET /Dataset/Download endpoint streams a single file (CSV / Parquet) or a zip of
-    // Excel chunks. We use HttpClient so the JWT interceptor attaches the Bearer header, and
-    // ask for a blob so the browser can save the response regardless of content type.
-    DownloadBlob(datasetUid: string): Observable<HttpResponse<Blob>> {
+    // Streams a single file (CSV / Parquet) or a zip of Excel chunks from the ingest parquet.
+    // We use HttpClient so the JWT interceptor attaches the Bearer header, and ask for a blob
+    // so the browser can save the response regardless of content type.
+    DownloadIngestedDatasetBlob(datasetUid: string): Observable<HttpResponse<Blob>> {
         return this.http.get(
-            GetBaseURL() + Endpoints.Dataset.Download + '/' + encodeURIComponent(datasetUid),
+            GetBaseURL() + Endpoints.Dataset.DownloadIngestedDataset + '/' + encodeURIComponent(datasetUid),
             { observe: 'response', responseType: 'blob' }
         );
     }
 
     // Streams the original uploaded file as-is. Used for unprocessed datasets, where no
     // parquet mirror exists yet, so the format picker and Python conversion are both skipped.
-    DownloadRawBlob(datasetUid: string): Observable<HttpResponse<Blob>> {
+    DownloadRawDatasetBlob(datasetUid: string): Observable<HttpResponse<Blob>> {
         return this.http.get(
-            GetBaseURL() + Endpoints.Dataset.DownloadRaw + '/' + encodeURIComponent(datasetUid),
+            GetBaseURL() + Endpoints.Dataset.DownloadRawDataset + '/' + encodeURIComponent(datasetUid),
             { observe: 'response', responseType: 'blob' }
         );
     }

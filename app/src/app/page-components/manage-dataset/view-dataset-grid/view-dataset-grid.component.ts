@@ -142,7 +142,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
     if (!row.isProcessed) {
       // No parquet mirror exists yet, so there is nothing to re-encode — just stream the
       // original uploaded file. Skip the format picker.
-      this.StartRawDownload(row);
+      this.StartRawDatasetDownload(row);
       return;
     }
 
@@ -159,15 +159,15 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
         return;
       }
 
-      this.StartProcessedDownload(row, result.downloadedFileType);
+      this.StartIngestedDatasetDownload(row, result.downloadedFileType);
     });
   }
 
-  private StartProcessedDownload(row: DatasetItem, downloadedFileType: number): void {
+  private StartIngestedDatasetDownload(row: DatasetItem, downloadedFileType: number): void {
     this.DownloadingUids.add(row.datasetUid);
     this.MatProgressBar = true;
 
-    this.datasetService.PrepareDownload(row.datasetUid, downloadedFileType).subscribe({
+    this.datasetService.PrepareDownloadIngestedDataset(row.datasetUid, downloadedFileType).subscribe({
       next: response => {
         if (!response.success) {
           this.DownloadingUids.delete(row.datasetUid);
@@ -179,7 +179,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
         }
 
         const plan = response.data as DatasetDownloadPlan;
-        this.StreamBlob(this.datasetService.DownloadBlob(row.datasetUid), row.datasetUid, plan.suggestedDownloadName);
+        this.StreamBlob(this.datasetService.DownloadIngestedDatasetBlob(row.datasetUid), row.datasetUid, plan.suggestedDownloadName);
       },
       error: () => {
         this.DownloadingUids.delete(row.datasetUid);
@@ -191,11 +191,11 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
     });
   }
 
-  private StartRawDownload(row: DatasetItem): void {
+  private StartRawDatasetDownload(row: DatasetItem): void {
     this.DownloadingUids.add(row.datasetUid);
     this.MatProgressBar = true;
     this.StreamBlob(
-      this.datasetService.DownloadRawBlob(row.datasetUid),
+      this.datasetService.DownloadRawDatasetBlob(row.datasetUid),
       row.datasetUid,
       `${row.fileName}${row.extension}`
     );

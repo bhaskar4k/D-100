@@ -362,9 +362,10 @@ export class DatasetService {
 
     // Validates ownership + processing state, then asks the pyd-100 side to write the download
     // artifact(s) into a dedicated scratch folder for this (user, dataset). Returns a plan the
-    // UI uses to trigger the follow-up GET /Dataset/Download/:datasetUid call. Returns an error
-    // message when the dataset is missing, deleted, not processed, or when Python fails.
-    static async PrepareDownload(UserId: number, DatasetUid: string, DownloadedFileTypeValue: number): Promise<DatasetDownloadPlan | string> {
+    // UI uses to trigger the follow-up GET /Dataset/DownloadIngestedDataset/:datasetUid call.
+    // Returns an error message when the dataset is missing, deleted, not processed, or when
+    // Python fails.
+    static async PrepareDownloadIngestedDataset(UserId: number, DatasetUid: string, DownloadedFileTypeValue: number): Promise<DatasetDownloadPlan | string> {
         if (!DatasetUid || !IsValidUuid(DatasetUid)) {
             return "A valid dataset identifier is required.";
         }
@@ -409,7 +410,7 @@ export class DatasetService {
         const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
         const response = await RunPython<{ files: string[]; format: "excel" | "csv" | "parquet" }>(
-            "GenerateDownloadableDatasetFile",
+            "GenerateDownloadIngestedDatasetFile",
             {
                 IngestDatasetFilepath: ingestPath,
                 DestinationFolderpath: destinationFolderPath,
@@ -437,12 +438,12 @@ export class DatasetService {
     }
 
 
-    // Looks at the scratch folder a prior PrepareDownload populated and returns the plan the
-    // controller needs to stream it: either the single generated file (CSV / Parquet) or the
-    // full list of files to zip (Excel). Does not read the files themselves — the controller
-    // is responsible for streaming. Returns an error message when the dataset is missing,
-    // deleted, not processed, or when the scratch folder is empty.
-    static async ResolveDownload(UserId: number, DatasetUid: string): Promise<DatasetDownloadPlan | string> {
+    // Looks at the scratch folder a prior PrepareDownloadIngestedDataset populated and returns
+    // the plan the controller needs to stream it: either the single generated file (CSV /
+    // Parquet) or the full list of files to zip (Excel). Does not read the files themselves —
+    // the controller is responsible for streaming. Returns an error message when the dataset
+    // is missing, deleted, not processed, or when the scratch folder is empty.
+    static async ResolveDownloadIngestedDataset(UserId: number, DatasetUid: string): Promise<DatasetDownloadPlan | string> {
         if (!DatasetUid || !IsValidUuid(DatasetUid)) {
             return "A valid dataset identifier is required.";
         }
@@ -529,7 +530,7 @@ export class DatasetService {
 
 
     // Exposed so the controller can turn a DatasetDownloadPlan back into a concrete folder.
-    static GetDownloadFolderPath(UserId: number, DatasetUid: string): string {
+    static GetIngestedDatasetDownloadFolderPath(UserId: number, DatasetUid: string): string {
         return BuildDownloadFolderPath(DOWNLOAD_TEMP_PATH!, UserId, DatasetUid);
     }
 
@@ -539,7 +540,7 @@ export class DatasetService {
     // option for unprocessed datasets (the parquet mirror has not been built yet). Returns an
     // error message when the dataset is missing, not the caller's, deleted, its upload is not
     // complete, or when the raw file is unexpectedly missing on disk.
-    static async ResolveRawDownload(UserId: number, DatasetUid: string): Promise<DatasetRawDownloadPlan | string> {
+    static async ResolveDownloadRawDataset(UserId: number, DatasetUid: string): Promise<DatasetRawDownloadPlan | string> {
         if (!DatasetUid || !IsValidUuid(DatasetUid)) {
             return "A valid dataset identifier is required.";
         }

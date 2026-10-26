@@ -110,14 +110,14 @@ export class DatasetController {
     }
 
 
-    static async PrepareDownload(req: Request, res: Response): Promise<void> {
+    static async PrepareDownloadIngestedDataset(req: Request, res: Response): Promise<void> {
         try {
-            await Logger.Info("PrepareDownload -> Called", req.UserData?.id);
+            await Logger.Info("PrepareDownloadIngestedDataset -> Called", req.UserData?.id);
 
             const datasetUid = String(req.body?.datasetUid ?? "").trim();
             const downloadedFileType = Number(req.body?.downloadedFileType);
 
-            const result = await DatasetService.PrepareDownload(Number(req.UserData!.id), datasetUid, downloadedFileType);
+            const result = await DatasetService.PrepareDownloadIngestedDataset(Number(req.UserData!.id), datasetUid, downloadedFileType);
 
             if (typeof result === "string") {
                 res.status(HttpStatusCode.OK).json(new ErrorDto(false, result, HttpStatusCode.BAD_REQUEST));
@@ -137,21 +137,21 @@ export class DatasetController {
     }
 
 
-    static async Download(req: Request, res: Response): Promise<void> {
+    static async DownloadIngestedDataset(req: Request, res: Response): Promise<void> {
         try {
-            await Logger.Info("DatasetDownload -> Called", req.UserData?.id);
+            await Logger.Info("DownloadIngestedDataset -> Called", req.UserData?.id);
 
             const datasetUid = String(req.params.datasetUid ?? "").trim();
             const userId = Number(req.UserData!.id);
 
-            const plan = await DatasetService.ResolveDownload(userId, datasetUid);
+            const plan = await DatasetService.ResolveDownloadIngestedDataset(userId, datasetUid);
 
             if (typeof plan === "string") {
                 res.status(HttpStatusCode.OK).json(new ErrorDto(false, plan, HttpStatusCode.BAD_REQUEST));
                 return;
             }
 
-            const folderPath = DatasetService.GetDownloadFolderPath(userId, datasetUid);
+            const folderPath = DatasetService.GetIngestedDatasetDownloadFolderPath(userId, datasetUid);
 
             // Use RFC 5987 attribute for the UTF-8 variant so non-ASCII characters in a
             // dataset name do not break browser downloads.
@@ -203,7 +203,7 @@ export class DatasetController {
             }
             await archive.finalize();
         } catch (error) {
-            await Logger.Error("Dataset Download Error", error, req.UserData?.id);
+            await Logger.Error("DownloadIngestedDataset Error", error, req.UserData?.id);
 
             if (!res.headersSent) {
                 res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
@@ -214,14 +214,14 @@ export class DatasetController {
     }
 
 
-    static async DownloadRaw(req: Request, res: Response): Promise<void> {
+    static async DownloadRawDataset(req: Request, res: Response): Promise<void> {
         try {
-            await Logger.Info("DatasetDownloadRaw -> Called", req.UserData?.id);
+            await Logger.Info("DownloadRawDataset -> Called", req.UserData?.id);
 
             const datasetUid = String(req.params.datasetUid ?? "").trim();
             const userId = Number(req.UserData!.id);
 
-            const plan = await DatasetService.ResolveRawDownload(userId, datasetUid);
+            const plan = await DatasetService.ResolveDownloadRawDataset(userId, datasetUid);
 
             if (typeof plan === "string") {
                 res.status(HttpStatusCode.OK).json(new ErrorDto(false, plan, HttpStatusCode.BAD_REQUEST));
@@ -235,7 +235,7 @@ export class DatasetController {
 
             const stream = fs.createReadStream(plan.filePath);
             stream.on("error", (streamError) => {
-                void Logger.Error("Dataset DownloadRaw file stream error", streamError, userId);
+                void Logger.Error("DownloadRawDataset file stream error", streamError, userId);
                 if (!res.headersSent) {
                     res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).end();
                 } else {
@@ -244,7 +244,7 @@ export class DatasetController {
             });
             stream.pipe(res);
         } catch (error) {
-            await Logger.Error("Dataset DownloadRaw Error", error, req.UserData?.id);
+            await Logger.Error("DownloadRawDataset Error", error, req.UserData?.id);
 
             if (!res.headersSent) {
                 res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
