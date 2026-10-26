@@ -13,6 +13,7 @@ import { TrueFalse } from "../enum/CommonEnum";
 import { DownloadedFileType } from "../enum/DownloadedFileType";
 import { RunPython } from "../python-manager/PythonManager";
 import { BuildDownloadFolderPath, BuildIngestFilePath, BuildRawFilePath, SanitizeDownloadBaseName } from "../util/UploadUtil";
+import { Logger } from "../log/Logger";
 
 
 const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
@@ -410,7 +411,7 @@ export class DatasetService {
         const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
         const response = await RunPython<{ files: string[]; format: "excel" | "csv" | "parquet" }>(
-            "GenerateDownloadIngestedDatasetFile",
+            "GenerateDownloadableIngestedDatasetFile",
             {
                 IngestDatasetFilepath: ingestPath,
                 DestinationFolderpath: destinationFolderPath,
@@ -421,7 +422,12 @@ export class DatasetService {
         );
 
         if (!response.success || !response.data) {
-            return response.message || "Could not generate the download file.";
+            await Logger.Error(
+                "PrepareDownloadIngestedDataset Python Error",
+                { message: response.message, extraData: response.extraData, datasetUid: DatasetUid },
+                UserId
+            );
+            return "Could not prepare the dataset for download. Please try again.";
         }
 
         const isArchive = response.data.format === "excel";

@@ -66,7 +66,7 @@ def _WriteExcelChunks(Lazy: pl.LazyFrame, DestinationFolderpath: str, GeneratedF
 
 
 @expose
-def GenerateDownloadIngestedDatasetFile(
+def GenerateDownloadableIngestedDatasetFile(
     IngestDatasetFilepath: str,
     DestinationFolderpath: str,
     GeneratedFileName: str,
