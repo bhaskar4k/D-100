@@ -8,15 +8,20 @@ import { DatasetProcessingStatus } from "../enum/DatasetProcessingStatus";
 import { DatasetCountRow, DatasetPage, DatasetRow } from "../entity/DatasetEntity";
 import { DatasetProcessingQueue, GetRabbitMqChannel } from "../config/RabbitMqConfig";
 import { StatusLabels } from "../enum/FileUploadStatus";
-import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow, ColumnLookupRow, DatasetPreviewResult, DatasetPreviewColumn, DatasetDownloadPlan } from "../entity/DatasetEntity";
+import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow, ColumnLookupRow, DatasetPreviewResult, DatasetPreviewColumn, DatasetDownloadPlan, DatasetRawDownloadPlan } from "../entity/DatasetEntity";
 import { TrueFalse } from "../enum/CommonEnum";
 import { DownloadedFileType } from "../enum/DownloadedFileType";
 import { RunPython } from "../python-manager/PythonManager";
-import { BuildDownloadFolderPath, BuildIngestFilePath, SanitizeDownloadBaseName } from "../util/UploadUtil";
+import { BuildDownloadFolderPath, BuildIngestFilePath, BuildRawFilePath, SanitizeDownloadBaseName } from "../util/UploadUtil";
 
 
 const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
+const RAW_UPLOAD_PATH = process.env.RAW_UPLOAD_PATH;
 const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
+
+if (!RAW_UPLOAD_PATH) {
+    throw new Error("RAW_UPLOAD_PATH is not configured in .env");
+}
 const PythonProcessingTimeoutMs = Number(process.env.DATASET_PROCESSING_TIMEOUT_MS) || 30 * 60 * 1000;
 const AutoDeletionDays = Number(process.env.AUTO_DELETION_TIME_IN_DAYS) || 30;
 const SecondsPerDay = 24 * 60 * 60;
@@ -526,6 +531,63 @@ export class DatasetService {
     // Exposed so the controller can turn a DatasetDownloadPlan back into a concrete folder.
     static GetDownloadFolderPath(UserId: number, DatasetUid: string): string {
         return BuildDownloadFolderPath(DOWNLOAD_TEMP_PATH!, UserId, DatasetUid);
+    }
+
+
+    // Resolves the raw uploaded file for a dataset so it can be streamed as-is. Used for the
+    // "download the original" path, which skips the Python conversion step and is the only
+    // option for unprocessed datasets (the parquet mirror has not been built yet). Returns an
+    // error message when the dataset is missing, not the caller's, deleted, its upload is not
+    // complete, or when the raw file is unexpectedly missing on disk.
+    static async ResolveRawDownload(UserId: number, DatasetUid: string): Promise<DatasetRawDownloadPlan | string> {
+        if (!DatasetUid || !IsValidUuid(DatasetUid)) {
+            return "A valid dataset identifier is required.";
+        }
+
+        const pool = await ConnectionPool;
+
+        const [rows] = await pool.query<DatasetDetailRow[]>(
+            `SELECT id, dataset_uid, filename, extension, status, created_by, is_active
+             FROM T_DATASET
+             WHERE dataset_uid = ?
+             LIMIT 1`,
+            [DatasetUid]
+        );
+
+        if (rows.length === 0) {
+            return "Dataset not found.";
+        }
+
+        const dataset = rows[0];
+
+        if (Number(dataset.created_by) !== Number(UserId)) {
+            return "You do not have access to this dataset.";
+        }
+
+        if (dataset.is_active !== TrueFalse.True) {
+            return "Dataset is deleted.";
+        }
+
+        if (dataset.status !== FileUploadStatus.COMPLETED) {
+            return "Dataset upload is not completed yet.";
+        }
+
+        const filePath = BuildRawFilePath(DatasetUid, RAW_UPLOAD_PATH!, UploadedFileName, dataset.extension);
+
+        if (!fs.existsSync(filePath)) {
+            return "Raw dataset file is missing on disk.";
+        }
+
+        // Serve the file under the user-facing name (what they uploaded), not the internal
+        // UploadedFile placeholder we stored on disk.
+        const safeBase = SanitizeDownloadBaseName(dataset.filename);
+        const suggestedDownloadName = `${safeBase}${dataset.extension}`;
+
+        return {
+            datasetUid: dataset.dataset_uid,
+            filePath,
+            suggestedDownloadName
+        };
     }
 
 

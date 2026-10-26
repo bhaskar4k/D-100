@@ -214,6 +214,47 @@ export class DatasetController {
     }
 
 
+    static async DownloadRaw(req: Request, res: Response): Promise<void> {
+        try {
+            await Logger.Info("DatasetDownloadRaw -> Called", req.UserData?.id);
+
+            const datasetUid = String(req.params.datasetUid ?? "").trim();
+            const userId = Number(req.UserData!.id);
+
+            const plan = await DatasetService.ResolveRawDownload(userId, datasetUid);
+
+            if (typeof plan === "string") {
+                res.status(HttpStatusCode.OK).json(new ErrorDto(false, plan, HttpStatusCode.BAD_REQUEST));
+                return;
+            }
+
+            const asciiFallback = plan.suggestedDownloadName.replace(/[^\x20-\x7e]/g, "_");
+            const disposition = `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodeURIComponent(plan.suggestedDownloadName)}`;
+            res.setHeader("Content-Disposition", disposition);
+            res.setHeader("Content-Type", "application/octet-stream");
+
+            const stream = fs.createReadStream(plan.filePath);
+            stream.on("error", (streamError) => {
+                void Logger.Error("Dataset DownloadRaw file stream error", streamError, userId);
+                if (!res.headersSent) {
+                    res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).end();
+                } else {
+                    res.destroy(streamError as Error);
+                }
+            });
+            stream.pipe(res);
+        } catch (error) {
+            await Logger.Error("Dataset DownloadRaw Error", error, req.UserData?.id);
+
+            if (!res.headersSent) {
+                res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
+                    new ErrorDto(null, "An unexpected error occurred while downloading the raw dataset.", HttpStatusCode.INTERNAL_SERVER_ERROR)
+                );
+            }
+        }
+    }
+
+
     static async Preview(req: Request, res: Response): Promise<void> {
         try {
             await Logger.Info("PreviewDataset -> Called", req.UserData?.id);

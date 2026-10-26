@@ -25,6 +25,7 @@ export const Endpoints = {
         Preview: "Dataset/Preview",
         PrepareDownload: "Dataset/PrepareDownload",
         Download: "Dataset/Download",
+        DownloadRaw: "Dataset/DownloadRaw",
         Process: "Dataset/Process",
         UpdateName: "Dataset/UpdateName",
         UpdateColumnName: "Dataset/UpdateColumnName",

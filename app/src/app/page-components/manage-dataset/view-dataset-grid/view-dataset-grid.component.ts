@@ -5,10 +5,11 @@ import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
-import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Observable, Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 import { DatasetService } from '../../../services/dataset.service';
 import { DatasetItem } from '../../../models/dataset.model';
-import { FILE_UPLOAD_STATUS_LABEL } from '../../../enums/file-upload-status.enum';
+import { FILE_UPLOAD_STATUS_LABEL, FileUploadStatus } from '../../../enums/file-upload-status.enum';
 import { DATASET_PROCESSING_STATUS_LABEL, DatasetProcessingStatus } from '../../../enums/dataset-processing-status.enum';
 import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
 import { FormatDuration } from '../../../common/CommonUtil';
@@ -128,11 +129,20 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
   }
 
   CanDownload(row: DatasetItem): boolean {
-    return row.isActive && row.isProcessed;
+    // Processed datasets can be re-exported in any format from the parquet mirror; unprocessed
+    // ones whose upload is complete can still be downloaded as the raw file the user sent.
+    return row.isActive && row.status === FileUploadStatus.COMPLETED;
   }
 
   OnDownload(row: DatasetItem): void {
     if (this.DownloadingUids.has(row.datasetUid)) {
+      return;
+    }
+
+    if (!row.isProcessed) {
+      // No parquet mirror exists yet, so there is nothing to re-encode — just stream the
+      // original uploaded file. Skip the format picker.
+      this.StartRawDownload(row);
       return;
     }
 
@@ -149,11 +159,11 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
         return;
       }
 
-      this.StartDownload(row, result.downloadedFileType);
+      this.StartProcessedDownload(row, result.downloadedFileType);
     });
   }
 
-  private StartDownload(row: DatasetItem, downloadedFileType: number): void {
+  private StartProcessedDownload(row: DatasetItem, downloadedFileType: number): void {
     this.DownloadingUids.add(row.datasetUid);
     this.MatProgressBar = true;
 
@@ -169,7 +179,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
         }
 
         const plan = response.data as DatasetDownloadPlan;
-        this.StreamDownload(row.datasetUid, plan.suggestedDownloadName);
+        this.StreamBlob(this.datasetService.DownloadBlob(row.datasetUid), row.datasetUid, plan.suggestedDownloadName);
       },
       error: () => {
         this.DownloadingUids.delete(row.datasetUid);
@@ -181,8 +191,18 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
     });
   }
 
-  private StreamDownload(datasetUid: string, suggestedName: string): void {
-    this.datasetService.DownloadBlob(datasetUid).subscribe({
+  private StartRawDownload(row: DatasetItem): void {
+    this.DownloadingUids.add(row.datasetUid);
+    this.MatProgressBar = true;
+    this.StreamBlob(
+      this.datasetService.DownloadRawBlob(row.datasetUid),
+      row.datasetUid,
+      `${row.fileName}${row.extension}`
+    );
+  }
+
+  private StreamBlob(request$: Observable<HttpResponse<Blob>>, datasetUid: string, suggestedName: string): void {
+    request$.subscribe({
       next: response => {
         this.DownloadingUids.delete(datasetUid);
         this.MatProgressBar = false;

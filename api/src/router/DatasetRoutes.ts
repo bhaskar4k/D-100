@@ -11,6 +11,7 @@ DatasetRouter.get("/GetDeleted", DatasetController.GetDeleted);
 DatasetRouter.get("/GetDetails/:datasetUid", DatasetController.GetDetails);
 DatasetRouter.get("/Preview/:datasetUid", DatasetController.Preview);
 DatasetRouter.get("/Download/:datasetUid", DatasetController.Download);
+DatasetRouter.get("/DownloadRaw/:datasetUid", DatasetController.DownloadRaw);
 DatasetRouter.post("/PrepareDownload", DatasetController.PrepareDownload);
 DatasetRouter.post("/Process", DatasetController.Process);
 DatasetRouter.post("/UpdateName", DatasetController.UpdateName);

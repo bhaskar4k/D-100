@@ -64,6 +64,15 @@ export class DatasetService {
         );
     }
 
+    // Streams the original uploaded file as-is. Used for unprocessed datasets, where no
+    // parquet mirror exists yet, so the format picker and Python conversion are both skipped.
+    DownloadRawBlob(datasetUid: string): Observable<HttpResponse<Blob>> {
+        return this.http.get(
+            GetBaseURL() + Endpoints.Dataset.DownloadRaw + '/' + encodeURIComponent(datasetUid),
+            { observe: 'response', responseType: 'blob' }
+        );
+    }
+
     UpdateName(datasetUid: string, newName: string): Observable<ApiResponseDto> {
         return this.http.post<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.UpdateName, { datasetUid, newName });
     }

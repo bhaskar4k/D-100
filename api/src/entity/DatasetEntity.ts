@@ -161,3 +161,12 @@ export interface DatasetDownloadPlan {
     suggestedDownloadName: string;
     isArchive: boolean;
 }
+
+// Lookup result for a raw-file download: the on-disk path to stream and the user-facing
+// name to send on Content-Disposition. Separate from DatasetDownloadPlan because the raw
+// path never involves chunking or zipping.
+export interface DatasetRawDownloadPlan {
+    datasetUid: string;
+    filePath: string;
+    suggestedDownloadName: string;
+}
