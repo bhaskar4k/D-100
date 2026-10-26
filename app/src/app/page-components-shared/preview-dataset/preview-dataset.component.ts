@@ -9,6 +9,8 @@ import { DatasetService } from '../../services/dataset.service';
 import { DatasetPreviewColumn, DatasetPreviewResult } from '../../models/dataset.model';
 import { DATA_TYPE_LABEL, DataType } from '../../enums/data-type.enum';
 
+const NumericTypes = new Set<number>([DataType.Integer, DataType.Float, DataType.Decimal]);
+
 export interface PreviewDatasetDialogData {
   datasetUid: string;
   fileName?: string;
@@ -23,6 +25,7 @@ export interface PreviewDatasetDialogData {
 })
 export class PreviewDatasetComponent implements OnInit, OnDestroy {
   readonly ResolveType = (type: number) => DATA_TYPE_LABEL[type] ?? { label: 'Unknown', color: 'type-unknown' };
+  readonly IsNumeric = (type: number) => NumericTypes.has(type);
 
   Loading = true;
   ErrorMessage = '';

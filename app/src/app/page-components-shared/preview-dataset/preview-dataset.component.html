@@ -1,8 +1,7 @@
 <div class="card shadow border rounded-3 border-secondary-subtle p-0 overflow-hidden mx-auto text-body bg-body preview-dialog"
     data-bs-theme="dark">
 
-    <h2
-        class="card-title h5 border-bottom border-secondary-subtle m-0 p-3 bg-body-tertiary fw-bold rounded-top-3 d-flex align-items-center justify-content-between">
+    <h2 class="card-title h5 border-bottom border-secondary-subtle m-0 p-3 bg-body-tertiary fw-bold rounded-top-3">
         <span class="text-primary">
             <i class="bi bi-table me-2"></i>
             Preview Dataset
@@ -10,7 +9,6 @@
             <span class="text-muted fw-normal ms-2 small">{{ Preview.fileName }}{{ Preview.extension }}</span>
             }
         </span>
-        <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="OnClose()"></button>
     </h2>
 
     <div class="card-body p-0 preview-body">
@@ -26,7 +24,7 @@
         </div>
         } @else if (Preview) {
         <div
-            class="preview-info px-3 pt-3 pb-2 d-flex align-items-center justify-content-between flex-wrap gap-2 small text-muted">
+            class="preview-info px-3 py-2 d-flex align-items-center justify-content-between flex-wrap gap-2 small text-muted">
             <span>
                 Showing <strong class="text-body">{{ Rows.length }}</strong>
                 @if (Preview.rowCount !== null) {
@@ -42,7 +40,7 @@
             <table mat-table class="app-table preview-table" [dataSource]="Rows">
                 @for (column of Preview.columns; track column.id) {
                 <ng-container [matColumnDef]="column.columnName">
-                    <th mat-header-cell *matHeaderCellDef>
+                    <th mat-header-cell *matHeaderCellDef [class.preview-cell-numeric]="IsNumeric(column.type)">
                         <div class="preview-th">
                             <span class="preview-th-name" [matTooltip]="column.columnName" matTooltipPosition="above">{{
                                 column.columnName }}</span>
@@ -51,7 +49,7 @@
                             </span>
                         </div>
                     </th>
-                    <td mat-cell *matCellDef="let row">
+                    <td mat-cell *matCellDef="let row" [class.preview-cell-numeric]="IsNumeric(column.type)">
                         @if (IsNullish(row, column.columnName)) {
                         <span class="preview-null">null</span>
                         } @else {

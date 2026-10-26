@@ -132,7 +132,8 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
         autoFocus: 'first-tabbable',
         panelClass: 'preview-dataset-dialog',
         maxWidth: '80vw',
-        width: 'min(max-content, 80vw)'
+        width: 'min(max-content, 80vw)',
+        minWidth: 'min(560px, 90vw)'
       }
     );
   }
