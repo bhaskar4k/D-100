@@ -4,20 +4,16 @@ import { UserData } from "../entity/AuthenticationEntity";
 import { MenuItem, MenuRow } from "../entity/CommonEntity";
 import { MenuAccessType } from "../enum/CommonEnum";
 import { Logger } from "../log/Logger";
-
-
-// Separate cache per audience so an authenticated user never sees the public menu and vice
-// versa. Each variant is populated on first access and reused on every subsequent call.
-// Cached forever: the menu changes only via a reseed, and that path should flush these keys.
-function MenuCacheKey(IsAuthenticated: boolean): string {
-    return IsAuthenticated ? "MENU-AUTH" : "MENU-NONAUTH";
-}
+import { GetMenuCacheKey } from "../util/CacheKeyUtil";
 
 
 export class UserBusiness {
+    // Separate cache per audience so an authenticated user never sees the public menu and vice
+    // versa. Each variant is populated on first access and reused on every subsequent call.
+    // Cached forever: the menu changes only via a reseed, and that path should flush these keys.
     static async DoGetMenu(User: UserData): Promise<MenuItem[]> {
         const isAuthenticated = User.auth === true;
-        const cacheKey = MenuCacheKey(isAuthenticated);
+        const cacheKey = GetMenuCacheKey(isAuthenticated);
         const redis = await RedisConnection;
 
         // Cache lookup never fails the request: a Redis blip just falls through to the DB and
