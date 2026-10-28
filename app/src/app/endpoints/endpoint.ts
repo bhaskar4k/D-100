@@ -18,6 +18,9 @@ export const Endpoints = {
     Common: {
         GetMenu: "Common/GetMenu",
     },
+    Processing: {
+        GetQueueStatus: "Processing/GetQueueStatus",
+    },
     Dataset: {
         GetAll: "Dataset/GetAll",
         GetDeleted: "Dataset/GetDeleted",
