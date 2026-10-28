@@ -7,6 +7,7 @@ import { TrueFalse } from "../../enum/CommonEnum";
 import { RunPython } from "../../python-manager/PythonManager";
 import { Logger } from "../../log/Logger";
 import { BuildRawFilePath, BuildIngestFilePath } from "../../util/UploadUtil";
+import { QueueRegistry } from "../QueueRegistry";
 
 const RAW_UPLOAD_PATH = process.env.RAW_UPLOAD_PATH;
 const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
@@ -75,6 +76,19 @@ class Semaphore {
 }
 
 const ProcessingSemaphore = new Semaphore(MaxParallelProcessing);
+
+
+// Live counter of how many ProcessDataset calls are in-flight. Incremented when the handler
+// starts, decremented in its finally. Exposed to QueueRegistry so the Processing dashboard can
+// show "N of M processing" for this queue.
+let ActiveJobCount = 0;
+
+QueueRegistry.Register({
+    DisplayName: "Dataset Processing",
+    QueueName: DatasetProcessingQueue,
+    MaxParallel: MaxParallelProcessing,
+    GetProcessingCount: () => ActiveJobCount
+});
 
 
 async function MarkFailed(DatasetId: number): Promise<void> {
@@ -223,6 +237,8 @@ export async function DatasetProcessingTick(): Promise<void> {
             break;
         }
 
+        ActiveJobCount += 1;
+
         void (async () => {
             try {
                 const payload = JSON.parse(message.content.toString()) as { datasetId?: number };
@@ -243,6 +259,7 @@ export async function DatasetProcessingTick(): Promise<void> {
                 // inner catch.
                 channel.nack(message, false, false);
             } finally {
+                ActiveJobCount -= 1;
                 ProcessingSemaphore.Release();
             }
         })();

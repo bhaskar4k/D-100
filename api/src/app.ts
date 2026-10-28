@@ -8,6 +8,7 @@ import AuthenticationRouter from "./router/AuthenticationRouter";
 import UploadRouter from "./router/UploadRoutes";
 import DatasetRouter from "./router/DatasetRoutes";
 import PythonRouter from "./router/PythonRoutes";
+import ProcessingRouter from "./router/ProcessingRoutes";
 import CorsConfig from "./config/CorsConfig";
 
 const app = express();
@@ -21,6 +22,7 @@ app.use("/Api/Authentication", AuthenticationRouter);
 app.use("/Api/Upload", UploadRouter);
 app.use("/Api/Dataset", DatasetRouter);
 app.use("/Api/Python", PythonRouter);
+app.use("/Api/Processing", ProcessingRouter);
 
 
 app.get("/api/health", async (_req, res) => {
