@@ -5,7 +5,10 @@
 <div class="card shadow-sm m-3 p-3">
     <div class="processing-header">
         <div>
-            <h4 class="processing-title">Processing Queues</h4>
+            <h4 class="processing-title">
+                <i class="bi bi-cpu-fill me-2 text-primary"></i>
+                Processing Queues
+            </h4>
             <small class="processing-subtitle" *ngIf="LastUpdated">
                 Last updated {{ LastUpdated | date: 'HH:mm:ss' }}
                 <span *ngIf="AutoRefresh"> &middot; auto-refresh every {{ AutoRefreshMs / 1000 }}s</span>
