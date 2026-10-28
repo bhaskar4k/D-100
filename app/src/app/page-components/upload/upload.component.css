@@ -1,52 +1,140 @@
-.upload-container {
-    max-width: 720px;
-    margin: 24px auto;
-    padding: 0 16px;
-}
-
+/* Dashed card that doubles as the file-picker; borders and bg track the dark card palette the
+   rest of the pages use. */
 .drop-zone {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 32px 16px;
-    border: 2px dashed #4b5563;
-    border-radius: 12px;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 2.5rem 1rem;
+    border: 2px dashed rgba(255, 255, 255, 0.14);
+    border-radius: 0.75rem;
+    background-color: #161b22;
+    color: #e5e7eb;
     cursor: pointer;
     text-align: center;
+    transition: border-color 150ms ease, background-color 150ms ease;
 }
 
-.drop-zone.dragging,
-.drop-zone:hover {
+.drop-zone:hover,
+.drop-zone.dragging {
     border-color: #3b82f6;
     background-color: rgba(59, 130, 246, 0.08);
 }
 
+.drop-zone-icon {
+    font-size: 2.5rem;
+    color: #60a5fa;
+    margin-bottom: 0.25rem;
+}
+
+.drop-zone-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #e5e7eb;
+}
+
+.drop-zone-hint {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+
+/* Row that appears once a file has been picked. */
 .file-info {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 0.65rem 0.9rem;
+    background-color: #161b22;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.5rem;
+}
+
+.file-info-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.file-info-left i {
+    color: #60a5fa;
+    font-size: 1rem;
+    flex-shrink: 0;
 }
 
 .file-name {
+    color: #e5e7eb;
+    font-size: 0.9rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 12px;
+.file-size {
+    color: #9ca3af;
+    font-size: 0.8rem;
+    white-space: nowrap;
 }
 
-.stats div {
+
+/* Bootstrap .progress tinted to match the dark card. */
+.upload-progress {
+    margin-top: 1rem;
+    height: 1.4rem;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.upload-progress .progress-bar {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+
+/* Live stats grid under the progress bar. Same visual language as the processing dashboard's
+   stat tiles so the two pages feel like the same app. */
+.upload-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.6rem;
+    margin-top: 1rem;
+}
+
+.upload-stat {
     display: flex;
     flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.6rem 0.75rem;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0.5rem;
 }
 
-.stats .label {
-    font-size: 0.75rem;
-    color: #9ca3af;
+.upload-stat-label {
+    font-size: 0.65rem;
     text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+    font-weight: 600;
+}
+
+.upload-stat-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #e5e7eb;
+    font-variant-numeric: tabular-nums;
+}
+
+
+.upload-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
 }

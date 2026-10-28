@@ -126,7 +126,10 @@
 
 <div class="card shadow-sm m-3 p-3" *ngIf="Dataset as D">
     <div class="app-page-header">
-        <h4 class="app-page-title">Columns ({{ Columns.length }})</h4>
+        <h4 class="app-page-title">
+            <i class="bi bi-list-columns-reverse me-2 text-primary"></i>
+            Columns ({{ Columns.length }})
+        </h4>
 
         <div class="app-page-actions">
             <div class="app-table-search">
