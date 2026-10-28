@@ -1,0 +1,39 @@
+<div class="page-loader" *ngIf="Loading && !HasLoadedOnce">
+    <mat-spinner diameter="50"></mat-spinner>
+</div>
+
+<div class="card shadow-sm m-3 p-3">
+    <div class="processing-header">
+        <div>
+            <h4 class="processing-title">Processing Queues</h4>
+            <small class="processing-subtitle" *ngIf="LastUpdated">
+                Last updated {{ LastUpdated | date: 'HH:mm:ss' }}
+                <span *ngIf="AutoRefresh"> &middot; auto-refresh every {{ AutoRefreshMs / 1000 }}s</span>
+            </small>
+        </div>
+
+        <div class="processing-actions">
+            <button type="button" class="processing-icon-button"
+                [matTooltip]="AutoRefresh ? 'Pause auto-refresh' : 'Resume auto-refresh'" matTooltipPosition="above"
+                (click)="OnToggleAutoRefresh()">
+                <i class="bi" [class.bi-pause-circle]="AutoRefresh" [class.bi-play-circle]="!AutoRefresh"></i>
+            </button>
+
+            <button type="button" class="processing-icon-button" matTooltip="Refresh now" matTooltipPosition="above"
+                [disabled]="Loading" (click)="OnRefresh()">
+                <i class="bi bi-arrow-clockwise" [class.spin]="Loading"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="processing-grid" *ngIf="Queues.length > 0; else emptyState">
+        <app-processing-queue-card *ngFor="let queue of Queues; trackBy: TrackByQueue" [queue]="queue">
+        </app-processing-queue-card>
+    </div>
+
+    <ng-template #emptyState>
+        <div class="processing-empty" *ngIf="HasLoadedOnce">
+            No processing queues are registered.
+        </div>
+    </ng-template>
+</div>

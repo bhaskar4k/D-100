@@ -11,6 +11,7 @@ import { AuthGuard } from './middleware/AuthGuard';
 import { ViewDatasetGridComponent } from './page-components/manage-dataset/view-dataset-grid/view-dataset-grid.component';
 import { ViewDatasetInfoComponent } from './page-components/manage-dataset/view-dataset-info/view-dataset-info.component';
 import { ViewDeletedDatasetGridComponent } from './page-components/view-deleted-dataset-grid/view-deleted-dataset-grid.component';
+import { ProcessingBaseComponent } from './page-components/processing/processing-base/processing-base.component';
 
 export const routes: Routes = [
   {
@@ -31,10 +32,14 @@ export const routes: Routes = [
         canActivate: [AuthGuard],
         children: [
           { path: 'upload', component: UploadComponent },
+
           { path: 'datasets', redirectTo: 'datasets/active', pathMatch: 'full' },
           { path: 'datasets/active', component: ViewDatasetGridComponent },
           { path: 'datasets/deleted', component: ViewDeletedDatasetGridComponent },
           { path: 'datasets/view', component: ViewDatasetInfoComponent },
+
+          { path: 'processing', component: ProcessingBaseComponent },
+
           { path: 'logout', component: LogoutComponent }
         ]
       },
