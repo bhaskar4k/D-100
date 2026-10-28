@@ -12,6 +12,7 @@ const RAW_UPLOAD_PATH = process.env.RAW_UPLOAD_PATH;
 const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
 const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
 const ProcessingTimeoutMs = Number(process.env.DATASET_PROCESSING_TIMEOUT_MS) || 30 * 60 * 1000;
+const MaxParallelProcessing = Math.max(1, Number(process.env.DATASET_PROCESSING_MAX_PARALLEL) || 5);
 
 if (!RAW_UPLOAD_PATH) {
     throw new Error("RAW_UPLOAD_PATH is not configured in .env");
@@ -39,6 +40,38 @@ interface FileMetadata {
     columnInfo: ColumnMetadata[];
 }
 
+
+// Caps how many datasets process concurrently across ticks. State is module-level so a slot held
+// by a job launched on tick N is still held when tick N+1 fires.
+class Semaphore {
+    private Available: number;
+    private readonly Waiters: Array<() => void> = [];
+
+    constructor(private readonly Max: number) {
+        this.Available = Max;
+    }
+
+    async Acquire(): Promise<void> {
+        if (this.Available > 0) {
+            this.Available -= 1;
+            return;
+        }
+        await new Promise<void>((Resolve) => this.Waiters.push(Resolve));
+    }
+
+    Release(): void {
+        const Next = this.Waiters.shift();
+        if (Next) {
+            Next();
+            return;
+        }
+        if (this.Available < this.Max) {
+            this.Available += 1;
+        }
+    }
+}
+
+const ProcessingSemaphore = new Semaphore(MaxParallelProcessing);
 
 
 async function MarkFailed(DatasetId: number): Promise<void> {
@@ -167,37 +200,48 @@ async function ProcessDataset(DatasetId: number): Promise<void> {
 }
 
 
-// Called by the worker-job scheduler. Pulls messages from the RabbitMQ queue one at a time and
-// processes them until the queue is empty. The outer WorkerJob guards against overlapping ticks,
-// so one tick never races the next.
+// Called by the worker-job scheduler. Pulls messages from the RabbitMQ queue and launches each
+// one as a background task, capped at MaxParallelProcessing by the module-level semaphore. The
+// loop blocks on Acquire when every slot is in use, so a new message only leaves the queue once
+// a running job frees a slot. The outer WorkerJob guards against overlapping ticks, so the next
+// tick cannot start until this one returns -- which happens as soon as the queue is drained,
+// leaving the launched jobs to finish on their own.
 export async function DatasetProcessingTick(): Promise<void> {
     const channel = GetRabbitMqChannel();
     await channel.assertQueue(DatasetProcessingQueue, { durable: true });
 
     while (true) {
+        await ProcessingSemaphore.Acquire();
+
         const message = await channel.get(DatasetProcessingQueue, { noAck: false });
 
         if (message === false) {
+            ProcessingSemaphore.Release();
             break;
         }
 
-        try {
-            const payload = JSON.parse(message.content.toString()) as { datasetId?: number };
-            const datasetId = Number(payload?.datasetId);
+        void (async () => {
+            try {
+                const payload = JSON.parse(message.content.toString()) as { datasetId?: number };
+                const datasetId = Number(payload?.datasetId);
 
-            if (!Number.isFinite(datasetId) || datasetId <= 0) {
-                await Logger.Error(`DatasetProcessing: invalid payload '${message.content.toString()}'`);
+                if (!Number.isFinite(datasetId) || datasetId <= 0) {
+                    await Logger.Error(`DatasetProcessing: invalid payload '${message.content.toString()}'`);
+                    channel.ack(message);
+                    return;
+                }
+
+                await ProcessDataset(datasetId);
                 channel.ack(message);
-                continue;
+            } catch (error) {
+                await Logger.Error("DatasetProcessing: tick error.", error);
+                // Discard rather than requeue so a poisoned message cannot loop forever; the
+                // dataset row is already flipped to FAILED by MarkFailed in ProcessDataset's
+                // inner catch.
+                channel.nack(message, false, false);
+            } finally {
+                ProcessingSemaphore.Release();
             }
-
-            await ProcessDataset(datasetId);
-            channel.ack(message);
-        } catch (error) {
-            await Logger.Error("DatasetProcessing: tick error.", error);
-            // Discard rather than requeue so a poisoned message cannot loop forever; the dataset
-            // row is already flipped to FAILED by MarkFailed in ProcessDataset's inner catch.
-            channel.nack(message, false, false);
-        }
+        })();
     }
 }
