@@ -9,10 +9,11 @@ import { ProcessingService } from '../../../services/processing.service';
 import { QueueStatus } from '../../../models/processing.model';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
+import { ProcessingQueueCardComponent } from '../processing-queue-card/processing-queue-card.component';
 
 @Component({
   selector: 'app-processing-base',
-  imports: [CommonModule, MatProgressSpinnerModule, MatTooltipModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MatTooltipModule, ProcessingQueueCardComponent],
   templateUrl: './processing-base.component.html',
   styleUrl: './processing-base.component.css'
 })
@@ -69,15 +70,8 @@ export class ProcessingBaseComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Percentage of capacity in use (processing / maxParallel) for the capacity bar. Clamped
-  // because a brief race can leave processing above maxParallel if the semaphore is misreported.
-  Utilization(queue: QueueStatus): number {
-    if (queue.maxParallel <= 0) return 0;
-    return Math.min(100, Math.round((queue.processing / queue.maxParallel) * 100));
-  }
-
   TrackByQueue(_index: number, queue: QueueStatus): string {
-    return queue.queueName;
+    return queue.displayName;
   }
 
   private StartPolling(): void {

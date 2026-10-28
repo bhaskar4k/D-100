@@ -4,7 +4,6 @@ import { Logger } from "../log/Logger";
 
 export interface QueueStatus {
     displayName: string;
-    queueName: string;
     inQueue: number;
     processing: number;
     maxParallel: number;
@@ -38,7 +37,6 @@ export class ProcessingService {
 
             results.push({
                 displayName: Q.DisplayName,
-                queueName: Q.QueueName,
                 inQueue,
                 processing: Q.GetProcessingCount(),
                 maxParallel: Q.MaxParallel

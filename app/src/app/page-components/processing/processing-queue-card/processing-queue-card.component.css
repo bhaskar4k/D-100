@@ -1,0 +1,246 @@
+:host {
+    display: block;
+}
+
+/* Dark card with a thin accent border on the leading edge; the accent color shifts with
+   CapacityLevel (data-level) so a glance at the gutter tells you idle vs. busy vs. full. */
+.queue-card {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 0.9rem;
+    padding: 1.1rem 1.25rem 1.25rem;
+    background: linear-gradient(180deg, #1b2230 0%, #141a24 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.03) inset,
+        0 10px 25px -15px rgba(0, 0, 0, 0.65);
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.queue-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background: var(--queue-accent, #3b82f6);
+    opacity: 0.9;
+}
+
+.queue-card:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 18px 34px -18px rgba(0, 0, 0, 0.75);
+}
+
+.queue-card-glow {
+    position: absolute;
+    inset: -40%;
+    background: radial-gradient(circle at 20% 0%, var(--queue-accent, #3b82f6) 0%, transparent 55%);
+    opacity: 0.09;
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Accent palette per CapacityLevel. */
+.queue-card[data-level='idle'] {
+    --queue-accent: #64748b;
+}
+
+.queue-card[data-level='busy'] {
+    --queue-accent: #22c55e;
+}
+
+.queue-card[data-level='full'] {
+    --queue-accent: #f59e0b;
+}
+
+
+/* ---- Head ------------------------------------------------------------ */
+
+.queue-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.queue-card-head-text {
+    min-width: 0;
+}
+
+.queue-card-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.queue-card-label i {
+    font-size: 0.8rem;
+    color: var(--queue-accent, #3b82f6);
+}
+
+.queue-name {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.queue-cap-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.queue-cap-badge i {
+    color: var(--queue-accent, #3b82f6);
+    font-size: 0.78rem;
+}
+
+
+/* ---- Stats ----------------------------------------------------------- */
+
+.queue-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+}
+
+.queue-stat {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0.6rem;
+    padding: 0.65rem 0.75rem;
+}
+
+.queue-stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+    font-size: 0.9rem;
+}
+
+.queue-stat--queued .queue-stat-icon {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.queue-stat--processing .queue-stat-icon {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.28);
+}
+
+.queue-stat-body {
+    min-width: 0;
+}
+
+.queue-stat-label {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.queue-stat-value {
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: #f8fafc;
+    line-height: 1.1;
+    margin-top: 0.1rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.queue-stat-cap {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 500;
+    margin-left: 0.1rem;
+}
+
+.queue-stat-hint {
+    font-size: 0.66rem;
+    color: #64748b;
+    margin-top: 0.15rem;
+}
+
+
+/* ---- Capacity bar ---------------------------------------------------- */
+
+.queue-capacity {
+    margin-top: auto;
+}
+
+.queue-capacity-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.68rem;
+    color: #94a3b8;
+    margin-bottom: 0.3rem;
+}
+
+.queue-capacity-label {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+}
+
+.queue-capacity-value {
+    color: #f1f5f9;
+    font-weight: 700;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.queue-capacity-track {
+    position: relative;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.queue-capacity-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--queue-accent, #3b82f6), color-mix(in oklab, var(--queue-accent, #3b82f6) 65%, #ffffff));
+    transition: width 280ms ease, background 280ms ease;
+    box-shadow: 0 0 10px color-mix(in oklab, var(--queue-accent, #3b82f6) 60%, transparent);
+}
