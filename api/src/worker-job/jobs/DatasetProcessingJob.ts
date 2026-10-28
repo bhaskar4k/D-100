@@ -1,7 +1,7 @@
 import path from "path";
 import { RowDataPacket } from "mysql2";
 import { ConnectionPool } from "../../data-access-layer/database";
-import { DatasetProcessingQueue, GetRabbitMqChannel } from "../../config/RabbitMqConfig";
+import { GetRabbitMqChannel } from "../../config/RabbitMqConfig";
 import { DatasetProcessingStatus } from "../../enum/DatasetProcessingStatus";
 import { TrueFalse } from "../../enum/CommonEnum";
 import { RunPython } from "../../python-manager/PythonManager";
@@ -13,6 +13,8 @@ const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
 const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
 const ProcessingTimeoutMs = Number(process.env.DATASET_PROCESSING_TIMEOUT_MS) || 30 * 60 * 1000;
 const MaxParallelProcessing = Math.max(1, Number(process.env.DATASET_PROCESSING_MAX_PARALLEL) || 5);
+const DatasetProcessingQueue = process.env.RABBITMQ_DATASET_PROCESSING_QUEUE_NAME || "DATASET_PROCESSING";
+
 
 if (!RAW_UPLOAD_PATH) {
     throw new Error("RAW_UPLOAD_PATH is not configured in .env");
@@ -21,6 +23,7 @@ if (!RAW_UPLOAD_PATH) {
 if (!INGEST_UPLOAD_PATH) {
     throw new Error("INGEST_UPLOAD_PATH is not configured in .env");
 }
+
 
 interface DatasetRow extends RowDataPacket {
     id: number;

@@ -6,7 +6,7 @@ import { ConnectionPool } from "../data-access-layer/database";
 import { FileUploadStatus } from "../enum/FileUploadStatus";
 import { DatasetProcessingStatus } from "../enum/DatasetProcessingStatus";
 import { DatasetCountRow, DatasetPage, DatasetRow } from "../entity/DatasetEntity";
-import { DatasetProcessingQueue, GetRabbitMqChannel } from "../config/RabbitMqConfig";
+import { GetRabbitMqChannel } from "../config/RabbitMqConfig";
 import { StatusLabels } from "../enum/FileUploadStatus";
 import { DatasetColumnItem, DatasetColumnRow, DatasetDetailItem, DatasetDetailResult, DatasetDetailRow, DatasetOwnerRow, ColumnLookupRow, DatasetPreviewResult, DatasetPreviewColumn, DatasetDownloadPlan, DatasetRawDownloadPlan } from "../entity/DatasetEntity";
 import { TrueFalse } from "../enum/CommonEnum";
@@ -26,6 +26,8 @@ const AutoDeletionDays = Number(process.env.AUTO_DELETION_TIME_IN_DAYS) || 30;
 const SecondsPerDay = 24 * 60 * 60;
 const TopNRowDatasetPreview = Math.max(1, Number(process.env.TOP_N_ROW_DATASET_PREVIEW) || 1000);
 const DOWNLOAD_TEMP_PATH = process.env.DOWNLOAD_TEMP_PATH;
+const DatasetProcessingQueue = process.env.RABBITMQ_DATASET_PROCESSING_QUEUE_NAME || "DATASET_PROCESSING";
+
 
 if (!RAW_UPLOAD_PATH) {
     throw new Error("RAW_UPLOAD_PATH is not configured in .env");

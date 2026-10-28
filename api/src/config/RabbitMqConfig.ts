@@ -2,8 +2,6 @@ import amqplib, { ChannelModel, Channel } from "amqplib";
 import "dotenv/config";
 import { RedisConnection } from "./RedisConfig";
 
-export const DatasetProcessingQueue = "DATASET_PROCESSING";
-
 // Single app-wide RabbitMQ connection + channel. Publishers and consumers both reuse these:
 // opening a connection per message is slow and leaks file descriptors.
 
