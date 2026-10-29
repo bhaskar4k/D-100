@@ -13,12 +13,6 @@ import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
 import { MISSING_VALUE_STRATEGY_OPTIONS } from '../../../enums/missing-value-strategy.enum';
 
-interface NullableColumnRow {
-  column: DatasetColumnItem;
-  options: Dropdown[];
-  selected: Dropdown | null;
-}
-
 @Component({
   selector: 'app-handle-missing-value',
   imports: [
@@ -35,7 +29,12 @@ export class HandleMissingValueComponent implements OnDestroy {
 
   SelectedDataset: DatasetItem | null = null;
   LoadingColumns = false;
-  NullableColumns: NullableColumnRow[] = [];
+
+  NullableColumns: DatasetColumnItem[] = [];
+  ColumnOptions: Dropdown[] = [];
+
+  SelectedColumn: Dropdown | null = null;
+  SelectedStrategy: Dropdown | null = null;
 
   private columnSubscription?: Subscription;
 
@@ -51,6 +50,9 @@ export class HandleMissingValueComponent implements OnDestroy {
   OnDatasetChange(dataset: DatasetItem | null): void {
     this.SelectedDataset = dataset;
     this.NullableColumns = [];
+    this.ColumnOptions = [];
+    this.SelectedColumn = null;
+    this.SelectedStrategy = null;
 
     if (!dataset) {
       return;
@@ -59,12 +61,15 @@ export class HandleMissingValueComponent implements OnDestroy {
     this.LoadColumns(dataset.datasetUid);
   }
 
-  OnColumnStrategyChange(row: NullableColumnRow, option: Dropdown): void {
-    row.selected = option;
+  OnColumnChange(option: Dropdown): void {
+    this.SelectedColumn = option;
+    // Switching columns resets the per-column choice so the strategy dropdown
+    // doesn't appear pre-filled with a selection from the previous column.
+    this.SelectedStrategy = null;
   }
 
-  GetTypeLabel(type: number): string {
-    return DATA_TYPE_LABEL[type]?.label ?? 'Unknown';
+  OnStrategyChange(option: Dropdown): void {
+    this.SelectedStrategy = option;
   }
 
   private LoadColumns(datasetUid: string): void {
@@ -83,9 +88,12 @@ export class HandleMissingValueComponent implements OnDestroy {
         }
 
         const columns: DatasetColumnItem[] = response.data?.columns ?? [];
-        this.NullableColumns = columns
-          .filter(c => c.nullable)
-          .map(c => ({ column: c, options: this.StrategyOptions, selected: null }));
+        this.NullableColumns = columns.filter(c => c.nullable);
+
+        this.ColumnOptions = this.NullableColumns.map(c => ({
+          id: c.id,
+          text: `${c.columnName} (${DATA_TYPE_LABEL[c.type]?.label ?? 'Unknown'})`
+        }));
       },
       error: () => {
         this.LoadingColumns = false;
