@@ -11,6 +11,7 @@ import { SingleSelectionDropdownComponent } from '../../../page-components-share
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
+import { MISSING_VALUE_STRATEGY_OPTIONS } from '../../../enums/missing-value-strategy.enum';
 
 interface NullableColumnRow {
   column: DatasetColumnItem;
@@ -30,6 +31,8 @@ interface NullableColumnRow {
   styleUrl: './handle-missing-value.component.css'
 })
 export class HandleMissingValueComponent implements OnDestroy {
+  readonly StrategyOptions: Dropdown[] = MISSING_VALUE_STRATEGY_OPTIONS;
+
   SelectedDataset: DatasetItem | null = null;
   LoadingColumns = false;
   NullableColumns: NullableColumnRow[] = [];
@@ -82,7 +85,7 @@ export class HandleMissingValueComponent implements OnDestroy {
         const columns: DatasetColumnItem[] = response.data?.columns ?? [];
         this.NullableColumns = columns
           .filter(c => c.nullable)
-          .map(c => ({ column: c, options: [], selected: null }));
+          .map(c => ({ column: c, options: this.StrategyOptions, selected: null }));
       },
       error: () => {
         this.LoadingColumns = false;
