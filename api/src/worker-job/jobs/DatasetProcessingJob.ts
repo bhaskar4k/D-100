@@ -37,6 +37,7 @@ interface ColumnMetadata {
     type: number;
     nullable: boolean;
     uniqueCount: number;
+    nullValueCount: number;
 }
 
 interface FileMetadata {
@@ -119,7 +120,7 @@ async function PersistMetadata(DatasetId: number, Metadata: FileMetadata): Promi
         await connection.execute(`DELETE FROM T_COLUMN WHERE dataset_id = ?`, [DatasetId]);
 
         if (Metadata.columnInfo.length > 0) {
-            const placeholders = Metadata.columnInfo.map(() => "(?, ?, ?, ?, ?)").join(", ");
+            const placeholders = Metadata.columnInfo.map(() => "(?, ?, ?, ?, ?, ?)").join(", ");
             const values: unknown[] = [];
 
             for (const Column of Metadata.columnInfo) {
@@ -128,12 +129,13 @@ async function PersistMetadata(DatasetId: number, Metadata: FileMetadata): Promi
                     Column.name,
                     Column.type,
                     Column.nullable ? TrueFalse.True : TrueFalse.False,
-                    Column.uniqueCount
+                    Column.uniqueCount,
+                    Column.nullValueCount
                 );
             }
 
             await connection.query(
-                `INSERT INTO T_COLUMN (dataset_id, column_name, type, nullable, unique_count) VALUES ${placeholders}`,
+                `INSERT INTO T_COLUMN (dataset_id, column_name, type, nullable, unique_count, null_value_count) VALUES ${placeholders}`,
                 values
             );
         }

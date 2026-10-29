@@ -51,6 +51,7 @@ export interface DatafileColumnMetadata {
     type: number;
     nullable: boolean;
     uniqueCount: number;
+    nullValueCount: number;
 }
 
 export interface DatasetOwnerRow extends RowDataPacket {

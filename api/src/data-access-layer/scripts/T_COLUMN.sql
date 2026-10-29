@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS T_COLUMN (
     type INT NOT NULL COMMENT 'DataType enum value (see enum/DataType.ts)',
     nullable INT NOT NULL DEFAULT 0,
     unique_count BIGINT NOT NULL DEFAULT 0,
+    null_value_count BIGINT NOT NULL DEFAULT 0,
 
     modified_on DATETIME(3) NULL DEFAULT NULL,
 
