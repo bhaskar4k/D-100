@@ -42,13 +42,26 @@
                                     </app-single-selection-dropdown>
                                 </div>
 
-                                <div class="col-md-6">
+                                <div class="col-md-6" *ngIf="SelectedColumn !== null">
                                     <label class="field-label">Replacement strategy <span
                                             class="text-danger">*</span></label>
                                     <app-single-selection-dropdown [options]="StrategyOptions"
                                         [selectedItem]="SelectedStrategy" placeholder="Select strategy"
                                         (selectionChange)="OnStrategyChange($event)">
                                     </app-single-selection-dropdown>
+                                </div>
+
+                                <div class="col-12" *ngIf="IsConstantStrategy && SelectedColumn !== null">
+                                    <label class="field-label">
+                                        Constant value <span class="text-danger">*</span>
+                                        <span class="field-hint" *ngIf="SelectedColumnTypeLabel">
+                                            &mdash; expected type: {{ SelectedColumnTypeLabel }}
+                                        </span>
+                                    </label>
+                                    <input type="text" class="form-control constant-value-input"
+                                        [(ngModel)]="ConstantValue" name="constantValue"
+                                        placeholder="Enter the value that will replace every null cell"
+                                        autocomplete="off" />
                                 </div>
                             </div>
                         </ng-container>

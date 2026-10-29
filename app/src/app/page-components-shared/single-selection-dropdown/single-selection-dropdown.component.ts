@@ -27,8 +27,13 @@ export class SingleSelectionDropdownComponent implements OnChanges {
   selectedValue: string | number | null = null;
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['selectedItem'] && this.selectedItem) {
-      this.selectedValue = this.selectedItem.id; // pre-select in mat-select
+    // Mirror selectedItem into the mat-select value for both branches:
+    //   - truthy -> pre-select / switch to the new item in mat-select
+    //   - null   -> clear mat-select so it falls back to the placeholder
+    // Without the null branch, the parent setting selectedItem back to null
+    // would leave the trigger showing the previous selection.
+    if (changes['selectedItem']) {
+      this.selectedValue = this.selectedItem ? this.selectedItem.id : null;
     }
   }
 

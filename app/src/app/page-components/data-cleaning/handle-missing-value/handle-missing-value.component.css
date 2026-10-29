@@ -34,3 +34,13 @@
     font-weight: 500;
     margin-bottom: 0.35rem;
 }
+
+.field-hint {
+    color: #6b7280;
+    font-weight: 400;
+}
+
+.constant-value-input {
+    padding: 0.55rem 0.75rem;
+    border-radius: 8px;
+}
