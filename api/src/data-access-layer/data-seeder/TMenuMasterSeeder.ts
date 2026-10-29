@@ -60,6 +60,33 @@ const menuItems: MenuSeed[] = [
     {
         active: 1,
         displayOrder: 4,
+        icon: "bi bi-tools",
+        label: "Data Cleaning",
+        parentLabel: null,
+        route: null,
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 1,
+        icon: "bi bi-bucket",
+        label: "Missing Value Handling",
+        parentLabel: "Data Cleaning",
+        route: "/data-cleaning/missing-value-handling",
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 2,
+        icon: "bi bi-copy",
+        label: "Duplicate Handling",
+        parentLabel: "Data Cleaning",
+        route: "/data-cleaning/duplicate-handling",
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 5,
         icon: "bi bi-cpu",
         label: "Processing",
         parentLabel: null,
@@ -68,7 +95,7 @@ const menuItems: MenuSeed[] = [
     },
     {
         active: 1,
-        displayOrder: 5,
+        displayOrder: 6,
         icon: "bi bi-box-arrow-in-right",
         label: "Login",
         parentLabel: null,
@@ -77,7 +104,7 @@ const menuItems: MenuSeed[] = [
     },
     {
         active: 1,
-        displayOrder: 6,
+        displayOrder: 7,
         icon: "bi bi-person-add",
         label: "Register",
         parentLabel: null,
@@ -86,7 +113,7 @@ const menuItems: MenuSeed[] = [
     },
     {
         active: 1,
-        displayOrder: 7,
+        displayOrder: 8,
         icon: "bi bi-box-arrow-left",
         label: "Logout",
         parentLabel: null,
