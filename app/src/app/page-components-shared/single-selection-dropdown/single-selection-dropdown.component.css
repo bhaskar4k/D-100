@@ -78,9 +78,61 @@
     background-color: #1f2937 !important;
     border: 1px solid #374151 !important;
     border-radius: 6px !important;
-    padding: 4px 0 !important;
+    padding: 0 !important;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45) !important;
-    max-height: 18rem !important;
+    max-height: 20rem !important;
+}
+
+/* Search header pinned to the top of the open panel */
+::ng-deep .single-select-panel .single-select-search {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background-color: #1f2937;
+    border-bottom: 1px solid #374151;
+}
+
+::ng-deep .single-select-panel .single-select-search-icon {
+    color: #9ca3af;
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
+::ng-deep .single-select-panel .single-select-search-input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e5e7eb;
+    font-size: 0.875rem;
+    padding: 0.25rem 0;
+}
+
+::ng-deep .single-select-panel .single-select-search-input::placeholder {
+    color: #6b7280;
+}
+
+::ng-deep .single-select-panel .single-select-search-clear {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 2px 4px;
+    line-height: 1;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+::ng-deep .single-select-panel .single-select-search-clear:hover {
+    color: #e5e7eb;
+    background-color: #374151;
 }
 
 ::ng-deep .single-select-panel .mat-mdc-option {
