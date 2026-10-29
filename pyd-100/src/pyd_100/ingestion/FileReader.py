@@ -21,12 +21,13 @@ MaxPreviewRowCount = 10000
 def GetFileMetadata(FilePath: str) -> BaseDto:
     """Exact metadata of a data file, shaped like the API's DatafileMetadata:
 
-        { rowCount, columnInfo: [{ name, type, nullable, uniqueCount }] }
+        { rowCount, columnInfo: [{ name, type, nullable, uniqueCount, nullValueCount }] }
 
-    - rowCount     number of data rows (the header is not counted).
-    - type         a DataType enum value.
-    - nullable     True if the column actually contains at least one null (empty cell).
-    - uniqueCount  number of distinct non-null values (SQL's COUNT(DISTINCT ...); nulls are not counted).
+    - rowCount        number of data rows (the header is not counted).
+    - type            a DataType enum value.
+    - nullable        True if the column actually contains at least one null (empty cell).
+    - uniqueCount     number of distinct non-null values (SQL's COUNT(DISTINCT ...); nulls are not counted).
+    - nullValueCount  number of null (empty) cells in the column.
 
     Everything is computed over the whole file in one pass, never from a sample.
     """
@@ -71,6 +72,7 @@ def GetFileMetadata(FilePath: str) -> BaseDto:
             "type": int(FromPolarsDtype(Dtype)),
             "nullable": Counts[1 + 2 * Index] > 0,
             "uniqueCount": Counts[2 + 2 * Index],
+            "nullValueCount": Counts[1 + 2 * Index],
         }
         for Index, (Name, Dtype) in enumerate(Schema.items())
     ]

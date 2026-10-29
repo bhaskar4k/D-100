@@ -69,7 +69,7 @@ const menuItems: MenuSeed[] = [
     {
         active: 1,
         displayOrder: 1,
-        icon: "bi bi-bucket",
+        icon: "bi bi-funnel",
         label: "Missing Value Handling",
         parentLabel: "Data Cleaning",
         route: "/data-cleaning/missing-value-handling",

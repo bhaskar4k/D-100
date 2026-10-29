@@ -1,0 +1,11 @@
+.dataset-selection-wrapper {
+    position: relative;
+}
+
+.dataset-selection-spinner {
+    position: absolute;
+    top: 50%;
+    right: 2.25rem;
+    transform: translateY(-50%);
+    pointer-events: none;
+}

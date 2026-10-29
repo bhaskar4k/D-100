@@ -239,7 +239,7 @@ export class DatasetService {
         }
 
         const [columnRows] = await pool.query<DatasetColumnRow[]>(
-            `SELECT id, column_name, type, nullable, unique_count, modified_on
+            `SELECT id, column_name, type, nullable, unique_count, null_value_count, modified_on
              FROM T_COLUMN
              WHERE dataset_id = ?
              ORDER BY id ASC`,
@@ -275,6 +275,7 @@ export class DatasetService {
             type: Column.type,
             nullable: Column.nullable === TrueFalse.True,
             uniqueCount: Number(Column.unique_count),
+            nullValueCount: Number(Column.null_value_count),
             createdOn: row.processing_completed_on,
             modifiedOn: Column.modified_on
         }));

@@ -1,0 +1,9 @@
+<div class="dataset-selection-wrapper">
+    <app-single-selection-dropdown [options]="Options" [selectedItem]="SelectedOption" placeholder="Select Dataset"
+        (selectionChange)="OnDatasetChange($event)">
+    </app-single-selection-dropdown>
+
+    <div class="dataset-selection-spinner" *ngIf="Loading">
+        <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner>
+    </div>
+</div>

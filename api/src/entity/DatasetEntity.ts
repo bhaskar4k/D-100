@@ -51,6 +51,7 @@ export interface DatafileColumnMetadata {
     type: number;
     nullable: boolean;
     uniqueCount: number;
+    nullValueCount: number;
 }
 
 export interface DatasetOwnerRow extends RowDataPacket {
@@ -90,6 +91,7 @@ export interface DatasetColumnRow extends RowDataPacket {
     type: number;
     nullable: number;
     unique_count: string | number;
+    null_value_count: string | number;
     modified_on: Date | null;
 }
 
@@ -99,6 +101,7 @@ export interface DatasetColumnItem {
     type: number;
     nullable: boolean;
     uniqueCount: number;
+    nullValueCount: number;
     createdOn: Date | null;
     modifiedOn: Date | null;
 }

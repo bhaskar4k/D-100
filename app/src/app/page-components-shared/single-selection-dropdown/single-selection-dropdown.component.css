@@ -1,0 +1,126 @@
+:host {
+    display: block;
+}
+
+/* ---------- Trigger (closed state) ---------- */
+
+::ng-deep .single-select-field.mat-mdc-form-field {
+    font-family: inherit;
+}
+
+/* Outline color + rounded corners */
+::ng-deep .single-select-field .mdc-notched-outline__leading,
+::ng-deep .single-select-field .mdc-notched-outline__notch,
+::ng-deep .single-select-field .mdc-notched-outline__trailing {
+    border-color: #374151 !important;
+}
+
+::ng-deep .single-select-field .mdc-notched-outline__leading {
+    border-top-left-radius: 8px !important;
+    border-bottom-left-radius: 8px !important;
+    width: 12px !important;
+}
+
+::ng-deep .single-select-field .mdc-notched-outline__trailing {
+    border-top-right-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+}
+
+::ng-deep .single-select-field:hover .mdc-notched-outline__leading,
+::ng-deep .single-select-field:hover .mdc-notched-outline__notch,
+::ng-deep .single-select-field:hover .mdc-notched-outline__trailing {
+    border-color: #4b5563 !important;
+}
+
+::ng-deep .single-select-field.mat-focused .mdc-notched-outline__leading,
+::ng-deep .single-select-field.mat-focused .mdc-notched-outline__notch,
+::ng-deep .single-select-field.mat-focused .mdc-notched-outline__trailing {
+    border-color: #3b82f6 !important;
+    border-width: 1px !important;
+}
+
+/* Trigger surface */
+::ng-deep .single-select-field .mat-mdc-text-field-wrapper {
+    background-color: #111827 !important;
+    border-radius: 8px !important;
+}
+
+::ng-deep .single-select-field .mat-mdc-form-field-flex {
+    padding: 0 0.75rem !important;
+    min-height: 2.75rem;
+    align-items: center;
+}
+
+::ng-deep .single-select-field .mat-mdc-form-field-infix {
+    padding: 0.5rem 0 !important;
+    min-height: auto !important;
+}
+
+/* Selected value + placeholder */
+::ng-deep .single-select-field .mat-mdc-select-value,
+::ng-deep .single-select-field .mat-mdc-select-value-text {
+    color: #e5e7eb !important;
+    font-size: 0.9rem;
+}
+
+::ng-deep .single-select-field .mat-mdc-select-placeholder {
+    color: #6b7280 !important;
+}
+
+::ng-deep .single-select-field .mat-mdc-select-arrow {
+    color: #9ca3af !important;
+}
+
+/* ---------- Panel (open state) ---------- */
+
+/* Scoped to this component's dropdown only, so other overlays are untouched */
+::ng-deep .single-select-panel.mat-mdc-select-panel {
+    background-color: #1f2937 !important;
+    border: 1px solid #374151 !important;
+    border-radius: 6px !important;
+    padding: 4px 0 !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45) !important;
+    max-height: 18rem !important;
+}
+
+::ng-deep .single-select-panel .mat-mdc-option {
+    min-height: 2.25rem !important;
+    padding: 0 0.9rem !important;
+    background-color: transparent !important;
+}
+
+::ng-deep .single-select-panel .mat-mdc-option .mdc-list-item__primary-text {
+    color: #e5e7eb !important;
+    font-size: 0.9rem;
+}
+
+::ng-deep .single-select-panel .mat-mdc-option:hover:not(.mdc-list-item--disabled),
+::ng-deep .single-select-panel .mat-mdc-option.mat-mdc-option-active:not(.mdc-list-item--disabled) {
+    background-color: #374151 !important;
+}
+
+::ng-deep .single-select-panel .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+    background-color: rgba(59, 130, 246, 0.18) !important;
+}
+
+::ng-deep .single-select-panel .mat-mdc-option.mdc-list-item--selected .mdc-list-item__primary-text {
+    color: #93c5fd !important;
+    font-weight: 500;
+}
+
+/* Empty-state option (shown when there are no items in the dropdown) */
+::ng-deep .single-select-panel .mat-mdc-option.single-select-empty {
+    cursor: default !important;
+    background-color: transparent !important;
+    opacity: 1 !important;
+}
+
+::ng-deep .single-select-panel .mat-mdc-option.single-select-empty .mdc-list-item__primary-text {
+    color: #6b7280 !important;
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+::ng-deep .single-select-panel .mat-mdc-option.single-select-empty:hover {
+    background-color: transparent !important;
+}
