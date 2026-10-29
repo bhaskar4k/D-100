@@ -4,7 +4,8 @@
 
 .dataset-selection-spinner {
     position: absolute;
-    top: 2.1rem;
-    right: 0.75rem;
+    top: 50%;
+    right: 2.25rem;
+    transform: translateY(-50%);
     pointer-events: none;
 }

@@ -13,7 +13,6 @@
                     <!-- Step 0: Dataset selection -->
                     <div class="step-block mb-4">
                         <div class="step-label">
-                            <span class="step-badge">0</span>
                             <span>Select a dataset</span>
                         </div>
                         <app-dataset-selection (datasetChange)="OnDatasetChange($event)"></app-dataset-selection>
@@ -22,7 +21,6 @@
                     <!-- Step 1: Nullable columns -->
                     <div class="step-block" *ngIf="SelectedDataset">
                         <div class="step-label">
-                            <span class="step-badge">1</span>
                             <span>Choose a strategy for each nullable column</span>
                         </div>
 
