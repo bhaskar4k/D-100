@@ -13,7 +13,7 @@
                     <!-- Step 0: Dataset selection -->
                     <div class="step-block">
                         <div class="step-label">
-                            <span>Select a dataset</span>
+                            <span>Select a dataset <span class="text-danger">*</span></span>
                         </div>
                         <app-dataset-selection (datasetChange)="OnDatasetChange($event)"></app-dataset-selection>
                     </div>
@@ -35,7 +35,7 @@
 
                             <div class="row g-3" *ngIf="NullableColumns.length > 0">
                                 <div class="col-md-6">
-                                    <label class="field-label">Column</label>
+                                    <label class="field-label">Column <span class="text-danger">*</span></label>
                                     <app-single-selection-dropdown [options]="ColumnOptions"
                                         [selectedItem]="SelectedColumn" placeholder="Select column"
                                         (selectionChange)="OnColumnChange($event)">
@@ -43,7 +43,8 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="field-label">Replacement strategy</label>
+                                    <label class="field-label">Replacement strategy <span
+                                            class="text-danger">*</span></label>
                                     <app-single-selection-dropdown [options]="StrategyOptions"
                                         [selectedItem]="SelectedStrategy" placeholder="Select strategy"
                                         (selectionChange)="OnStrategyChange($event)">
