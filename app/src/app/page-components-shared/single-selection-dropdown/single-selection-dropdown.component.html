@@ -1,12 +1,29 @@
 <mat-form-field appearance="outline" class="single-select-field w-100" subscriptSizing="dynamic">
-    <mat-select [(value)]="selectedValue" (selectionChange)="onValueChange($event.value)" [placeholder]="placeholder"
-        panelClass="single-select-panel" disableOptionCentering hideSingleSelectionIndicator>
-        <mat-option *ngFor="let opt of options" [value]="opt.id">
+    <mat-select [(value)]="selectedValue" (selectionChange)="onValueChange($event.value)"
+        (openedChange)="onPanelOpenedChange($event)" [placeholder]="placeholder" panelClass="single-select-panel"
+        disableOptionCentering hideSingleSelectionIndicator>
+
+        <div class="single-select-search" *ngIf="options.length > 0" (click)="$event.stopPropagation()">
+            <i class="bi bi-search single-select-search-icon"></i>
+            <input #searchInput type="text" class="single-select-search-input" [placeholder]="searchPlaceholder"
+                [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" (keydown)="onSearchKeydown($event)"
+                autocomplete="off" />
+            <button *ngIf="searchText" type="button" class="single-select-search-clear"
+                (click)="clearSearch(); $event.stopPropagation()" aria-label="Clear search">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <mat-option *ngFor="let opt of options" [value]="opt.id" [style.display]="isVisible(opt) ? '' : 'none'">
             {{ opt.text }}
         </mat-option>
 
         <mat-option *ngIf="options.length === 0" disabled class="single-select-empty">
             No option available
+        </mat-option>
+
+        <mat-option *ngIf="options.length > 0 && visibleCount === 0" disabled class="single-select-empty">
+            No matching options
         </mat-option>
     </mat-select>
 </mat-form-field>
