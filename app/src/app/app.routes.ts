@@ -10,7 +10,7 @@ import { UploadComponent } from './page-components/upload/upload.component';
 import { AuthGuard } from './middleware/AuthGuard';
 import { ViewDatasetGridComponent } from './page-components/manage-dataset/view-dataset-grid/view-dataset-grid.component';
 import { ViewDatasetInfoComponent } from './page-components/manage-dataset/view-dataset-info/view-dataset-info.component';
-import { ViewDeletedDatasetGridComponent } from './page-components/view-deleted-dataset-grid/view-deleted-dataset-grid.component';
+import { ViewDeletedDatasetGridComponent } from './page-components/manage-dataset/view-deleted-dataset-grid/view-deleted-dataset-grid.component';
 import { ProcessingBaseComponent } from './page-components/processing/processing-base/processing-base.component';
 import { HandleMissingValueComponent } from './page-components/data-cleaning/handle-missing-value/handle-missing-value.component';
 
