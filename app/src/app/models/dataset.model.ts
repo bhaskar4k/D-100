@@ -26,6 +26,7 @@ export interface DatasetColumnItem {
     type: number;
     nullable: boolean;
     uniqueCount: number;
+    nullValueCount: number;
     createdOn: string | null;
     modifiedOn: string | null;
 }

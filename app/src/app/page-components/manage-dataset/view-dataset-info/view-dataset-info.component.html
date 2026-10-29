@@ -178,6 +178,11 @@
                     <td mat-cell *matCellDef="let col">{{ col.uniqueCount.toLocaleString() }}</td>
                 </ng-container>
 
+                <ng-container matColumnDef="nullValueCount">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Null Count</th>
+                    <td mat-cell *matCellDef="let col">{{ col.nullValueCount.toLocaleString() }}</td>
+                </ng-container>
+
                 <ng-container matColumnDef="createdOn">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Created On</th>
                     <td mat-cell *matCellDef="let col">{{ col.createdOn ? (col.createdOn | date: DateFormat) : '-' }}

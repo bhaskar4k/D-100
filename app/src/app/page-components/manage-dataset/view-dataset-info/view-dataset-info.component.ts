@@ -34,7 +34,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   styleUrl: './view-dataset-info.component.css'
 })
 export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
-  readonly ColumnColumns = ['id', 'columnName', 'type', 'nullable', 'uniqueCount', 'createdOn', 'modifiedOn', 'action'];
+  readonly ColumnColumns = ['id', 'columnName', 'type', 'nullable', 'uniqueCount', 'nullValueCount', 'createdOn', 'modifiedOn', 'action'];
   readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
   readonly ReadableSize = GetReadableFileSize;
   readonly FileIcon = GetFileIconByExtension;
@@ -87,6 +87,7 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
         case 'type': return DATA_TYPE_LABEL[data.type]?.label ?? '';
         case 'nullable': return data.nullable ? 1 : 0;
         case 'uniqueCount': return data.uniqueCount;
+        case 'nullValueCount': return data.nullValueCount;
         case 'createdOn': return data.createdOn ? new Date(data.createdOn).getTime() : 0;
         case 'modifiedOn': return data.modifiedOn ? new Date(data.modifiedOn).getTime() : 0;
         default: return '';
