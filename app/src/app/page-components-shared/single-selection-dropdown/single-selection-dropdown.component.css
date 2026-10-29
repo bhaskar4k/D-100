@@ -107,3 +107,20 @@
     color: #93c5fd !important;
     font-weight: 500;
 }
+
+/* Empty-state option (shown when there are no items in the dropdown) */
+::ng-deep .single-select-panel .mat-mdc-option.single-select-empty {
+    cursor: default !important;
+    background-color: transparent !important;
+    opacity: 1 !important;
+}
+
+::ng-deep .single-select-panel .mat-mdc-option.single-select-empty .mdc-list-item__primary-text {
+    color: #6b7280 !important;
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+::ng-deep .single-select-panel .mat-mdc-option.single-select-empty:hover {
+    background-color: transparent !important;
+}

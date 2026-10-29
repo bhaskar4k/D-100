@@ -4,5 +4,9 @@
         <mat-option *ngFor="let opt of options" [value]="opt.id">
             {{ opt.text }}
         </mat-option>
+
+        <mat-option *ngIf="options.length === 0" disabled class="single-select-empty">
+            No option available
+        </mat-option>
     </mat-select>
 </mat-form-field>
