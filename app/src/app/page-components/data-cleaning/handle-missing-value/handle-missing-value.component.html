@@ -59,6 +59,12 @@
                                     <p class="strategy-info-description">
                                         {{ strategy.replacmentStrategyDescription }}
                                     </p>
+                                    <div class="strategy-info-datatypes"
+                                        *ngIf="AllowedDatatypeLabels(strategy).length > 0">
+                                        <span class="strategy-info-datatypes-label">Allowed on:</span>
+                                        <span class="strategy-info-datatype-chip"
+                                            *ngFor="let dt of AllowedDatatypeLabels(strategy)">{{ dt }}</span>
+                                    </div>
                                 </div>
                             </div>
 

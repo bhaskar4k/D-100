@@ -123,3 +123,31 @@
     font-size: 0.85rem;
     line-height: 1.4;
 }
+
+.strategy-info-datatypes {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+}
+
+.strategy-info-datatypes-label {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-right: 0.1rem;
+}
+
+.strategy-info-datatype-chip {
+    display: inline-block;
+    padding: 0.1rem 0.45rem;
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 999px;
+    color: #e5e7eb;
+    font-size: 0.72rem;
+    letter-spacing: 0.01em;
+}

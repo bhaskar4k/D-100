@@ -98,6 +98,12 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
     return (column.nullValueCount / this.RowCount) * 100;
   }
 
+  AllowedDatatypeLabels(strategy: MissingValueReplacementStrategyItem): string[] {
+    return (strategy.allowedDatatypeToBePerformedOn ?? [])
+      .map(t => DATA_TYPE_LABEL[t]?.label)
+      .filter((label): label is string => !!label);
+  }
+
   OnDatasetChange(dataset: DatasetItem | null): void {
     this.SelectedDataset = dataset;
     this.IsColumnListPulledFromDb = false;
@@ -122,11 +128,30 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
     // doesn't appear pre-filled with a selection from the previous column.
     this.SelectedStrategy = null;
     this.ConstantValue = '';
+    this.RebuildStrategyOptions();
   }
 
   OnStrategyChange(option: Dropdown): void {
     this.SelectedStrategy = option;
     this.ConstantValue = '';
+  }
+
+  private RebuildStrategyOptions(): void {
+    const columnType = this.SelectedColumnDetail?.type;
+
+    this.StrategyOptions = this.Strategies.map(s => {
+      // No column picked yet, no gating: every strategy stays enabled. Once a column is
+      // selected, each strategy is enabled only when its allowed-datatype list contains
+      // that column's type (an empty list disables the strategy for every column).
+      const disabled = columnType !== undefined
+        && !(s.allowedDatatypeToBePerformedOn ?? []).includes(columnType);
+
+      return {
+        id: s.id,
+        text: s.replacementStrategyName,
+        disabled
+      };
+    });
   }
 
   private LoadStrategies(): void {
@@ -146,10 +171,7 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
 
         const strategies: MissingValueReplacementStrategyItem[] = response.data ?? [];
         this.Strategies = strategies;
-        this.StrategyOptions = strategies.map(s => ({
-          id: s.id,
-          text: s.replacementStrategyName
-        }));
+        this.RebuildStrategyOptions();
         this.IsSearchStrategyPulledFromDb = true;
       },
       error: () => {

@@ -4,6 +4,7 @@ export interface MissingValueReplacementStrategyItem {
     replacmentStrategyEnum: string;
     replacmentStrategyDescription: string;
     isActive: number;
+    allowedDatatypeToBePerformedOn: number[];
 }
 
 export const MissingValueReplacementStrategyEnum = {
