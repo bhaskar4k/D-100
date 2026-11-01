@@ -11,6 +11,11 @@
         </h4>
 
         <div class="app-page-actions">
+            <button type="button" class="app-icon-button text-success" matTooltip="Refresh" matTooltipPosition="above"
+                aria-label="Refresh dataset" [disabled]="MatProgressBar" (click)="OnRefresh()">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+
             <button type="button" class="app-icon-button text-primary" matTooltip="Preview top N rows"
                 matTooltipPosition="above" aria-label="Preview dataset" *ngIf="CanPreview(D)"
                 [disabled]="MatProgressBar" (click)="OnPreview(D)">

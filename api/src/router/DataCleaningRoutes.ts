@@ -4,10 +4,16 @@ import { JwtMiddleWare } from "../middleware/JwtMiddleWare";
 
 const DataCleaningRouter = Router();
 
+DataCleaningRouter.use(JwtMiddleWare);
+
 DataCleaningRouter.get(
     "/GetMissingValueReplacementStrategies",
-    JwtMiddleWare,
     DataCleaningController.GetMissingValueReplacementStrategies
+);
+
+DataCleaningRouter.post(
+    "/HandleMissingValue",
+    DataCleaningController.HandleMissingValue
 );
 
 export default DataCleaningRouter;

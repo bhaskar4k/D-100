@@ -1,15 +1,18 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subscription } from 'rxjs';
 import { DatasetService } from '../../../services/dataset.service';
 import { DataCleaningService } from '../../../services/data-cleaning.service';
 import { DatasetItem, DatasetColumnItem } from '../../../models/dataset.model';
+import { PreviewDatasetComponent, PreviewDatasetDialogData } from '../../../page-components-shared/preview-dataset/preview-dataset.component';
 import {
   MissingValueReplacementStrategyEnum,
-  MissingValueReplacementStrategyItem
+  MissingValueReplacementStrategyItem,
+  HandleMissingValuePayload
 } from '../../../models/data-cleaning.model';
 import { Dropdown } from '../../../models/common.model';
 import { DatasetSelectionComponent } from '../../../page-components-shared/dataset-selection/dataset-selection.component';
@@ -24,6 +27,7 @@ import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
     CommonModule,
     FormsModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     DatasetSelectionComponent,
     SingleSelectionDropdownComponent
   ],
@@ -31,6 +35,8 @@ import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
   styleUrl: './handle-missing-value.component.css'
 })
 export class HandleMissingValueComponent implements OnInit, OnDestroy {
+  @ViewChild(DatasetSelectionComponent) datasetSelection?: DatasetSelectionComponent;
+
   MatProgressBar = false;
 
   IsColumnListPulledFromDb = false;
@@ -51,6 +57,7 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
 
   private columnSubscription?: Subscription;
   private strategySubscription?: Subscription;
+  private cleanSubscription?: Subscription;
 
   constructor(
     private datasetService: DatasetService,
@@ -65,6 +72,7 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.columnSubscription?.unsubscribe();
     this.strategySubscription?.unsubscribe();
+    this.cleanSubscription?.unsubscribe();
   }
 
   get SelectedStrategyDetail(): MissingValueReplacementStrategyItem | null {
@@ -117,9 +125,60 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
     return false;
   }
 
+  private ResetComponentState(): void {
+    this.SelectedDataset = null;
+    this.IsColumnListPulledFromDb = false;
+    this.RowCount = null;
+    this.NullableColumns = [];
+    this.ColumnOptions = [];
+    this.SelectedColumn = null;
+    this.SelectedStrategy = null;
+    this.ConstantValue = '';
+    this.RebuildStrategyOptions();
+  }
+
   OnClean(): void {
-    // Cleaning logic will be wired up here; the button is already gated so this fires
-    // only when a complete, valid selection is in hand.
+    // IsCleanDisabled gates every mandatory field, so these narrowings are only for TS.
+    if (!this.SelectedDataset || !this.SelectedColumn || !this.SelectedStrategy) {
+      return;
+    }
+
+    const payload: HandleMissingValuePayload = {
+      datasetUid: this.SelectedDataset.datasetUid,
+      columnId: Number(this.SelectedColumn.id),
+      strategyId: Number(this.SelectedStrategy.id),
+      constantValue: this.IsConstantStrategy ? this.ConstantValue : null
+    };
+
+    this.MatProgressBar = true;
+    this.cleanSubscription?.unsubscribe();
+
+    this.cleanSubscription = this.dataCleaningService.HandleMissingValue(payload).subscribe({
+      next: response => {
+        this.MatProgressBar = false;
+
+        const dialogRef = this.dialog.open(CustomAlertComponent, {
+          data: {
+            text: response.message,
+            type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+          }
+        });
+
+        if (response.success) {
+          // Reset this component's own state and ask the dataset-selection child to refetch
+          // its list, so the row we just flipped to IN_QUEUE shows up with the "(In Queue)"
+          // suffix without a full page reload.
+          this.ResetComponentState();
+          this.datasetSelection?.Reload();
+        }
+      },
+      error: () => {
+        this.MatProgressBar = false;
+        this.dialog.open(CustomAlertComponent, {
+          data: { text: 'Failed to queue missing-value handling process.', type: ResponseTypeColor.ERROR }
+        });
+      }
+    });
   }
 
   OnDatasetChange(dataset: DatasetItem | null): void {
@@ -152,6 +211,32 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
   OnStrategyChange(option: Dropdown): void {
     this.SelectedStrategy = option;
     this.ConstantValue = '';
+  }
+
+  get CanPreview(): boolean {
+    return !!this.SelectedDataset && this.SelectedDataset.isActive && this.SelectedDataset.isProcessed;
+  }
+
+  OnPreview(): void {
+    if (!this.CanPreview || this.MatProgressBar || !this.SelectedDataset) {
+      return;
+    }
+
+    this.dialog.open<PreviewDatasetComponent, PreviewDatasetDialogData>(
+      PreviewDatasetComponent,
+      {
+        data: {
+          datasetUid: this.SelectedDataset.datasetUid,
+          fileName: this.SelectedDataset.fileName,
+          extension: this.SelectedDataset.extension
+        },
+        autoFocus: 'first-tabbable',
+        panelClass: 'preview-dataset-dialog',
+        maxWidth: '80vw',
+        width: 'min(max-content, 80vw)',
+        minWidth: 'min(560px, 90vw)'
+      }
+    );
   }
 
   private RebuildStrategyOptions(): void {

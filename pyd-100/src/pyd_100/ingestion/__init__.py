@@ -1,3 +1,3 @@
 from .DownloadWriter import GenerateDownloadableIngestedDatasetFile
-from .FileReader import GetFileMetadata, PreviewDataset
+from .FileReader import GetColumnMetadata, GetFileMetadata, PreviewDataset
 from .FileWriter import ConvertToParquet, DeleteColumnFromParquet, RenameColumnInParquet
