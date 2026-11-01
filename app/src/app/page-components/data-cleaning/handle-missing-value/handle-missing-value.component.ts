@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subscription } from 'rxjs';
 import { DatasetService } from '../../../services/dataset.service';
 import { DataCleaningService } from '../../../services/data-cleaning.service';
 import { DatasetItem, DatasetColumnItem } from '../../../models/dataset.model';
+import { PreviewDatasetComponent, PreviewDatasetDialogData } from '../../../page-components-shared/preview-dataset/preview-dataset.component';
 import {
   MissingValueReplacementStrategyEnum,
   MissingValueReplacementStrategyItem,
@@ -25,6 +27,7 @@ import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
     CommonModule,
     FormsModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     DatasetSelectionComponent,
     SingleSelectionDropdownComponent
   ],
@@ -195,6 +198,32 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
   OnStrategyChange(option: Dropdown): void {
     this.SelectedStrategy = option;
     this.ConstantValue = '';
+  }
+
+  get CanPreview(): boolean {
+    return !!this.SelectedDataset && this.SelectedDataset.isActive && this.SelectedDataset.isProcessed;
+  }
+
+  OnPreview(): void {
+    if (!this.CanPreview || this.MatProgressBar || !this.SelectedDataset) {
+      return;
+    }
+
+    this.dialog.open<PreviewDatasetComponent, PreviewDatasetDialogData>(
+      PreviewDatasetComponent,
+      {
+        data: {
+          datasetUid: this.SelectedDataset.datasetUid,
+          fileName: this.SelectedDataset.fileName,
+          extension: this.SelectedDataset.extension
+        },
+        autoFocus: 'first-tabbable',
+        panelClass: 'preview-dataset-dialog',
+        maxWidth: '80vw',
+        width: 'min(max-content, 80vw)',
+        minWidth: 'min(560px, 90vw)'
+      }
+    );
   }
 
   private RebuildStrategyOptions(): void {
