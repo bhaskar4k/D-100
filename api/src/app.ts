@@ -9,6 +9,7 @@ import UploadRouter from "./router/UploadRoutes";
 import DatasetRouter from "./router/DatasetRoutes";
 import PythonRouter from "./router/PythonRoutes";
 import ProcessingRouter from "./router/ProcessingRoutes";
+import DataCleaningRouter from "./router/DataCleaningRoutes";
 import CorsConfig from "./config/CorsConfig";
 
 const app = express();
@@ -23,6 +24,7 @@ app.use("/Api/Upload", UploadRouter);
 app.use("/Api/Dataset", DatasetRouter);
 app.use("/Api/Python", PythonRouter);
 app.use("/Api/Processing", ProcessingRouter);
+app.use("/Api/DataCleaning", DataCleaningRouter);
 
 
 app.get("/api/health", async (_req, res) => {

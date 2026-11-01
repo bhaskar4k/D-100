@@ -14,7 +14,8 @@
             </button>
         </div>
 
-        <mat-option *ngFor="let opt of options" [value]="opt.id" [style.display]="isVisible(opt) ? '' : 'none'">
+        <mat-option *ngFor="let opt of options" [value]="opt.id" [disabled]="!!opt.disabled"
+            [style.display]="isVisible(opt) ? '' : 'none'">
             {{ opt.text }}
         </mat-option>
 

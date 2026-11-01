@@ -34,7 +34,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   styleUrl: './view-dataset-info.component.css'
 })
 export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
-  readonly ColumnColumns = ['id', 'columnName', 'type', 'nullable', 'uniqueCount', 'nullValueCount', 'createdOn', 'modifiedOn', 'action'];
+  readonly ColumnColumns = ['id', 'columnName', 'type', 'nullable', 'uniqueCount', 'nullValueCount', 'nullPercentage', 'createdOn', 'modifiedOn', 'action'];
   readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
   readonly ReadableSize = GetReadableFileSize;
   readonly FileIcon = GetFileIconByExtension;
@@ -88,6 +88,7 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
         case 'nullable': return data.nullable ? 1 : 0;
         case 'uniqueCount': return data.uniqueCount;
         case 'nullValueCount': return data.nullValueCount;
+        case 'nullPercentage': return this.NullPercentageValue(data) ?? -1;
         case 'createdOn': return data.createdOn ? new Date(data.createdOn).getTime() : 0;
         case 'modifiedOn': return data.modifiedOn ? new Date(data.modifiedOn).getTime() : 0;
         default: return '';
@@ -136,6 +137,22 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
 
   GetType(type: number): { label: string; color: string } {
     return DATA_TYPE_LABEL[type] ?? { label: 'Unknown', color: 'type-unknown' };
+  }
+
+  NullPercentageValue(column: DatasetColumnItem): number | null {
+    const rowCount = this.Dataset?.rowCount ?? null;
+    if (rowCount === null || rowCount <= 0) {
+      return null;
+    }
+    return (column.nullValueCount / rowCount) * 100;
+  }
+
+  NullPercentageDisplay(column: DatasetColumnItem): string {
+    const value = this.NullPercentageValue(column);
+    if (value === null) {
+      return '-';
+    }
+    return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 6 }) + '%';
   }
 
   OnColumnSearch(value: string): void {

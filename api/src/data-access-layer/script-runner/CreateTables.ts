@@ -4,6 +4,7 @@ import { ExecuteTDatasetScript } from "./TDatasetRunner";
 import { ExecuteTColumnScript } from "./TColumnRunner";
 import { ExecuteTDeletedDatasetScript } from "./TDeletedDatasetRunner";
 import { ExecuteTLogScript } from "./TLogRunner";
+import { ExecuteTMissingValueReplacementStrategyScript } from "./TMissingValueReplacementStrategyRunner";
 
 export async function CreateTables(): Promise<void> {
     console.log("=====================================================");
@@ -15,6 +16,7 @@ export async function CreateTables(): Promise<void> {
     await ExecuteTColumnScript();
     await ExecuteTDeletedDatasetScript();
     await ExecuteTLogScript();
+    await ExecuteTMissingValueReplacementStrategyScript();
 
     console.log("\n Finished :: Creating Tables");
     console.log("=====================================================\n");

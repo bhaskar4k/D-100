@@ -183,6 +183,11 @@
                     <td mat-cell *matCellDef="let col">{{ col.nullValueCount.toLocaleString() }}</td>
                 </ng-container>
 
+                <ng-container matColumnDef="nullPercentage">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Null Percentage</th>
+                    <td mat-cell *matCellDef="let col">{{ NullPercentageDisplay(col) }}</td>
+                </ng-container>
+
                 <ng-container matColumnDef="createdOn">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Created On</th>
                     <td mat-cell *matCellDef="let col">{{ col.createdOn ? (col.createdOn | date: DateFormat) : '-' }}
