@@ -28,8 +28,8 @@ import polars as pl
 
 from ..dto import BaseDto, ErrorDto, SuccessDto
 from ..enums import HttpStatusCode
-from ..enums.data_type import FromPolarsDtype
 from ..ingestion.DataReader import GetExtension, ReadFileAsPolarsLazyFrame
+from ..ingestion.FileReader import GetColumnMetadata
 from ..ingestion.FileWriter import SaveLazyFrameAsParquet
 from ..registry import expose
 
@@ -105,34 +105,6 @@ _STRATEGY_HANDLERS: dict[str, Callable[[pl.LazyFrame, str, str | None], pl.LazyF
     FORWARD_FILL: _apply_forward_fill,
     BACKWARD_FILL: _apply_backward_fill,
 }
-
-
-def _collect_column_metadata(FilePath: str, ColumnName: str) -> dict[str, Any]:
-    """Reads one column's fresh metadata from the parquet after it has been written.
-
-    Shape matches the single-column slice of GetFileMetadata's columnInfo entries:
-        { type, nullable, uniqueCount, nullValueCount }
-
-    Scans one column only (parquet is columnar), so this stays cheap on large files.
-    """
-    lazy = pl.scan_parquet(FilePath)
-    schema = lazy.collect_schema()
-    dtype = schema[ColumnName]
-
-    counts = lazy.select(
-        pl.col(ColumnName).null_count().alias("null_count"),
-        pl.col(ColumnName).drop_nulls().n_unique().alias("unique_count"),
-    ).collect().row(0)
-
-    null_value_count = int(counts[0])
-    unique_count = int(counts[1])
-
-    return {
-        "type": int(FromPolarsDtype(dtype)),
-        "nullable": null_value_count > 0,
-        "uniqueCount": unique_count,
-        "nullValueCount": null_value_count,
-    }
 
 
 @expose
@@ -212,7 +184,7 @@ def HandleMissingValue(
         swapped = True
         temp_exists = False  # os.replace consumed TempPath
 
-        column_metadata = _collect_column_metadata(FilePath, ColumnName)
+        column_metadata = GetColumnMetadata(FilePath, ColumnName)
 
     except Exception as error:
         # Restore the original file bytes if we got as far as swapping, then wipe our own temp

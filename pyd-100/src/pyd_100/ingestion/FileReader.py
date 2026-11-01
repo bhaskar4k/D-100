@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import polars as pl
 
@@ -15,6 +16,60 @@ from ..registry import expose
 
 
 MaxPreviewRowCount = 10000
+
+
+def GetColumnMetadata(FilePath: str, ColumnName: str) -> dict[str, Any]:
+    """Exact metadata for one column, shaped like a single columnInfo entry of GetFileMetadata:
+
+        { type, nullable, uniqueCount, nullValueCount }
+
+    - type            a DataType enum value (int) derived from the column's polars dtype.
+    - nullable        True if the column actually contains at least one null (matches
+                      GetFileMetadata's definition — "has nulls now", not "declared nullable").
+    - uniqueCount     number of distinct non-null values (nulls are not counted).
+    - nullValueCount  number of null (empty) cells in the column.
+
+    Reusable helper, not exposed to Node: callers that need to publish this through the
+    registry wrap it in their own @expose'd function. Scans one column only (parquet is
+    columnar), so stays cheap on large files.
+
+    Raises FileNotFoundError / ValueError / KeyError for the three failure modes so callers
+    can decide how to surface them.
+    """
+    if not os.path.isfile(FilePath):
+        raise FileNotFoundError(f"File not found: '{FilePath}'.")
+
+    if not IsSupported(FilePath):
+        raise ValueError(
+            f"Unsupported file type '{GetExtension(FilePath)}'. Supported: {', '.join(SupportedExtensions)}"
+        )
+
+    if not ColumnName or not ColumnName.strip():
+        raise ValueError("Column name is required.")
+
+    Lazy = ReadFileAsPolarsLazyFrame(FilePath)
+    Schema = Lazy.collect_schema()
+
+    if ColumnName not in Schema.names():
+        raise KeyError(f"Column '{ColumnName}' not found in file.")
+
+    Dtype = Schema[ColumnName]
+
+    # One pass over the one column: null count + distinct-non-null count.
+    Counts = Lazy.select(
+        pl.col(ColumnName).null_count().alias("null_count"),
+        pl.col(ColumnName).drop_nulls().n_unique().alias("unique_count"),
+    ).collect().row(0)
+
+    NullValueCount = int(Counts[0])
+    UniqueCount = int(Counts[1])
+
+    return {
+        "type": int(FromPolarsDtype(Dtype)),
+        "nullable": NullValueCount > 0,
+        "uniqueCount": UniqueCount,
+        "nullValueCount": NullValueCount,
+    }
 
 
 @expose
