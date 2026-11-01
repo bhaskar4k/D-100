@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -35,6 +35,8 @@ import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
   styleUrl: './handle-missing-value.component.css'
 })
 export class HandleMissingValueComponent implements OnInit, OnDestroy {
+  @ViewChild(DatasetSelectionComponent) datasetSelection?: DatasetSelectionComponent;
+
   MatProgressBar = false;
 
   IsColumnListPulledFromDb = false;
@@ -123,6 +125,18 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
     return false;
   }
 
+  private ResetComponentState(): void {
+    this.SelectedDataset = null;
+    this.IsColumnListPulledFromDb = false;
+    this.RowCount = null;
+    this.NullableColumns = [];
+    this.ColumnOptions = [];
+    this.SelectedColumn = null;
+    this.SelectedStrategy = null;
+    this.ConstantValue = '';
+    this.RebuildStrategyOptions();
+  }
+
   OnClean(): void {
     // IsCleanDisabled gates every mandatory field, so these narrowings are only for TS.
     if (!this.SelectedDataset || !this.SelectedColumn || !this.SelectedStrategy) {
@@ -143,7 +157,7 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
       next: response => {
         this.MatProgressBar = false;
 
-        this.dialog.open(CustomAlertComponent, {
+        const dialogRef = this.dialog.open(CustomAlertComponent, {
           data: {
             text: response.message,
             type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
@@ -151,12 +165,11 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
         });
 
         if (response.success) {
-          // Reset the per-column choice so the user can either queue another column or walk
-          // away. The dataset selection and strategy list stay in place.
-          this.SelectedColumn = null;
-          this.SelectedStrategy = null;
-          this.ConstantValue = '';
-          this.RebuildStrategyOptions();
+          // Reset this component's own state and ask the dataset-selection child to refetch
+          // its list, so the row we just flipped to IN_QUEUE shows up with the "(In Queue)"
+          // suffix without a full page reload.
+          this.ResetComponentState();
+          this.datasetSelection?.Reload();
         }
       },
       error: () => {

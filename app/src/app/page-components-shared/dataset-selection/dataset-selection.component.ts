@@ -53,6 +53,14 @@ export class DatasetSelectionComponent implements OnInit, OnDestroy {
     this.datasetChange.emit(dataset);
   }
 
+  // Clears the current selection and re-fetches the dataset list. Callers trigger this when
+  // something external (e.g. a job they just queued) may have changed what the list should
+  // show.
+  Reload(): void {
+    this.SelectedOption = null;
+    this.Load();
+  }
+
   private Load(): void {
     this.Loading = true;
     this.loadSubscription?.unsubscribe();
