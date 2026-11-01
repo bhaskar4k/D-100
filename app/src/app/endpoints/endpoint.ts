@@ -41,6 +41,9 @@ export const Endpoints = {
         Chunk: "Upload/Chunk",
         Complete: "Upload/Complete"
     },
+    DataCleaning: {
+        GetMissingValueReplacementStrategies: "DataCleaning/GetMissingValueReplacementStrategies",
+    },
     Download: {
         SingleFile: "file/download/single-file"
     },

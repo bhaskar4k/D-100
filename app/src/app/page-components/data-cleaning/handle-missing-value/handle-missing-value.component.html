@@ -45,10 +45,29 @@
                                 <div class="col-md-6" *ngIf="SelectedColumn !== null">
                                     <label class="field-label">Replacement strategy <span
                                             class="text-danger">*</span></label>
-                                    <app-single-selection-dropdown [options]="StrategyOptions"
-                                        [selectedItem]="SelectedStrategy" placeholder="Select strategy"
-                                        (selectionChange)="OnStrategyChange($event)">
+                                    <div class="d-flex align-items-center py-2" *ngIf="LoadingStrategies">
+                                        <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner>
+                                        <span class="text-muted small ms-2">Loading strategies…</span>
+                                    </div>
+                                    <app-single-selection-dropdown *ngIf="!LoadingStrategies"
+                                        [options]="StrategyOptions" [selectedItem]="SelectedStrategy"
+                                        placeholder="Select strategy" (selectionChange)="OnStrategyChange($event)">
                                     </app-single-selection-dropdown>
+                                </div>
+
+                                <div class="col-12" *ngIf="SelectedStrategyDetail as strategy">
+                                    <div class="strategy-info">
+                                        <div class="strategy-info-head">
+                                            <i class="bi bi-info-circle-fill me-2 text-info"></i>
+                                            <span class="strategy-info-title">{{ strategy.replacementStrategyName
+                                                }}</span>
+                                            <span class="strategy-info-code">{{ strategy.replacmentStrategyEnum
+                                                }}</span>
+                                        </div>
+                                        <p class="strategy-info-description">
+                                            {{ strategy.replacmentStrategyDescription }}
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <div class="col-12" *ngIf="SelectedColumnDetail as col">

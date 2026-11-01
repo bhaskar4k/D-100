@@ -82,3 +82,44 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+.strategy-info {
+    background-color: #111827;
+    border: 1px solid #374151;
+    border-left: 3px solid #38bdf8;
+    border-radius: 0.5rem;
+    padding: 0.75rem 0.9rem;
+}
+
+.strategy-info-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.35rem;
+}
+
+.strategy-info-title {
+    color: #e5e7eb;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.strategy-info-code {
+    display: inline-block;
+    padding: 0.1rem 0.45rem;
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 0.3rem;
+    color: #93c5fd;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.03em;
+}
+
+.strategy-info-description {
+    margin: 0;
+    color: #9ca3af;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}

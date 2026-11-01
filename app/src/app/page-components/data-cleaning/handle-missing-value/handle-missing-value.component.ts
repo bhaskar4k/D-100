@@ -1,18 +1,22 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subscription } from 'rxjs';
 import { DatasetService } from '../../../services/dataset.service';
+import { DataCleaningService } from '../../../services/data-cleaning.service';
 import { DatasetItem, DatasetColumnItem } from '../../../models/dataset.model';
+import {
+  MissingValueReplacementStrategyEnum,
+  MissingValueReplacementStrategyItem
+} from '../../../models/data-cleaning.model';
 import { Dropdown } from '../../../models/common.model';
 import { DatasetSelectionComponent } from '../../../page-components-shared/dataset-selection/dataset-selection.component';
 import { SingleSelectionDropdownComponent } from '../../../page-components-shared/single-selection-dropdown/single-selection-dropdown.component';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
 import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
-import { MISSING_VALUE_STRATEGY_OPTIONS, MissingValueStrategy } from '../../../enums/missing-value-strategy.enum';
 
 @Component({
   selector: 'app-handle-missing-value',
@@ -26,34 +30,49 @@ import { MISSING_VALUE_STRATEGY_OPTIONS, MissingValueStrategy } from '../../../e
   templateUrl: './handle-missing-value.component.html',
   styleUrl: './handle-missing-value.component.css'
 })
-export class HandleMissingValueComponent implements OnDestroy {
-  readonly StrategyOptions: Dropdown[] = MISSING_VALUE_STRATEGY_OPTIONS;
-  readonly MissingValueStrategy = MissingValueStrategy;
-
+export class HandleMissingValueComponent implements OnInit, OnDestroy {
   SelectedDataset: DatasetItem | null = null;
   LoadingColumns = false;
+  LoadingStrategies = false;
 
   RowCount: number | null = null;
   NullableColumns: DatasetColumnItem[] = [];
   ColumnOptions: Dropdown[] = [];
+
+  Strategies: MissingValueReplacementStrategyItem[] = [];
+  StrategyOptions: Dropdown[] = [];
 
   SelectedColumn: Dropdown | null = null;
   SelectedStrategy: Dropdown | null = null;
   ConstantValue: string = '';
 
   private columnSubscription?: Subscription;
+  private strategySubscription?: Subscription;
 
   constructor(
     private datasetService: DatasetService,
+    private dataCleaningService: DataCleaningService,
     private dialog: MatDialog
   ) { }
 
+  ngOnInit(): void {
+    this.LoadStrategies();
+  }
+
   ngOnDestroy(): void {
     this.columnSubscription?.unsubscribe();
+    this.strategySubscription?.unsubscribe();
+  }
+
+  get SelectedStrategyDetail(): MissingValueReplacementStrategyItem | null {
+    if (!this.SelectedStrategy) {
+      return null;
+    }
+    return this.Strategies.find(s => s.id === this.SelectedStrategy!.id) ?? null;
   }
 
   get IsConstantStrategy(): boolean {
-    return this.SelectedStrategy?.id === MissingValueStrategy.Constant;
+    return this.SelectedStrategyDetail?.replacmentStrategyEnum === MissingValueReplacementStrategyEnum.Constant;
   }
 
   get SelectedColumnTypeLabel(): string {
@@ -104,6 +123,37 @@ export class HandleMissingValueComponent implements OnDestroy {
   OnStrategyChange(option: Dropdown): void {
     this.SelectedStrategy = option;
     this.ConstantValue = '';
+  }
+
+  private LoadStrategies(): void {
+    this.LoadingStrategies = true;
+    this.strategySubscription?.unsubscribe();
+
+    this.strategySubscription = this.dataCleaningService.GetMissingValueReplacementStrategies().subscribe({
+      next: response => {
+        this.LoadingStrategies = false;
+
+        if (!response.success) {
+          this.dialog.open(CustomAlertComponent, {
+            data: { text: response.message, type: ResponseTypeColor.ERROR }
+          });
+          return;
+        }
+
+        const strategies: MissingValueReplacementStrategyItem[] = response.data ?? [];
+        this.Strategies = strategies;
+        this.StrategyOptions = strategies.map(s => ({
+          id: s.id,
+          text: s.replacementStrategyName
+        }));
+      },
+      error: () => {
+        this.LoadingStrategies = false;
+        this.dialog.open(CustomAlertComponent, {
+          data: { text: 'Failed to load replacement strategies.', type: ResponseTypeColor.ERROR }
+        });
+      }
+    });
   }
 
   private LoadColumns(datasetUid: string): void {
