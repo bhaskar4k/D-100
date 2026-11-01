@@ -6,9 +6,15 @@ import { Subscription } from 'rxjs';
 import { DatasetService } from '../../services/dataset.service';
 import { DatasetItem } from '../../models/dataset.model';
 import { Dropdown } from '../../models/common.model';
+import { DatasetProcessingStatus } from '../../enums/dataset-processing-status.enum';
 import { SingleSelectionDropdownComponent } from '../single-selection-dropdown/single-selection-dropdown.component';
 import { CustomAlertComponent } from '../custom-alert/custom-alert.component';
 import { ResponseTypeColor } from '../../constants/commonConsts';
+
+const IN_FLIGHT_STATUSES = new Set<number>([
+  DatasetProcessingStatus.IN_QUEUE,
+  DatasetProcessingStatus.PROCESSING
+]);
 
 @Component({
   selector: 'app-dataset-selection',
@@ -63,12 +69,27 @@ export class DatasetSelectionComponent implements OnInit, OnDestroy {
         }
 
         const items: DatasetItem[] = response.data?.items ?? [];
-        this.Datasets = items.filter(d => d.isActive && d.isProcessed);
+        this.Datasets = items.filter(d =>
+          d.isActive && (d.isProcessed || IN_FLIGHT_STATUSES.has(d.processingStatus))
+        );
 
-        this.Options = this.Datasets.map(d => ({
-          id: d.datasetUid,
-          text: `${d.fileName}${d.extension}`
-        }));
+        // Datasets going through IN_QUEUE / PROCESSING stay in the list so the user can see
+        // something is happening to them, but they are rendered disabled with a status suffix
+        // so another job can't be kicked off on top.
+        this.Options = this.Datasets.map(d => {
+          const inFlight = !d.isProcessed && IN_FLIGHT_STATUSES.has(d.processingStatus);
+          const suffix = inFlight
+            ? (d.processingStatus === DatasetProcessingStatus.IN_QUEUE
+              ? ' (In Queue)'
+              : ' (Under Processing)')
+            : '';
+
+          return {
+            id: d.datasetUid,
+            text: `${d.fileName}${d.extension}${suffix}`,
+            disabled: inFlight
+          };
+        });
       },
       error: () => {
         this.Loading = false;
