@@ -33,6 +33,7 @@ export class HandleMissingValueComponent implements OnDestroy {
   SelectedDataset: DatasetItem | null = null;
   LoadingColumns = false;
 
+  RowCount: number | null = null;
   NullableColumns: DatasetColumnItem[] = [];
   ColumnOptions: Dropdown[] = [];
 
@@ -56,15 +57,28 @@ export class HandleMissingValueComponent implements OnDestroy {
   }
 
   get SelectedColumnTypeLabel(): string {
-    if (!this.SelectedColumn) {
-      return '';
-    }
-    const column = this.NullableColumns.find(c => c.id === this.SelectedColumn!.id);
+    const column = this.SelectedColumnDetail;
     return column ? (DATA_TYPE_LABEL[column.type]?.label ?? 'Unknown') : '';
+  }
+
+  get SelectedColumnDetail(): DatasetColumnItem | null {
+    if (!this.SelectedColumn) {
+      return null;
+    }
+    return this.NullableColumns.find(c => c.id === this.SelectedColumn!.id) ?? null;
+  }
+
+  get SelectedColumnNullPercentage(): number | null {
+    const column = this.SelectedColumnDetail;
+    if (!column || this.RowCount === null || this.RowCount <= 0) {
+      return null;
+    }
+    return (column.nullValueCount / this.RowCount) * 100;
   }
 
   OnDatasetChange(dataset: DatasetItem | null): void {
     this.SelectedDataset = dataset;
+    this.RowCount = null;
     this.NullableColumns = [];
     this.ColumnOptions = [];
     this.SelectedColumn = null;
@@ -107,6 +121,7 @@ export class HandleMissingValueComponent implements OnDestroy {
           return;
         }
 
+        this.RowCount = response.data?.dataset?.rowCount ?? null;
         const columns: DatasetColumnItem[] = response.data?.columns ?? [];
         this.NullableColumns = columns.filter(c => c.nullable);
 

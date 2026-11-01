@@ -51,6 +51,37 @@
                                     </app-single-selection-dropdown>
                                 </div>
 
+                                <div class="col-12" *ngIf="SelectedColumnDetail as col">
+                                    <div class="column-info">
+                                        <div class="info-tile">
+                                            <span class="info-label">Column name</span>
+                                            <span class="info-value" [title]="col.columnName">{{ col.columnName
+                                                }}</span>
+                                        </div>
+                                        <div class="info-tile">
+                                            <span class="info-label">Rows in dataset</span>
+                                            <span class="info-value">{{ RowCount !== null ? (RowCount | number) : '—'
+                                                }}</span>
+                                        </div>
+                                        <div class="info-tile">
+                                            <span class="info-label">Null count</span>
+                                            <span class="info-value">{{ col.nullValueCount | number }}</span>
+                                        </div>
+                                        <div class="info-tile">
+                                            <span class="info-label">Null percentage</span>
+                                            <span class="info-value">
+                                                {{ SelectedColumnNullPercentage !== null
+                                                ? (SelectedColumnNullPercentage | number:'1.0-2') + '%'
+                                                : '—' }}
+                                            </span>
+                                        </div>
+                                        <div class="info-tile">
+                                            <span class="info-label">Unique values</span>
+                                            <span class="info-value">{{ col.uniqueCount | number }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="col-12" *ngIf="IsConstantStrategy && SelectedColumn !== null">
                                     <label class="field-label">
                                         Constant value <span class="text-danger">*</span>

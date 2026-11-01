@@ -44,3 +44,41 @@
     padding: 0.55rem 0.75rem;
     border-radius: 8px;
 }
+
+.column-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.6rem;
+    background-color: #111827;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+}
+
+.info-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.5rem 0.6rem;
+    background-color: #1f2937;
+    border: 1px solid #2d3748;
+    border-radius: 0.4rem;
+    min-width: 0;
+}
+
+.info-label {
+    color: #9ca3af;
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.info-value {
+    color: #e5e7eb;
+    font-size: 0.95rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
