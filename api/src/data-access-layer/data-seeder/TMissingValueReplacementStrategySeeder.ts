@@ -1,8 +1,9 @@
 import { ConnectionPool } from "../../data-access-layer/database";
+import { MissingValueReplacementStrategy } from "../../enum/MissingValueReplacementStrategyEnum";
 
 interface MissingValueReplacementStrategySeed {
     replacement_strategy_name: string;
-    replacment_strategy_enum: string;
+    replacment_strategy_enum: MissingValueReplacementStrategy;
     replacment_strategy_description: string;
     is_active: number;
 }
@@ -10,56 +11,56 @@ interface MissingValueReplacementStrategySeed {
 const strategies: MissingValueReplacementStrategySeed[] = [
     {
         replacement_strategy_name: "Mean imputation",
-        replacment_strategy_enum: "MEAN",
+        replacment_strategy_enum: MissingValueReplacementStrategy.Mean,
         replacment_strategy_description:
             "Replaces every null in the column with the arithmetic mean of its non-null values. Works on numeric columns only.",
         is_active: 1
     },
     {
         replacement_strategy_name: "Median imputation",
-        replacment_strategy_enum: "MEDIAN",
+        replacment_strategy_enum: MissingValueReplacementStrategy.Median,
         replacment_strategy_description:
             "Replaces every null in the column with the median of its non-null values. Robust to outliers; numeric columns only.",
         is_active: 1
     },
     {
         replacement_strategy_name: "Mode imputation",
-        replacment_strategy_enum: "MODE",
+        replacment_strategy_enum: MissingValueReplacementStrategy.Mode,
         replacment_strategy_description:
             "Replaces every null in the column with the most frequent non-null value. Suitable for categorical and numeric columns.",
         is_active: 1
     },
     {
         replacement_strategy_name: "Minimum-value imputation",
-        replacment_strategy_enum: "MIN",
+        replacment_strategy_enum: MissingValueReplacementStrategy.Min,
         replacment_strategy_description:
             "Replaces every null in the column with its smallest non-null value. Numeric or date-like columns only.",
         is_active: 1
     },
     {
         replacement_strategy_name: "Maximum-value imputation",
-        replacment_strategy_enum: "MAX",
+        replacment_strategy_enum: MissingValueReplacementStrategy.Max,
         replacment_strategy_description:
             "Replaces every null in the column with its largest non-null value. Numeric or date-like columns only.",
         is_active: 1
     },
     {
         replacement_strategy_name: "Constant-value imputation",
-        replacment_strategy_enum: "CONSTANT",
+        replacment_strategy_enum: MissingValueReplacementStrategy.Constant,
         replacment_strategy_description:
             "Replaces every null in the column with a fixed value you provide. The value must match the column's data type.",
         is_active: 1
     },
     {
         replacement_strategy_name: "Forward fill",
-        replacment_strategy_enum: "FORWARD_FILL",
+        replacment_strategy_enum: MissingValueReplacementStrategy.ForwardFill,
         replacment_strategy_description:
             "Propagates the previous non-null value forward over nulls. Row order matters; leading nulls are left unchanged.",
         is_active: 1
     },
     {
         replacement_strategy_name: "Backward fill",
-        replacment_strategy_enum: "BACKWARD_FILL",
+        replacment_strategy_enum: MissingValueReplacementStrategy.BackwardFill,
         replacment_strategy_description:
             "Propagates the next non-null value backward over nulls. Row order matters; trailing nulls are left unchanged.",
         is_active: 1

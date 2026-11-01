@@ -1,4 +1,5 @@
 import { RowDataPacket } from "mysql2";
+import { DataType } from "../enum/DataType";
 
 export interface MissingValueReplacementStrategyItem {
     id: number;
@@ -6,6 +7,7 @@ export interface MissingValueReplacementStrategyItem {
     replacmentStrategyEnum: string;
     replacmentStrategyDescription: string;
     isActive: number;
+    allowedDatatypeToBePerformedOn: DataType[];
 }
 
 export interface MissingValueReplacementStrategyRow extends RowDataPacket {
