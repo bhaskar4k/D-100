@@ -9,7 +9,8 @@ import { DataCleaningService } from '../../../services/data-cleaning.service';
 import { DatasetItem, DatasetColumnItem } from '../../../models/dataset.model';
 import {
   MissingValueReplacementStrategyEnum,
-  MissingValueReplacementStrategyItem
+  MissingValueReplacementStrategyItem,
+  HandleMissingValuePayload
 } from '../../../models/data-cleaning.model';
 import { Dropdown } from '../../../models/common.model';
 import { DatasetSelectionComponent } from '../../../page-components-shared/dataset-selection/dataset-selection.component';
@@ -51,6 +52,7 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
 
   private columnSubscription?: Subscription;
   private strategySubscription?: Subscription;
+  private cleanSubscription?: Subscription;
 
   constructor(
     private datasetService: DatasetService,
@@ -65,6 +67,7 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.columnSubscription?.unsubscribe();
     this.strategySubscription?.unsubscribe();
+    this.cleanSubscription?.unsubscribe();
   }
 
   get SelectedStrategyDetail(): MissingValueReplacementStrategyItem | null {
@@ -118,8 +121,48 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
   }
 
   OnClean(): void {
-    // Cleaning logic will be wired up here; the button is already gated so this fires
-    // only when a complete, valid selection is in hand.
+    // IsCleanDisabled gates every mandatory field, so these narrowings are only for TS.
+    if (!this.SelectedDataset || !this.SelectedColumn || !this.SelectedStrategy) {
+      return;
+    }
+
+    const payload: HandleMissingValuePayload = {
+      datasetUid: this.SelectedDataset.datasetUid,
+      columnId: Number(this.SelectedColumn.id),
+      strategyId: Number(this.SelectedStrategy.id),
+      constantValue: this.IsConstantStrategy ? this.ConstantValue : null
+    };
+
+    this.MatProgressBar = true;
+    this.cleanSubscription?.unsubscribe();
+
+    this.cleanSubscription = this.dataCleaningService.HandleMissingValue(payload).subscribe({
+      next: response => {
+        this.MatProgressBar = false;
+
+        this.dialog.open(CustomAlertComponent, {
+          data: {
+            text: response.message,
+            type: response.success ? ResponseTypeColor.SUCCESS : ResponseTypeColor.ERROR
+          }
+        });
+
+        if (response.success) {
+          // Reset the per-column choice so the user can either queue another column or walk
+          // away. The dataset selection and strategy list stay in place.
+          this.SelectedColumn = null;
+          this.SelectedStrategy = null;
+          this.ConstantValue = '';
+          this.RebuildStrategyOptions();
+        }
+      },
+      error: () => {
+        this.MatProgressBar = false;
+        this.dialog.open(CustomAlertComponent, {
+          data: { text: 'Failed to queue missing-value handling process.', type: ResponseTypeColor.ERROR }
+        });
+      }
+    });
   }
 
   OnDatasetChange(dataset: DatasetItem | null): void {

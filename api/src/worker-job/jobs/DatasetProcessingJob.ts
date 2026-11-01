@@ -162,28 +162,28 @@ async function PersistMetadata(DatasetId: number, Metadata: FileMetadata): Promi
 
 
 async function ProcessDataset(DatasetId: number): Promise<void> {
-    const pool = await ConnectionPool;
+    try {
+        const pool = await ConnectionPool;
 
-    const [rows] = await pool.query<DatasetRow[]>(
-        `SELECT id, dataset_uid, extension FROM T_DATASET WHERE id = ? LIMIT 1`,
-        [DatasetId]
-    );
+        const [rows] = await pool.query<DatasetRow[]>(
+            `SELECT id, dataset_uid, extension FROM T_DATASET WHERE id = ? LIMIT 1`,
+            [DatasetId]
+        );
 
-    if (rows.length === 0) {
-        await Logger.Error(`Dataset ${DatasetId} not found while processing.`);
-        return;
-    }
+        if (rows.length === 0) {
+            await Logger.Error(`Dataset ${DatasetId} not found while processing.`);
+            return;
+        }
 
-    const dataset = rows[0];
+        const dataset = rows[0];
 
-    await pool.execute(
-        `UPDATE T_DATASET
+        await pool.execute(
+            `UPDATE T_DATASET
          SET processing_status = ?, processing_initiated_on = NOW(3)
          WHERE id = ?`,
-        [DatasetProcessingStatus.PROCESSING, DatasetId]
-    );
+            [DatasetProcessingStatus.PROCESSING, DatasetId]
+        );
 
-    try {
         const sourcePath = BuildRawFilePath(dataset.dataset_uid, RAW_UPLOAD_PATH!, UploadedFileName, dataset.extension);
         const targetPath = BuildIngestFilePath(dataset.dataset_uid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
