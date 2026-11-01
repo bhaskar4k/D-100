@@ -1,3 +1,4 @@
+import fs from "fs/promises";
 import { ConnectionPool } from "../../data-access-layer/database";
 import { GetRabbitMqChannel } from "../../config/RabbitMqConfig";
 import { DatasetProcessingStatus } from "../../enum/DatasetProcessingStatus";
@@ -7,6 +8,8 @@ import { Logger } from "../../log/Logger";
 import { BuildIngestFilePath } from "../../util/UploadUtil";
 import { MissingValueHandlingQueuePayload } from "../../entity/DataCleaningEntity";
 import { QueueRegistry } from "../QueueRegistry";
+import { ColumnMetadata, HandleMissingValuePythonResponse } from "../../entity/DataCleaningEntity";
+
 
 const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
 const UploadedFileName = process.env.UPLOAD_FILE_NAME || "UploadedFile";
@@ -18,6 +21,7 @@ const MissingValueHandlingQueue = process.env.RABBITMQ_MISSING_VALUE_HANDLING_QU
 if (!INGEST_UPLOAD_PATH) {
     throw new Error("INGEST_UPLOAD_PATH is not configured in .env");
 }
+
 
 
 // Caps how many missing-value handling jobs process concurrently across ticks. State is
@@ -81,7 +85,7 @@ async function MarkStarted(DatasetId: number): Promise<void> {
 }
 
 
-async function MarkFinished(DatasetId: number, Status: DatasetProcessingStatus): Promise<void> {
+async function MarkFailed(DatasetId: number): Promise<void> {
     const pool = await ConnectionPool;
 
     await pool.execute(
@@ -91,18 +95,100 @@ async function MarkFinished(DatasetId: number, Status: DatasetProcessingStatus):
              processing_completed_on = NOW(3),
              processing_time = TIMESTAMPDIFF(MICROSECOND, processing_initiated_on, NOW(3)) DIV 1000
          WHERE id = ?`,
-        [TrueFalse.True, Status, DatasetId]
+        [TrueFalse.True, DatasetProcessingStatus.FAILED, DatasetId]
     );
 }
 
 
+// Writes the column's fresh metadata and the dataset's final status in one DB transaction, so
+// a partial failure never leaves the column row updated while the dataset still looks
+// in-flight (or vice-versa).
+async function CommitSuccess(
+    DatasetId: number,
+    ColumnId: number,
+    Metadata: ColumnMetadata
+): Promise<void> {
+    const pool = await ConnectionPool;
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        const [updateResult]: any = await connection.execute(
+            `UPDATE T_COLUMN
+             SET type = ?,
+                 nullable = ?,
+                 unique_count = ?,
+                 null_value_count = ?,
+                 modified_on = NOW(3)
+             WHERE id = ? AND dataset_id = ?`,
+            [
+                Metadata.type,
+                Metadata.nullable ? TrueFalse.True : TrueFalse.False,
+                Metadata.uniqueCount,
+                Metadata.nullValueCount,
+                ColumnId,
+                DatasetId
+            ]
+        );
+
+        if (!updateResult || Number(updateResult.affectedRows) === 0) {
+            // Something deleted the column while we were working. Treat it as a hard failure
+            // so the caller rolls the file change back.
+            throw new Error(`Column ${ColumnId} not found for dataset ${DatasetId}; aborting commit.`);
+        }
+
+        await connection.execute(
+            `UPDATE T_DATASET
+             SET is_processed = ?,
+                 processing_status = ?,
+                 processing_completed_on = NOW(3),
+                 processing_time = TIMESTAMPDIFF(MICROSECOND, processing_initiated_on, NOW(3)) DIV 1000
+             WHERE id = ?`,
+            [TrueFalse.True, DatasetProcessingStatus.PROCESSED, DatasetId]
+        );
+
+        await connection.commit();
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
+}
+
+
+async function RestoreFromBackup(FilePath: string, BackupPath: string): Promise<void> {
+    try {
+        await fs.rename(BackupPath, FilePath);
+    } catch (error) {
+        await Logger.Error(
+            `Failed to restore parquet from backup. The dataset file may be stale. BackupPath='${BackupPath}', FilePath='${FilePath}'.`,
+            error
+        );
+    }
+}
+
+
+async function DeleteBackup(BackupPath: string): Promise<void> {
+    try {
+        await fs.unlink(BackupPath);
+    } catch (error) {
+        // Best-effort cleanup: a leftover .bak is not a correctness problem, just noise on disk.
+        await Logger.Error(`Failed to delete missing-value backup at '${BackupPath}'.`, error);
+    }
+}
+
+
 async function HandleMissingValueJob(Payload: MissingValueHandlingQueuePayload): Promise<void> {
+    const FilePath = BuildIngestFilePath(Payload.datasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
+
+    let backupPath: string | null = null;
+
     try {
         await MarkStarted(Payload.datasetId);
 
-        const FilePath = BuildIngestFilePath(Payload.datasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
-
-        const response = await RunPython<{ filePath: string; columnName: string; strategy: string; remainingNullCount: number }>(
+        const response = await RunPython<HandleMissingValuePythonResponse>(
             "HandleMissingValue",
             {
                 FilePath,
@@ -113,17 +199,40 @@ async function HandleMissingValueJob(Payload: MissingValueHandlingQueuePayload):
             ProcessingTimeoutMs
         );
 
-        if (!response.success) {
+        if (!response.success || !response.data) {
+            // Python already rolled its own temp/backup state back, so FilePath is unchanged.
             throw new Error(`Python returned error (HandleMissingValue): ${response.message}`);
         }
 
-        await MarkFinished(Payload.datasetId, DatasetProcessingStatus.PROCESSED);
+        backupPath = response.data.backupPath;
+
+        try {
+            await CommitSuccess(Payload.datasetId, Payload.columnId, response.data.columnMetadata);
+        } catch (dbError) {
+            // The parquet is already swapped on disk but the DB commit failed. Rename the
+            // backup back over the live file so the dataset's on-disk state matches the DB
+            // row that is about to be flipped to FAILED.
+            await RestoreFromBackup(FilePath, backupPath);
+            backupPath = null;
+            throw dbError;
+        }
+
+        // DB and file are both committed. The backup is no longer needed.
+        await DeleteBackup(backupPath);
+        backupPath = null;
 
         await Logger.Info(
-            `Missing-value handling finished for dataset ${Payload.datasetId}, column '${Payload.columnName}', strategy '${Payload.strategyEnum}' (remaining nulls: ${response.data?.remainingNullCount ?? "?"}).`
+            `Missing-value handling finished for dataset ${Payload.datasetId}, column '${Payload.columnName}', strategy '${Payload.strategyEnum}' (nulls left: ${response.data.columnMetadata.nullValueCount}).`
         );
     } catch (error) {
-        await MarkFinished(Payload.datasetId, DatasetProcessingStatus.FAILED);
+        if (backupPath) {
+            // Belt and braces: if we somehow left the catch above with a backup still on disk,
+            // restore it here before marking FAILED.
+            await RestoreFromBackup(FilePath, backupPath);
+        }
+
+        await MarkFailed(Payload.datasetId);
+
         await Logger.Error(
             `Missing-value handling failed for dataset ${Payload.datasetId}, column '${Payload.columnName}', strategy '${Payload.strategyEnum}'.`,
             error
@@ -157,8 +266,10 @@ export async function MissingValueHandlingTick(): Promise<void> {
             try {
                 const payload = JSON.parse(message.content.toString()) as Partial<MissingValueHandlingQueuePayload>;
                 const datasetId = Number(payload?.datasetId);
+                const columnId = Number(payload?.columnId);
 
                 if (!Number.isFinite(datasetId) || datasetId <= 0
+                    || !Number.isFinite(columnId) || columnId <= 0
                     || !payload.datasetUid || !payload.columnName || !payload.strategyEnum) {
                     await Logger.Error(`MissingValueHandling: invalid payload '${message.content.toString()}'`);
                     channel.ack(message);

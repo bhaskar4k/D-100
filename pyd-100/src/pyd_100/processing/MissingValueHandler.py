@@ -5,17 +5,30 @@ Dispatches on `ReplacementStrategy` (string enum matching
 chosen column cleaned. Everything runs on a polars LazyFrame so a huge dataset streams end to
 end: the aggregate used by the strategy (mean/median/mode/min/max) is expressed inside
 `fill_null`, so polars plans a single scan and `sink_parquet` writes without materializing the
-frame in memory. Writes to a sibling `.tmp` first and atomically swaps with `os.replace` so a
-crash mid-write never leaves a half-written file.
+frame in memory.
+
+Transactional contract with the caller:
+    - A `.bak` copy of the original is kept beside the file until the caller tells us the
+      downstream DB write committed. The on-disk swap of the cleaned file is itself atomic
+      (sibling .tmp + os.replace), so FilePath always references either the pre-call bytes or
+      the post-call bytes, never a half-written frame.
+    - On success we return `backupPath` in the response. The caller must either:
+          * delete the backup after its DB transaction commits, or
+          * rename the backup back over FilePath (fs.rename) to roll back, then mark the row
+            FAILED.
+    - On any failure here we clean up our own temp artifacts and restore from the backup
+      ourselves, so FilePath is unchanged when we return an ErrorDto.
 """
 
 import os
+import shutil
 from typing import Any, Callable
 
 import polars as pl
 
 from ..dto import BaseDto, ErrorDto, SuccessDto
 from ..enums import HttpStatusCode
+from ..enums.data_type import FromPolarsDtype
 from ..ingestion.DataReader import GetExtension, ReadFileAsPolarsLazyFrame
 from ..ingestion.FileWriter import SaveLazyFrameAsParquet
 from ..registry import expose
@@ -94,6 +107,34 @@ _STRATEGY_HANDLERS: dict[str, Callable[[pl.LazyFrame, str, str | None], pl.LazyF
 }
 
 
+def _collect_column_metadata(FilePath: str, ColumnName: str) -> dict[str, Any]:
+    """Reads one column's fresh metadata from the parquet after it has been written.
+
+    Shape matches the single-column slice of GetFileMetadata's columnInfo entries:
+        { type, nullable, uniqueCount, nullValueCount }
+
+    Scans one column only (parquet is columnar), so this stays cheap on large files.
+    """
+    lazy = pl.scan_parquet(FilePath)
+    schema = lazy.collect_schema()
+    dtype = schema[ColumnName]
+
+    counts = lazy.select(
+        pl.col(ColumnName).null_count().alias("null_count"),
+        pl.col(ColumnName).drop_nulls().n_unique().alias("unique_count"),
+    ).collect().row(0)
+
+    null_value_count = int(counts[0])
+    unique_count = int(counts[1])
+
+    return {
+        "type": int(FromPolarsDtype(dtype)),
+        "nullable": null_value_count > 0,
+        "uniqueCount": unique_count,
+        "nullValueCount": null_value_count,
+    }
+
+
 @expose
 def HandleMissingValue(
     FilePath: str,
@@ -107,6 +148,14 @@ def HandleMissingValue(
     ColumnName       the column to clean
     ReplacementStrategy  one of MEAN / MEDIAN / MODE / MIN / MAX / CONSTANT / FORWARD_FILL / BACKWARD_FILL
     ConstantValue    required (and only used) when ReplacementStrategy is CONSTANT
+
+    Returns a SuccessDto whose data is:
+        {
+            filePath, columnName, strategy, backupPath,
+            columnMetadata: { type, nullable, uniqueCount, nullValueCount }
+        }
+    The caller must either delete `backupPath` after its DB commit, or rename it back over
+    FilePath to roll the file change back.
     """
     if not os.path.isfile(FilePath):
         return ErrorDto(False, "File not found.", HttpStatusCode.NOT_FOUND)
@@ -126,7 +175,13 @@ def HandleMissingValue(
         )
 
     TempPath = FilePath + ".tmp"
+    BackupPath = FilePath + ".bak"
     constant = str(ConstantValue) if ConstantValue is not None else None
+
+    # Track which artifacts exist so the catch block can clean up precisely.
+    temp_exists = False
+    backup_exists = False
+    swapped = False
 
     try:
         lf = ReadFileAsPolarsLazyFrame(FilePath)
@@ -146,19 +201,36 @@ def HandleMissingValue(
 
         # Streams the lazy plan to disk; the frame is never materialized in memory.
         SaveLazyFrameAsParquet(cleaned, TempPath)
-        os.replace(TempPath, FilePath)
+        temp_exists = True
 
-        # Columnar scan of the final parquet reads only this column's null count, so this is
-        # cheap even on a large file.
-        remaining_nulls = int(
-            pl.scan_parquet(FilePath)
-              .select(pl.col(ColumnName).null_count())
-              .collect()
-              .item()
-        )
+        # Copy, not move: the live file keeps serving reads if the caller rolls back. Takes 2x
+        # disk briefly, which is cheaper than another full pass over the original.
+        shutil.copy2(FilePath, BackupPath)
+        backup_exists = True
+
+        os.replace(TempPath, FilePath)
+        swapped = True
+        temp_exists = False  # os.replace consumed TempPath
+
+        column_metadata = _collect_column_metadata(FilePath, ColumnName)
 
     except Exception as error:
-        if os.path.exists(TempPath):
+        # Restore the original file bytes if we got as far as swapping, then wipe our own temp
+        # artifacts. The caller sees an ErrorDto with FilePath exactly as it was.
+        if swapped and backup_exists:
+            try:
+                os.replace(BackupPath, FilePath)
+                backup_exists = False
+            except OSError:
+                pass
+
+        if backup_exists:
+            try:
+                os.remove(BackupPath)
+            except OSError:
+                pass
+
+        if temp_exists and os.path.exists(TempPath):
             try:
                 os.remove(TempPath)
             except OSError:
@@ -175,7 +247,8 @@ def HandleMissingValue(
             "filePath": FilePath,
             "columnName": ColumnName,
             "strategy": ReplacementStrategy,
-            "remainingNullCount": remaining_nulls,
+            "backupPath": BackupPath,
+            "columnMetadata": column_metadata,
         },
         "Missing values handled.",
         HttpStatusCode.OK,

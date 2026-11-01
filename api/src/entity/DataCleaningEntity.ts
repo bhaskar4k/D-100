@@ -28,6 +28,7 @@ export interface HandleMissingValueRequest {
 export interface MissingValueHandlingQueuePayload {
     datasetId: number;
     datasetUid: string;
+    columnId: number;
     columnName: string;
     columnType: number;
     strategyEnum: string;
@@ -54,4 +55,19 @@ export interface StrategyByIdRow extends RowDataPacket {
     id: number;
     replacment_strategy_enum: string;
     is_active: number;
+}
+
+export interface ColumnMetadata {
+    type: number;
+    nullable: boolean;
+    uniqueCount: number;
+    nullValueCount: number;
+}
+
+export interface HandleMissingValuePythonResponse {
+    filePath: string;
+    columnName: string;
+    strategy: string;
+    backupPath: string;
+    columnMetadata: ColumnMetadata;
 }

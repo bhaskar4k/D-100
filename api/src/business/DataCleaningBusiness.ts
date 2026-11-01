@@ -159,6 +159,7 @@ export class DataCleaningBusiness {
         const payload: MissingValueHandlingQueuePayload = {
             datasetId: Number(dataset.id),
             datasetUid: dataset.dataset_uid,
+            columnId: Number(column.id),
             columnName: column.column_name,
             columnType: column.type,
             strategyEnum: strategyEnum,
