@@ -17,3 +17,10 @@ export const MissingValueReplacementStrategyEnum = {
     ForwardFill: 'FORWARD_FILL',
     BackwardFill: 'BACKWARD_FILL',
 } as const;
+
+export interface HandleMissingValuePayload {
+    datasetUid: string;
+    columnId: number;
+    strategyId: number;
+    constantValue: string | null;
+}

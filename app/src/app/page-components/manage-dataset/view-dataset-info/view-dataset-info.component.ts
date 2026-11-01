@@ -139,6 +139,13 @@ export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
     return DATA_TYPE_LABEL[type] ?? { label: 'Unknown', color: 'type-unknown' };
   }
 
+  OnRefresh(): void {
+    if (this.MatProgressBar || !this.Dataset) {
+      return;
+    }
+    this.Load(this.Dataset.datasetUid);
+  }
+
   NullPercentageValue(column: DatasetColumnItem): number | null {
     const rowCount = this.Dataset?.rowCount ?? null;
     if (rowCount === null || rowCount <= 0) {

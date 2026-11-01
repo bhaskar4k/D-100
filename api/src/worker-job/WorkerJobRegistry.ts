@@ -1,6 +1,7 @@
 import { Logger } from "../log/Logger";
 import { WorkerJobManager } from "./WorkerJobManager";
 import { DatasetProcessingTick } from "./jobs/DatasetProcessingJob";
+import { MissingValueHandlingTick } from "./jobs/MissingValueHandlingJob";
 
 // Register every background job the API should run here. Called once from server.ts before
 // StartAll. Each Register call takes (name, intervalMs, task, runImmediately?).
@@ -13,6 +14,9 @@ export function RegisterWorkerJobs(): void {
 
     WorkerJobManager.Register("DatasetProcessing", 5_000, DatasetProcessingTick, true);
     console.log("✅ DatasetProcessing Job Registered Successfully.");
+
+    WorkerJobManager.Register("MissingValueHandling", 5_000, MissingValueHandlingTick, true);
+    console.log("✅ MissingValueHandling Job Registered Successfully.");
 
     console.log("\n Finished :: Registering Worker Jobs");
     console.log("=====================================================\n");

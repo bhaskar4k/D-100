@@ -43,6 +43,7 @@ export const Endpoints = {
     },
     DataCleaning: {
         GetMissingValueReplacementStrategies: "DataCleaning/GetMissingValueReplacementStrategies",
+        HandleMissingValue: "DataCleaning/HandleMissingValue",
     },
     Download: {
         SingleFile: "file/download/single-file"
