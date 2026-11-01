@@ -174,6 +174,20 @@ export class DataCleaningBusiness {
             { persistent: true, contentType: "application/json" }
         );
 
+        // The row is now in RabbitMQ; the worker flips it to PROCESSING on pickup. Clear the
+        // timing fields so stale values from a previous run never show up in the UI's queued
+        // state.
+        await pool.execute(
+            `UPDATE T_DATASET
+             SET is_processed = ?,
+                 processing_status = ?,
+                 processing_initiated_on = NULL,
+                 processing_completed_on = NULL,
+                 processing_time = NULL
+             WHERE id = ?`,
+            [TrueFalse.False, DatasetProcessingStatus.IN_QUEUE, dataset.id]
+        );
+
         return null;
     }
 }

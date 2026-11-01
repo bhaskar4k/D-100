@@ -74,13 +74,10 @@ async function MarkStarted(DatasetId: number): Promise<void> {
 
     await pool.execute(
         `UPDATE T_DATASET
-         SET is_processed = ?,
-             processing_status = ?,
-             processing_initiated_on = NOW(3),
-             processing_completed_on = NULL,
-             processing_time = NULL
+         SET processing_status = ?,
+         processing_initiated_on = NOW(3)
          WHERE id = ?`,
-        [TrueFalse.False, DatasetProcessingStatus.PROCESSING, DatasetId]
+        [DatasetProcessingStatus.PROCESSING, DatasetId]
     );
 }
 
