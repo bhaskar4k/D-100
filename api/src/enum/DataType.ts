@@ -1,4 +1,3 @@
-// Mirrors pyd-100/src/pyd_100/enums/data_type.py. The numbers are a contract with the Python package:
 // never renumber, only add.
 export enum DataType {
     Integer = 1,
@@ -17,3 +16,28 @@ export enum DataType {
     Null = 14,
     Unknown = 99,
 }
+
+export const NUMERIC_TYPES: DataType[] = [DataType.Integer, DataType.Float, DataType.Decimal];
+
+export const ORDERED_TYPES: DataType[] = [
+    DataType.Integer,
+    DataType.Float,
+    DataType.Decimal,
+    DataType.Date,
+    DataType.DateTime,
+    DataType.Time,
+    DataType.Duration
+];
+
+export const ANY_SCALAR_TYPES: DataType[] = [
+    DataType.Integer,
+    DataType.Float,
+    DataType.Decimal,
+    DataType.String,
+    DataType.Boolean,
+    DataType.Date,
+    DataType.DateTime,
+    DataType.Time,
+    DataType.Duration,
+    DataType.Categorical
+];
