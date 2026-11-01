@@ -14,7 +14,7 @@ export class DataCleaningBusiness {
                    replacment_strategy_enum,
                    replacment_strategy_description,
                    is_active
-            FROM t_missing_value_replacement_strategy
+            FROM t_missing_value_replacement_strategy_master
             WHERE is_active = 1
             ORDER BY id ASC
         `);

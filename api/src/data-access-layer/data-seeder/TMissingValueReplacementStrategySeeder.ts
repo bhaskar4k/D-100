@@ -76,7 +76,7 @@ export async function SeedTMissingValueReplacementStrategy(): Promise<void> {
         for (const item of strategies) {
             const [existing] = await connection.execute<any[]>(
                 `SELECT ID
-                 FROM T_MISSING_VALUE_REPLACEMENT_STRATEGY
+                 FROM T_MISSING_VALUE_REPLACEMENT_STRATEGY_MASTER
                  WHERE REPLACMENT_STRATEGY_ENUM = ?
                  LIMIT 1`,
                 [item.replacment_strategy_enum]
@@ -84,7 +84,7 @@ export async function SeedTMissingValueReplacementStrategy(): Promise<void> {
 
             if (existing.length > 0) {
                 await connection.execute(
-                    `UPDATE T_MISSING_VALUE_REPLACEMENT_STRATEGY
+                    `UPDATE T_MISSING_VALUE_REPLACEMENT_STRATEGY_MASTER
                      SET REPLACEMENT_STRATEGY_NAME = ?,
                          REPLACMENT_STRATEGY_DESCRIPTION = ?,
                          IS_ACTIVE = ?
@@ -98,7 +98,7 @@ export async function SeedTMissingValueReplacementStrategy(): Promise<void> {
                 );
             } else {
                 await connection.execute(
-                    `INSERT INTO T_MISSING_VALUE_REPLACEMENT_STRATEGY
+                    `INSERT INTO T_MISSING_VALUE_REPLACEMENT_STRATEGY_MASTER
                         (REPLACEMENT_STRATEGY_NAME, REPLACMENT_STRATEGY_ENUM, REPLACMENT_STRATEGY_DESCRIPTION, IS_ACTIVE)
                      VALUES (?, ?, ?, ?)`,
                     [
