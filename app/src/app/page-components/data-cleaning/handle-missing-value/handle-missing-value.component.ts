@@ -104,6 +104,24 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
       .filter((label): label is string => !!label);
   }
 
+  get IsCleanDisabled(): boolean {
+    if (this.MatProgressBar) {
+      return true;
+    }
+    if (!this.SelectedDataset || !this.SelectedColumn || !this.SelectedStrategy) {
+      return true;
+    }
+    if (this.IsConstantStrategy && this.ConstantValue.trim() === '') {
+      return true;
+    }
+    return false;
+  }
+
+  OnClean(): void {
+    // Cleaning logic will be wired up here; the button is already gated so this fires
+    // only when a complete, valid selection is in hand.
+  }
+
   OnDatasetChange(dataset: DatasetItem | null): void {
     this.SelectedDataset = dataset;
     this.IsColumnListPulledFromDb = false;

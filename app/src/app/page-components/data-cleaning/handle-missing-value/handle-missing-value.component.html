@@ -109,6 +109,13 @@
                                     name="constantValue" placeholder="Enter the value that will replace every null cell"
                                     autocomplete="off" />
                             </div>
+
+                            <div class="col-12 d-flex justify-content-end">
+                                <button type="button" class="btn btn-primary" [disabled]="IsCleanDisabled"
+                                    (click)="OnClean()">
+                                    <i class="bi bi-magic me-1"></i> Clean
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
