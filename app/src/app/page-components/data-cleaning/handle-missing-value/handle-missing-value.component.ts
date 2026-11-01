@@ -31,9 +31,12 @@ import { DATA_TYPE_LABEL } from '../../../enums/data-type.enum';
   styleUrl: './handle-missing-value.component.css'
 })
 export class HandleMissingValueComponent implements OnInit, OnDestroy {
+  MatProgressBar = false;
+
+  IsColumnListPulledFromDb = false;
+  IsSearchStrategyPulledFromDb = false;
+
   SelectedDataset: DatasetItem | null = null;
-  LoadingColumns = false;
-  LoadingStrategies = false;
 
   RowCount: number | null = null;
   NullableColumns: DatasetColumnItem[] = [];
@@ -97,6 +100,7 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
 
   OnDatasetChange(dataset: DatasetItem | null): void {
     this.SelectedDataset = dataset;
+    this.IsColumnListPulledFromDb = false;
     this.RowCount = null;
     this.NullableColumns = [];
     this.ColumnOptions = [];
@@ -126,12 +130,12 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
   }
 
   private LoadStrategies(): void {
-    this.LoadingStrategies = true;
+    this.MatProgressBar = true;
     this.strategySubscription?.unsubscribe();
 
     this.strategySubscription = this.dataCleaningService.GetMissingValueReplacementStrategies().subscribe({
       next: response => {
-        this.LoadingStrategies = false;
+        this.MatProgressBar = false;
 
         if (!response.success) {
           this.dialog.open(CustomAlertComponent, {
@@ -146,9 +150,10 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
           id: s.id,
           text: s.replacementStrategyName
         }));
+        this.IsSearchStrategyPulledFromDb = true;
       },
       error: () => {
-        this.LoadingStrategies = false;
+        this.MatProgressBar = false;
         this.dialog.open(CustomAlertComponent, {
           data: { text: 'Failed to load replacement strategies.', type: ResponseTypeColor.ERROR }
         });
@@ -157,12 +162,13 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
   }
 
   private LoadColumns(datasetUid: string): void {
-    this.LoadingColumns = true;
+    this.MatProgressBar = true;
+    this.IsColumnListPulledFromDb = false;
     this.columnSubscription?.unsubscribe();
 
     this.columnSubscription = this.datasetService.GetDetails(datasetUid).subscribe({
       next: response => {
-        this.LoadingColumns = false;
+        this.MatProgressBar = false;
 
         if (!response.success) {
           this.dialog.open(CustomAlertComponent, {
@@ -179,9 +185,10 @@ export class HandleMissingValueComponent implements OnInit, OnDestroy {
           id: c.id,
           text: `${c.columnName} (${DATA_TYPE_LABEL[c.type]?.label ?? 'Unknown'})`
         }));
+        this.IsColumnListPulledFromDb = true;
       },
       error: () => {
-        this.LoadingColumns = false;
+        this.MatProgressBar = false;
         this.dialog.open(CustomAlertComponent, {
           data: { text: 'Failed to load dataset columns.', type: ResponseTypeColor.ERROR }
         });

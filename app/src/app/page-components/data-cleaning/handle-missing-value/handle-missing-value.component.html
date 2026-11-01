@@ -1,3 +1,7 @@
+<div class="page-loader" *ngIf="MatProgressBar">
+    <mat-spinner diameter="50"></mat-spinner>
+</div>
+
 <div class="container-fluid py-4">
     <div class="row">
         <div class="col-lg-10 mx-auto">
@@ -19,102 +23,87 @@
                     </div>
 
                     <!-- Step 1: Column + strategy -->
-                    <div class="step-block mt-4" *ngIf="SelectedDataset">
+                    <div class="step-block mt-4" *ngIf="SelectedDataset && IsColumnListPulledFromDb">
                         <div class="step-label">
                             <span>Pick a column and its replacement strategy</span>
                         </div>
 
-                        <div class="d-flex align-items-center justify-content-center py-4" *ngIf="LoadingColumns">
-                            <mat-progress-spinner mode="indeterminate" diameter="28"></mat-progress-spinner>
-                        </div>
+                        <p class="text-muted small mb-0" *ngIf="NullableColumns.length === 0">
+                            This dataset has no nullable columns.
+                        </p>
 
-                        <ng-container *ngIf="!LoadingColumns">
-                            <p class="text-muted small mb-0" *ngIf="NullableColumns.length === 0">
-                                This dataset has no nullable columns.
-                            </p>
+                        <div class="row g-3" *ngIf="NullableColumns.length > 0">
+                            <div class="col-md-6">
+                                <label class="field-label">Column <span class="text-danger">*</span></label>
+                                <app-single-selection-dropdown [options]="ColumnOptions" [selectedItem]="SelectedColumn"
+                                    placeholder="Select column" (selectionChange)="OnColumnChange($event)">
+                                </app-single-selection-dropdown>
+                            </div>
 
-                            <div class="row g-3" *ngIf="NullableColumns.length > 0">
-                                <div class="col-md-6">
-                                    <label class="field-label">Column <span class="text-danger">*</span></label>
-                                    <app-single-selection-dropdown [options]="ColumnOptions"
-                                        [selectedItem]="SelectedColumn" placeholder="Select column"
-                                        (selectionChange)="OnColumnChange($event)">
-                                    </app-single-selection-dropdown>
-                                </div>
+                            <div class="col-md-6" *ngIf="SelectedColumn !== null && IsSearchStrategyPulledFromDb">
+                                <label class="field-label">Replacement strategy <span
+                                        class="text-danger">*</span></label>
+                                <app-single-selection-dropdown [options]="StrategyOptions"
+                                    [selectedItem]="SelectedStrategy" placeholder="Select strategy"
+                                    (selectionChange)="OnStrategyChange($event)">
+                                </app-single-selection-dropdown>
+                            </div>
 
-                                <div class="col-md-6" *ngIf="SelectedColumn !== null">
-                                    <label class="field-label">Replacement strategy <span
-                                            class="text-danger">*</span></label>
-                                    <div class="d-flex align-items-center py-2" *ngIf="LoadingStrategies">
-                                        <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner>
-                                        <span class="text-muted small ms-2">Loading strategies…</span>
+                            <div class="col-12" *ngIf="SelectedStrategyDetail as strategy">
+                                <div class="strategy-info">
+                                    <div class="strategy-info-head">
+                                        <i class="bi bi-info-circle-fill me-2 text-info"></i>
+                                        <span class="strategy-info-title">{{ strategy.replacementStrategyName }}</span>
+                                        <span class="strategy-info-code">{{ strategy.replacmentStrategyEnum }}</span>
                                     </div>
-                                    <app-single-selection-dropdown *ngIf="!LoadingStrategies"
-                                        [options]="StrategyOptions" [selectedItem]="SelectedStrategy"
-                                        placeholder="Select strategy" (selectionChange)="OnStrategyChange($event)">
-                                    </app-single-selection-dropdown>
-                                </div>
-
-                                <div class="col-12" *ngIf="SelectedStrategyDetail as strategy">
-                                    <div class="strategy-info">
-                                        <div class="strategy-info-head">
-                                            <i class="bi bi-info-circle-fill me-2 text-info"></i>
-                                            <span class="strategy-info-title">{{ strategy.replacementStrategyName
-                                                }}</span>
-                                            <span class="strategy-info-code">{{ strategy.replacmentStrategyEnum
-                                                }}</span>
-                                        </div>
-                                        <p class="strategy-info-description">
-                                            {{ strategy.replacmentStrategyDescription }}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div class="col-12" *ngIf="SelectedColumnDetail as col">
-                                    <div class="column-info">
-                                        <div class="info-tile">
-                                            <span class="info-label">Column name</span>
-                                            <span class="info-value" [title]="col.columnName">{{ col.columnName
-                                                }}</span>
-                                        </div>
-                                        <div class="info-tile">
-                                            <span class="info-label">Rows in dataset</span>
-                                            <span class="info-value">{{ RowCount !== null ? (RowCount | number) : '—'
-                                                }}</span>
-                                        </div>
-                                        <div class="info-tile">
-                                            <span class="info-label">Null count</span>
-                                            <span class="info-value">{{ col.nullValueCount | number }}</span>
-                                        </div>
-                                        <div class="info-tile">
-                                            <span class="info-label">Null percentage</span>
-                                            <span class="info-value">
-                                                {{ SelectedColumnNullPercentage !== null
-                                                ? (SelectedColumnNullPercentage | number:'1.0-6') + '%'
-                                                : '—' }}
-                                            </span>
-                                        </div>
-                                        <div class="info-tile">
-                                            <span class="info-label">Unique values</span>
-                                            <span class="info-value">{{ col.uniqueCount | number }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-12" *ngIf="IsConstantStrategy && SelectedColumn !== null">
-                                    <label class="field-label">
-                                        Constant value <span class="text-danger">*</span>
-                                        <span class="field-hint" *ngIf="SelectedColumnTypeLabel">
-                                            &mdash; expected type: {{ SelectedColumnTypeLabel }}
-                                        </span>
-                                    </label>
-                                    <input type="text" class="form-control constant-value-input"
-                                        [(ngModel)]="ConstantValue" name="constantValue"
-                                        placeholder="Enter the value that will replace every null cell"
-                                        autocomplete="off" />
+                                    <p class="strategy-info-description">
+                                        {{ strategy.replacmentStrategyDescription }}
+                                    </p>
                                 </div>
                             </div>
-                        </ng-container>
+
+                            <div class="col-12" *ngIf="SelectedColumnDetail as col">
+                                <div class="column-info">
+                                    <div class="info-tile">
+                                        <span class="info-label">Column name</span>
+                                        <span class="info-value" [title]="col.columnName">{{ col.columnName }}</span>
+                                    </div>
+                                    <div class="info-tile">
+                                        <span class="info-label">Rows in dataset</span>
+                                        <span class="info-value">{{ RowCount !== null ? (RowCount | number) : '—'
+                                            }}</span>
+                                    </div>
+                                    <div class="info-tile">
+                                        <span class="info-label">Null count</span>
+                                        <span class="info-value">{{ col.nullValueCount | number }}</span>
+                                    </div>
+                                    <div class="info-tile">
+                                        <span class="info-label">Null percentage</span>
+                                        <span class="info-value">
+                                            {{ SelectedColumnNullPercentage !== null
+                                            ? (SelectedColumnNullPercentage | number:'1.0-6') + '%'
+                                            : '—' }}
+                                        </span>
+                                    </div>
+                                    <div class="info-tile">
+                                        <span class="info-label">Unique values</span>
+                                        <span class="info-value">{{ col.uniqueCount | number }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12" *ngIf="IsConstantStrategy && SelectedColumn !== null">
+                                <label class="field-label">
+                                    Constant value <span class="text-danger">*</span>
+                                    <span class="field-hint" *ngIf="SelectedColumnTypeLabel">
+                                        &mdash; expected type: {{ SelectedColumnTypeLabel }}
+                                    </span>
+                                </label>
+                                <input type="text" class="form-control constant-value-input" [(ngModel)]="ConstantValue"
+                                    name="constantValue" placeholder="Enter the value that will replace every null cell"
+                                    autocomplete="off" />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
