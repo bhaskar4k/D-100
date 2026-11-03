@@ -7,9 +7,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { DatasetSelectionComponent } from '../../../page-components-shared/dataset-selection/dataset-selection.component';
 import {
-  KeyValueModalComponent,
+  KeyValuePairViewerComponent,
   KeyValueModalData
-} from '../../../page-components-shared/key-value-modal/key-value-modal.component';
+} from '../../../page-components-shared/key-value-pair-viewer/key-value-pair-viewer.component';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
 import { DatasetItem } from '../../../models/dataset.model';
 import {
@@ -65,7 +65,7 @@ export class HistoryMissingValueHandlingComponent implements OnDestroy {
   }
 
   OnView(title: string, data: Record<string, unknown> | null): void {
-    this.dialog.open<KeyValueModalComponent, KeyValueModalData>(KeyValueModalComponent, {
+    this.dialog.open<KeyValuePairViewerComponent, KeyValueModalData>(KeyValuePairViewerComponent, {
       data: { title, data },
       autoFocus: 'first-tabbable',
       panelClass: 'key-value-dialog',
