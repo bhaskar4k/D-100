@@ -13,7 +13,7 @@ import { DATASET_PROCESSING_STATUS_LABEL } from '../../../enums/dataset-processi
 import { GetFileIconByExtension, GetReadableFileSize } from '../../../common/FileUtil';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
 import { CustomDialogComponent, CustomDialogData } from '../../../page-components-shared/custom-dialog/custom-dialog.component';
-import { ResponseTypeColor } from '../../../constants/commonConsts';
+import { DateFormat, ResponseTypeColor } from '../../../constants/commonConsts';
 
 @Component({
   selector: 'app-view-deleted-dataset-grid',
@@ -70,7 +70,7 @@ export class ViewDeletedDatasetGridComponent implements OnInit, OnDestroy {
   }
 
   RestoringUids = new Set<string>();
-  readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
+  readonly DateFormat = DateFormat;
   readonly ReadableSize = GetReadableFileSize;
   readonly FileIcon = GetFileIconByExtension;
   readonly PageSizeOptions = [10, 25, 50, 100];

@@ -96,6 +96,33 @@ const menuItems: MenuSeed[] = [
     {
         active: 1,
         displayOrder: 6,
+        icon: "bi bi-bar-chart-steps",
+        label: "Dataset History",
+        parentLabel: null,
+        route: null,
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 1,
+        icon: "bi bi-funnel",
+        label: "Missing Value Handling",
+        parentLabel: "Dataset History",
+        route: "/dataset-history/missing-value-handling",
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 2,
+        icon: "bi bi-copy",
+        label: "Duplicate Handling",
+        parentLabel: "Dataset History",
+        route: "/dataset-history/duplicate-handling",
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 7,
         icon: "bi bi-box-arrow-in-right",
         label: "Login",
         parentLabel: null,
@@ -104,7 +131,7 @@ const menuItems: MenuSeed[] = [
     },
     {
         active: 1,
-        displayOrder: 7,
+        displayOrder: 8,
         icon: "bi bi-person-add",
         label: "Register",
         parentLabel: null,
@@ -113,7 +140,7 @@ const menuItems: MenuSeed[] = [
     },
     {
         active: 1,
-        displayOrder: 8,
+        displayOrder: 9,
         icon: "bi bi-box-arrow-left",
         label: "Logout",
         parentLabel: null,
