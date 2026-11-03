@@ -8,7 +8,7 @@
             <div class="card shadow-sm">
                 <div class="card-body p-4">
                     <h4 class="card-title mb-1">
-                        <i class="bi bi-clock-history me-2 text-info"></i>Missing Value Handling History
+                        <i class="bi bi-funnel me-2 text-info"></i>Missing Value Handling History
                     </h4>
                     <p class="text-muted small mb-4">
                         Pick a dataset to see every missing-value handling action that was applied to it.
@@ -22,17 +22,28 @@
                     </div>
 
                     <div class="step-block mt-4" *ngIf="SelectedDataset && Loaded">
-                        <div class="step-label">
+                        <div class="step-label d-flex align-items-center">
                             <span>History</span>
+                            <div class="app-table-search ms-auto" *ngIf="HistoryDataSource.data.length > 0">
+                                <i class="bi bi-search"></i>
+                                <input #historySearchInput type="text" placeholder="Search column or strategy..."
+                                    autocomplete="off" [value]="HistorySearchText"
+                                    (input)="OnHistorySearch(historySearchInput.value)" />
+                                @if (HistorySearchText) {
+                                <button type="button" class="app-table-search-clear" aria-label="Clear search"
+                                    (click)="historySearchInput.value = ''; OnHistorySearch('')"><i
+                                        class="bi bi-x-lg"></i></button>
+                                }
+                            </div>
                         </div>
 
-                        <p class="text-muted small mb-0" *ngIf="History.length === 0">
+                        <p class="text-muted small mb-0" *ngIf="HistoryDataSource.data.length === 0">
                             No missing-value handling has been applied to this dataset yet.
                         </p>
 
-                        <div class="app-table-container" *ngIf="History.length > 0">
+                        <div class="app-table-container" *ngIf="HistoryDataSource.data.length > 0">
                             <div class="app-table-scroll app-scroll-thin">
-                                <table mat-table class="app-table" [dataSource]="History">
+                                <table mat-table class="app-table" [dataSource]="HistoryDataSource">
                                     <ng-container matColumnDef="index">
                                         <th mat-header-cell *matHeaderCellDef>#</th>
                                         <td mat-cell *matCellDef="let row; let i = index">{{ i + 1 }}</td>
@@ -73,8 +84,17 @@
 
                                     <tr mat-header-row *matHeaderRowDef="DisplayedColumns"></tr>
                                     <tr mat-row *matRowDef="let row; columns: DisplayedColumns"></tr>
+
+                                    <tr class="mat-mdc-no-data-row" *matNoDataRow>
+                                        <td class="mat-mdc-cell" [attr.colspan]="DisplayedColumns.length">
+                                            No history matches your search.
+                                        </td>
+                                    </tr>
                                 </table>
                             </div>
+
+                            <mat-paginator [length]="HistoryDataSource.filteredData.length" [pageSize]="5"
+                                [pageSizeOptions]="PageSizeOptions" showFirstLastButtons></mat-paginator>
                         </div>
                     </div>
                 </div>

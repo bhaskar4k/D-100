@@ -1,9 +1,10 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { MatTableModule } from '@angular/material/table';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { DatasetSelectionComponent } from '../../../page-components-shared/dataset-selection/dataset-selection.component';
 import { KeyValuePairViewerComponent } from '../../../page-components-shared/key-value-pair-viewer/key-value-pair-viewer.component';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
@@ -21,6 +22,7 @@ import { DateFormat, ResponseTypeColor } from '../../../constants/commonConsts';
     CommonModule,
     DatePipe,
     MatTableModule,
+    MatPaginatorModule,
     MatProgressSpinnerModule,
     DatasetSelectionComponent,
     KeyValuePairViewerComponent
@@ -28,29 +30,69 @@ import { DateFormat, ResponseTypeColor } from '../../../constants/commonConsts';
   templateUrl: './history-missing-value-handling.component.html',
   styleUrl: './history-missing-value-handling.component.css'
 })
-export class HistoryMissingValueHandlingComponent implements OnDestroy {
+export class HistoryMissingValueHandlingComponent implements OnInit, OnDestroy {
   readonly DateFormat = DateFormat;
   readonly DisplayedColumns = ['index', 'columnName', 'strategy', 'previousState', 'currentState', 'createdOn'];
+  readonly PageSizeOptions = [5, 10, 25, 50, 100];
+  readonly SearchDebounceMs = 200;
 
   MatProgressBar = false;
   SelectedDataset: DatasetItem | null = null;
-  History: MissingValueHandlingHistoryItem[] = [];
+  HistoryDataSource = new MatTableDataSource<MissingValueHandlingHistoryItem>([]);
+  HistorySearchText = '';
   Loaded = false;
 
+  private readonly historySearch$ = new Subject<string>();
   private historySubscription?: Subscription;
+  private searchSubscription?: Subscription;
+
+  // Paginator mounts only after the History block renders (gated by *ngIf), so bind it from a
+  // setter that fires whenever the view child materializes.
+  @ViewChild(MatPaginator) set HistoryPaginator(value: MatPaginator | undefined) {
+    if (value) {
+      this.HistoryDataSource.paginator = value;
+    }
+  }
 
   constructor(
     private historyService: DatasetHistoryService,
     private dialog: MatDialog
-  ) { }
+  ) {
+    // Match against column name and strategy name — the two fields visible as text on the
+    // row. The previous/current state objects are rendered through the key-value viewer and
+    // aren't practical to search as free text.
+    this.HistoryDataSource.filterPredicate = (data, filter) => {
+      const text = filter.trim().toLowerCase();
+      if (!text) {
+        return true;
+      }
+      const column = (data.columnName ?? '').toLowerCase();
+      const strategy = (data.replacement_strategy_name ?? '').toLowerCase();
+      return column.includes(text) || strategy.includes(text);
+    };
+  }
+
+  ngOnInit(): void {
+    this.searchSubscription = this.historySearch$
+      .pipe(debounceTime(this.SearchDebounceMs), distinctUntilChanged())
+      .subscribe((text) => {
+        this.HistoryDataSource.filter = text;
+        if (this.HistoryDataSource.paginator) {
+          this.HistoryDataSource.paginator.firstPage();
+        }
+      });
+  }
 
   ngOnDestroy(): void {
     this.historySubscription?.unsubscribe();
+    this.searchSubscription?.unsubscribe();
   }
 
   OnDatasetChange(dataset: DatasetItem | null): void {
     this.SelectedDataset = dataset;
-    this.History = [];
+    this.HistoryDataSource.data = [];
+    this.HistorySearchText = '';
+    this.HistoryDataSource.filter = '';
     this.Loaded = false;
 
     if (!dataset) {
@@ -58,6 +100,11 @@ export class HistoryMissingValueHandlingComponent implements OnDestroy {
     }
 
     this.LoadHistory(dataset.datasetUid);
+  }
+
+  OnHistorySearch(value: string): void {
+    this.HistorySearchText = value;
+    this.historySearch$.next(value);
   }
 
   private LoadHistory(datasetUid: string): void {
@@ -77,8 +124,12 @@ export class HistoryMissingValueHandlingComponent implements OnDestroy {
             return;
           }
 
-          this.History = (response.data as MissingValueHandlingHistoryItem[]) ?? [];
+          this.HistoryDataSource.data = (response.data as MissingValueHandlingHistoryItem[]) ?? [];
           this.Loaded = true;
+
+          if (this.HistoryDataSource.paginator) {
+            this.HistoryDataSource.paginator.firstPage();
+          }
         },
         error: () => {
           this.MatProgressBar = false;
