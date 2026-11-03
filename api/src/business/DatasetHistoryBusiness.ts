@@ -3,23 +3,13 @@ import { RowDataPacket } from "mysql2";
 import { ConnectionPool } from "../data-access-layer/database";
 import {
     DatasetHistoryRow,
-    MissingValueHandlingHistoryItem
+    MissingValueHandlingHistoryItem,
+    DatasetOwnerIdRow,
+    StrategyNameRow
 } from "../entity/DatasetHistoryEntity";
 import { MissingValueHandlingStateEntity } from "../entity/audit/MissingValueHandlingEntity";
 import { DatasetHistoryActionType } from "../enum/DatasetHistoryActionType";
 import { SafeJsonParse } from "../util/JsonUtil";
-
-
-interface DatasetOwnerIdRow extends RowDataPacket {
-    id: number;
-    created_by: number;
-}
-
-
-interface StrategyNameRow extends RowDataPacket {
-    replacment_strategy_enum: string;
-    replacement_strategy_name: string;
-}
 
 
 // Pulls the strategy enum off a parsed state object. Returns null when the state is null,

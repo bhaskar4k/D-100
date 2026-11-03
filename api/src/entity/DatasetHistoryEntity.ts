@@ -27,3 +27,13 @@ export interface MissingValueHandlingHistoryItem {
     isActive: number;
     createdOn: string;
 }
+
+export interface DatasetOwnerIdRow extends RowDataPacket {
+    id: number;
+    created_by: number;
+}
+
+export interface StrategyNameRow extends RowDataPacket {
+    replacment_strategy_enum: string;
+    replacement_strategy_name: string;
+}
