@@ -19,7 +19,7 @@ import { EditDatasetNameComponent, EditDatasetNameDialogData, EditDatasetNameDia
 import { PreviewDatasetComponent, PreviewDatasetDialogData } from '../../../page-components-shared/preview-dataset/preview-dataset.component';
 import { DownloadIngestedDatasetComponent, DownloadIngestedDatasetFormatDialogData, DownloadIngestedDatasetFormatDialogResult } from '../../../page-components-shared/download-ingested-dataset/download-ingested-dataset.component';
 import { DatasetDownloadPlan } from '../../../models/dataset.model';
-import { ResponseTypeColor } from '../../../constants/commonConsts';
+import { DateFormat, ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
@@ -46,7 +46,7 @@ export class ViewDatasetGridComponent implements OnInit, OnDestroy {
   DeletingUids = new Set<string>();
   RenamingUids = new Set<string>();
   DownloadingUids = new Set<string>();
-  readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
+  readonly DateFormat = DateFormat;
   readonly ReadableSize = GetReadableFileSize;
   readonly FileIcon = GetFileIconByExtension;
   readonly Duration = FormatDuration;

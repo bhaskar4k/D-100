@@ -45,6 +45,9 @@ export const Endpoints = {
         GetMissingValueReplacementStrategies: "DataCleaning/GetMissingValueReplacementStrategies",
         HandleMissingValue: "DataCleaning/HandleMissingValue",
     },
+    DatasetHistory: {
+        GetHistory: "DatasetHistory/GetHistory",
+    },
     Download: {
         SingleFile: "file/download/single-file"
     },

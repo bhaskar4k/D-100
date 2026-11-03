@@ -179,8 +179,8 @@ async function ProcessDataset(DatasetId: number): Promise<void> {
 
         await pool.execute(
             `UPDATE T_DATASET
-         SET processing_status = ?, processing_initiated_on = NOW(3)
-         WHERE id = ?`,
+             SET processing_status = ?, processing_initiated_on = NOW(3)
+             WHERE id = ?`,
             [DatasetProcessingStatus.PROCESSING, DatasetId]
         );
 
