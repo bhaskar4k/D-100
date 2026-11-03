@@ -1,0 +1,40 @@
+<div class="card shadow border rounded-3 border-secondary-subtle p-0 overflow-hidden mx-auto text-body bg-body kv-dialog"
+    data-bs-theme="dark">
+
+    <h2 class="card-title h5 border-bottom border-secondary-subtle m-0 p-3 bg-body-tertiary fw-bold rounded-top-3">
+        <span class="text-primary">
+            <i class="bi bi-list-check me-2"></i>
+            {{ Title }}
+        </span>
+    </h2>
+
+    <div class="card-body p-0 kv-body">
+        <div class="kv-table-wrapper app-scroll-thin">
+            <table mat-table class="app-table kv-table" [dataSource]="Rows">
+                <ng-container matColumnDef="key">
+                    <th mat-header-cell *matHeaderCellDef>Field</th>
+                    <td mat-cell *matCellDef="let row">{{ row.key }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="value">
+                    <th mat-header-cell *matHeaderCellDef>Value</th>
+                    <td mat-cell *matCellDef="let row">{{ row.value }}</td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="DisplayedColumns; sticky: true"></tr>
+                <tr mat-row *matRowDef="let row; columns: DisplayedColumns"></tr>
+
+                <tr class="mat-mdc-no-data-row" *matNoDataRow>
+                    <td class="mat-mdc-cell" [attr.colspan]="DisplayedColumns.length">
+                        No data to show.
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div
+        class="border-top border-secondary-subtle bg-body-tertiary p-3 m-0 d-flex justify-content-end gap-2 rounded-bottom-3">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="OnClose()">Close</button>
+    </div>
+</div>

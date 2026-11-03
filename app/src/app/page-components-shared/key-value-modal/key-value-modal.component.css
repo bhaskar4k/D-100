@@ -1,0 +1,32 @@
+.kv-dialog {
+    width: 100%;
+    min-width: 320px;
+    max-width: 560px;
+}
+
+.kv-body {
+    max-height: 60vh;
+    overflow: hidden;
+}
+
+.kv-table-wrapper {
+    max-height: 60vh;
+    overflow: auto;
+}
+
+.kv-table {
+    width: 100%;
+}
+
+.kv-table th,
+.kv-table td {
+    padding: 0.55rem 0.9rem;
+    word-break: break-word;
+}
+
+.kv-table th:first-child,
+.kv-table td:first-child {
+    width: 40%;
+    font-weight: 500;
+    color: #9ca3af;
+}

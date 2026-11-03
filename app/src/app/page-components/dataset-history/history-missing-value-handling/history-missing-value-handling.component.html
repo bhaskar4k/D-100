@@ -1,1 +1,83 @@
-<p>history-missing-value-handling works!</p>
+<div class="page-loader" *ngIf="MatProgressBar">
+    <mat-spinner diameter="50"></mat-spinner>
+</div>
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h4 class="card-title mb-1">
+                        <i class="bi bi-clock-history me-2 text-info"></i>Missing Value Handling History
+                    </h4>
+                    <p class="text-muted small mb-4">
+                        Pick a dataset to see every missing-value handling action that was applied to it.
+                    </p>
+
+                    <div class="step-block">
+                        <div class="step-label">
+                            <span>Select a dataset <span class="text-danger">*</span></span>
+                        </div>
+                        <app-dataset-selection (datasetChange)="OnDatasetChange($event)"></app-dataset-selection>
+                    </div>
+
+                    <div class="step-block mt-4" *ngIf="SelectedDataset && Loaded">
+                        <div class="step-label">
+                            <span>History</span>
+                        </div>
+
+                        <p class="text-muted small mb-0" *ngIf="History.length === 0">
+                            No missing-value handling has been applied to this dataset yet.
+                        </p>
+
+                        <div class="app-table-container" *ngIf="History.length > 0">
+                            <div class="app-table-scroll app-scroll-thin">
+                                <table mat-table class="app-table" [dataSource]="History">
+                                    <ng-container matColumnDef="index">
+                                        <th mat-header-cell *matHeaderCellDef>#</th>
+                                        <td mat-cell *matCellDef="let row; let i = index">{{ i + 1 }}</td>
+                                    </ng-container>
+
+                                    <ng-container matColumnDef="columnName">
+                                        <th mat-header-cell *matHeaderCellDef>Column</th>
+                                        <td mat-cell *matCellDef="let row">{{ row.columnName ?? '-' }}</td>
+                                    </ng-container>
+
+                                    <ng-container matColumnDef="previousState">
+                                        <th mat-header-cell *matHeaderCellDef>Previous State</th>
+                                        <td mat-cell *matCellDef="let row">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                matTooltip="View previous state" matTooltipPosition="above"
+                                                (click)="OnView('Previous State', row.previousState)">
+                                                <i class="bi bi-eye-fill me-1"></i>View
+                                            </button>
+                                        </td>
+                                    </ng-container>
+
+                                    <ng-container matColumnDef="currentState">
+                                        <th mat-header-cell *matHeaderCellDef>Current State</th>
+                                        <td mat-cell *matCellDef="let row">
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                matTooltip="View current state" matTooltipPosition="above"
+                                                (click)="OnView('Current State', row.currentState)">
+                                                <i class="bi bi-eye-fill me-1"></i>View
+                                            </button>
+                                        </td>
+                                    </ng-container>
+
+                                    <ng-container matColumnDef="createdOn">
+                                        <th mat-header-cell *matHeaderCellDef>Applied On</th>
+                                        <td mat-cell *matCellDef="let row">{{ row.createdOn | date: DateFormat }}</td>
+                                    </ng-container>
+
+                                    <tr mat-header-row *matHeaderRowDef="DisplayedColumns"></tr>
+                                    <tr mat-row *matRowDef="let row; columns: DisplayedColumns"></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
