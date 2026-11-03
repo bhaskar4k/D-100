@@ -20,7 +20,7 @@ import { CustomDialogComponent, CustomDialogData } from '../../../page-component
 import { PreviewDatasetComponent, PreviewDatasetDialogData } from '../../../page-components-shared/preview-dataset/preview-dataset.component';
 import { EditColumnNameComponent, EditColumnNameDialogData, EditColumnNameDialogResult } from '../edit-column-name/edit-column-name.component';
 import { DownloadIngestedDatasetComponent, DownloadIngestedDatasetFormatDialogData, DownloadIngestedDatasetFormatDialogResult } from '../../../page-components-shared/download-ingested-dataset/download-ingested-dataset.component';
-import { ResponseTypeColor } from '../../../constants/commonConsts';
+import { DateFormat, ResponseTypeColor } from '../../../constants/commonConsts';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
@@ -35,7 +35,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 })
 export class ViewDatasetInfoComponent implements OnInit, OnDestroy {
   readonly ColumnColumns = ['id', 'columnName', 'type', 'nullable', 'uniqueCount', 'nullValueCount', 'nullPercentage', 'createdOn', 'modifiedOn', 'action'];
-  readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
+  readonly DateFormat = DateFormat;
   readonly ReadableSize = GetReadableFileSize;
   readonly FileIcon = GetFileIconByExtension;
   readonly Duration = FormatDuration;

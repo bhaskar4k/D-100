@@ -13,7 +13,7 @@ import {
   MissingValueHandlingHistoryItem
 } from '../../../models/dataset-history.model';
 import { DatasetHistoryService } from '../../../services/dataset-history.service';
-import { ResponseTypeColor } from '../../../constants/commonConsts';
+import { DateFormat, ResponseTypeColor } from '../../../constants/commonConsts';
 
 @Component({
   selector: 'app-history-missing-value-handling',
@@ -29,7 +29,7 @@ import { ResponseTypeColor } from '../../../constants/commonConsts';
   styleUrl: './history-missing-value-handling.component.css'
 })
 export class HistoryMissingValueHandlingComponent implements OnDestroy {
-  readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
+  readonly DateFormat = DateFormat;
   readonly DisplayedColumns = ['index', 'columnName', 'strategy', 'previousState', 'currentState', 'createdOn'];
 
   MatProgressBar = false;
