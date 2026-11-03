@@ -10,7 +10,7 @@ import { CustomAlertComponent } from '../../../page-components-shared/custom-ale
 import { DatasetItem } from '../../../models/dataset.model';
 import {
   DatasetHistoryActionType,
-  DatasetHistoryItem
+  MissingValueHandlingHistoryItem
 } from '../../../models/dataset-history.model';
 import { DatasetHistoryService } from '../../../services/dataset-history.service';
 import { ResponseTypeColor } from '../../../constants/commonConsts';
@@ -30,11 +30,11 @@ import { ResponseTypeColor } from '../../../constants/commonConsts';
 })
 export class HistoryMissingValueHandlingComponent implements OnDestroy {
   readonly DateFormat = 'dd MMM yyyy HH:mm:ss';
-  readonly DisplayedColumns = ['index', 'columnName', 'previousState', 'currentState', 'createdOn'];
+  readonly DisplayedColumns = ['index', 'columnName', 'strategy', 'previousState', 'currentState', 'createdOn'];
 
   MatProgressBar = false;
   SelectedDataset: DatasetItem | null = null;
-  History: DatasetHistoryItem[] = [];
+  History: MissingValueHandlingHistoryItem[] = [];
   Loaded = false;
 
   private historySubscription?: Subscription;
@@ -77,7 +77,7 @@ export class HistoryMissingValueHandlingComponent implements OnDestroy {
             return;
           }
 
-          this.History = (response.data as DatasetHistoryItem[]) ?? [];
+          this.History = (response.data as MissingValueHandlingHistoryItem[]) ?? [];
           this.Loaded = true;
         },
         error: () => {

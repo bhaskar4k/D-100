@@ -12,7 +12,10 @@ export interface DatasetHistoryRow extends RowDataPacket {
     created_on: Date | string;
 }
 
-export interface DatasetHistoryItem {
+// Response shape for a MISSING_VALUE_HANDLING history row. The strategy is lifted out of the
+// serialized state and resolved to its human-readable name against the master table; the
+// serialized states no longer carry replacement_strategy at this layer.
+export interface MissingValueHandlingHistoryItem {
     id: number;
     datasetId: number;
     actionType: string;
@@ -20,6 +23,7 @@ export interface DatasetHistoryItem {
     columnName: string | null;
     previousState: unknown;
     currentState: unknown;
+    replacement_strategy_name: string | null;
     isActive: number;
     createdOn: string;
 }

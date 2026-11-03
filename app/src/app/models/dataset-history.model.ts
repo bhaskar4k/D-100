@@ -1,4 +1,8 @@
-export interface DatasetHistoryItem {
+// Response shape for a MISSING_VALUE_HANDLING history row. Matches
+// api/src/entity/DatasetHistoryEntity.ts -> MissingValueHandlingHistoryItem. The strategy is
+// lifted out of the serialized states and resolved to its human-readable name, so neither
+// previousState nor currentState carry replacement_strategy here.
+export interface MissingValueHandlingHistoryItem {
     id: number;
     datasetId: number;
     actionType: string;
@@ -6,6 +10,7 @@ export interface DatasetHistoryItem {
     columnName: string | null;
     previousState: Record<string, unknown> | null;
     currentState: Record<string, unknown> | null;
+    replacement_strategy_name: string | null;
     isActive: number;
     createdOn: string;
 }

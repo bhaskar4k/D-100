@@ -3,6 +3,7 @@ import { DatasetHistoryBusiness } from "../business/DatasetHistoryBusiness";
 import { SuccessDto } from "../dto/SuccessDto";
 import { ErrorDto } from "../dto/ErrorDto";
 import { HttpStatusCode } from "../enum/HttpStatusCode";
+import { DatasetHistoryActionType } from "../enum/DatasetHistoryActionType";
 import { Logger } from "../log/Logger";
 
 export class DatasetHistoryController {
@@ -12,12 +13,24 @@ export class DatasetHistoryController {
 
             const datasetUid = String(req.query?.datasetUid ?? "").trim();
             const actionType = String(req.query?.actionType ?? "").trim();
+            const userId = Number(req.UserData!.id);
 
-            const result = await DatasetHistoryBusiness.DoGetHistory(
-                Number(req.UserData!.id),
-                datasetUid,
-                actionType
-            );
+            // Dispatch to the action-specific business method. Each action's response shape
+            // can diverge (e.g. missing-value lifts replacement_strategy_name out of state),
+            // so the business layer is specialized rather than generic.
+            let result: unknown[] | string;
+
+            switch (actionType) {
+                case DatasetHistoryActionType.MISSING_VALUE_HANDLING:
+                    result = await DatasetHistoryBusiness.DoGetMissingValueHandlingHistory(userId, datasetUid);
+                    break;
+
+                default:
+                    res.status(HttpStatusCode.OK).json(
+                        new ErrorDto(null, "A valid action type is required.", HttpStatusCode.BAD_REQUEST)
+                    );
+                    return;
+            }
 
             if (typeof result === "string") {
                 res.status(HttpStatusCode.OK).json(
