@@ -20,8 +20,21 @@
 
 .kv-table th,
 .kv-table td {
-    padding: 0.55rem 0.9rem;
+    padding: 0.3rem 0.9rem;
     word-break: break-word;
+}
+
+/* Material gives mat-table rows a fixed min-height (~52px) that would hide the padding
+ * change above on short content, so tighten the row heights to match. */
+::ng-deep .kv-table .mat-mdc-row,
+::ng-deep .kv-table .mat-mdc-no-data-row {
+    min-height: 32px;
+    height: auto;
+}
+
+::ng-deep .kv-table .mat-mdc-header-row {
+    min-height: 36px;
+    height: auto;
 }
 
 .kv-table th:first-child,
