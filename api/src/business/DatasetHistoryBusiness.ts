@@ -7,7 +7,7 @@ import {
 } from "../entity/DatasetHistoryEntity";
 import { MissingValueHandlingStateEntity } from "../entity/audit/MissingValueHandlingEntity";
 import { DatasetHistoryActionType } from "../enum/DatasetHistoryActionType";
-import { Logger } from "../log/Logger";
+import { SafeJsonParse } from "../util/JsonUtil";
 
 
 interface DatasetOwnerIdRow extends RowDataPacket {
@@ -22,21 +22,9 @@ interface StrategyNameRow extends RowDataPacket {
 }
 
 
-function SafeJsonParse<T = unknown>(value: string): T | null {
-    try {
-        return JSON.parse(value) as T;
-    } catch (error) {
-        // A corrupt row should not break the whole page; log it and surface a null so the UI
-        // renders "no data" for just this cell.
-        void Logger.Error(`Failed to parse history state JSON: '${value}'`, error);
-        return null;
-    }
-}
-
-
 // Pulls the strategy enum off a parsed state object. Returns null when the state is null,
 // not an object, or missing the field — the caller then falls through to the other state.
-function ExtractStrategyEnum(state: unknown): string | null {
+function ExtractReplacementStrategyEnum(state: unknown): string | null {
     if (!state || typeof state !== "object" || Array.isArray(state)) {
         return null;
     }
@@ -48,7 +36,7 @@ function ExtractStrategyEnum(state: unknown): string | null {
 // Returns a shallow copy of the state with `replacement_strategy` removed. The strategy is
 // lifted to its own top-level field on the response, so the client doesn't need to look for
 // it inside the serialized blob.
-function StripStrategyField(state: unknown): unknown {
+function StripReplacementStrategyField(state: unknown): unknown {
     if (!state || typeof state !== "object" || Array.isArray(state)) {
         return state;
     }
@@ -132,7 +120,7 @@ export class DatasetHistoryBusiness {
             const currentState = SafeJsonParse(row.current_state);
             // Both states carry the same strategy — the one that was applied — but currentState
             // is written after the fact so we prefer it; previousState is the fallback.
-            const strategyEnum = ExtractStrategyEnum(currentState) ?? ExtractStrategyEnum(previousState);
+            const strategyEnum = ExtractReplacementStrategyEnum(currentState) ?? ExtractReplacementStrategyEnum(previousState);
             return { row, previousState, currentState, strategyEnum };
         });
 
@@ -166,8 +154,8 @@ export class DatasetHistoryBusiness {
             actionType: row.action_type,
             columnId: Number(row.column_id),
             columnName: row.column_name,
-            previousState: StripStrategyField(previousState),
-            currentState: StripStrategyField(currentState),
+            previousState: StripReplacementStrategyField(previousState),
+            currentState: StripReplacementStrategyField(currentState),
             // Falls back to the enum string if the strategy row has been deleted — better to
             // show "MEAN" than nothing in that corner case.
             replacement_strategy_name: strategyEnum
