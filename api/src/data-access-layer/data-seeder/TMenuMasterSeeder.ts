@@ -87,6 +87,15 @@ const menuItems: MenuSeed[] = [
     {
         active: 1,
         displayOrder: 5,
+        icon: "bi bi-cpu",
+        label: "Processing",
+        parentLabel: null,
+        route: "/processing",
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 6,
         icon: "bi bi-bar-chart-steps",
         label: "Dataset History",
         parentLabel: null,
@@ -109,15 +118,6 @@ const menuItems: MenuSeed[] = [
         label: "Duplicate Handling",
         parentLabel: "Dataset History",
         route: "/dataset-history/duplicate-handling",
-        access_type: MenuAccessType.Authenticated
-    },
-    {
-        active: 1,
-        displayOrder: 6,
-        icon: "bi bi-cpu",
-        label: "Processing",
-        parentLabel: null,
-        route: "/processing",
         access_type: MenuAccessType.Authenticated
     },
     {
