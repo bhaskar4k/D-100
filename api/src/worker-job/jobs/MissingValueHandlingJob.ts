@@ -100,7 +100,7 @@ async function MarkFailed(DatasetId: number): Promise<void> {
 
 interface ColumnStateSnapshot {
     datatype: number;
-    is_nullable: boolean;
+    nullable: boolean;
     unique_count: number;
     null_value_count: number;
 }
@@ -114,19 +114,19 @@ function BuildColumnStateFromRow(row: {
 }): ColumnStateSnapshot {
     return {
         datatype: Number(row.type),
-        is_nullable: Number(row.nullable) === TrueFalse.True,
+        nullable: Number(row.nullable) === TrueFalse.True,
         unique_count: Number(row.unique_count),
         null_value_count: Number(row.null_value_count),
     };
 }
 
 
-function BuildColumnStateFromMetadata(metadata: ColumnMetadata): ColumnStateSnapshot {
+function BuildColumnStateFromMetadata(datatype: number, nullable: number, uniqueCount: number, nullValueCount: number): ColumnStateSnapshot {
     return {
-        datatype: metadata.type,
-        is_nullable: metadata.nullable,
-        unique_count: metadata.uniqueCount,
-        null_value_count: metadata.nullValueCount,
+        datatype,
+        nullable: nullable === TrueFalse.True,
+        unique_count: uniqueCount,
+        null_value_count: nullValueCount,
     };
 }
 
@@ -183,7 +183,7 @@ async function CommitSuccess(
             ]
         );
 
-        const currentState = BuildColumnStateFromMetadata(Metadata);
+        const currentState = BuildColumnStateFromMetadata(Metadata.type, Metadata.nullable == true ? TrueFalse.True : TrueFalse.False, Metadata.uniqueCount, Metadata.nullValueCount);
 
         await connection.execute(
             `INSERT INTO T_DATASET_HISTORY
