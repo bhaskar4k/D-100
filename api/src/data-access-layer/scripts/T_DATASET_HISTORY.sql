@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS T_DATASET_HISTORY (
     id BIGINT NOT NULL AUTO_INCREMENT,
     dataset_id BIGINT NOT NULL,
     action_type VARCHAR(100) NOT NULL COMMENT 'DatasetHistoryActionType enum value (e.g. MISSING_VALUE_HANDLING, DUPLICATE_HANDLING)',
-    applied_on VARCHAR(50) NOT NULL COMMENT 'DatasetHistoryAppliedOn enum value (e.g. DATASET, COLUMN)',
+    column_id BIGINT NOT NULL,
     previous_state TEXT NOT NULL COMMENT 'JSON-serialized snapshot of the entity before the action',
     current_state TEXT NOT NULL COMMENT 'JSON-serialized snapshot of the entity after the action',
     is_active INT NOT NULL DEFAULT 1,

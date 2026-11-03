@@ -3,6 +3,7 @@ import { ConnectionPool } from "../../data-access-layer/database";
 import { GetRabbitMqChannel } from "../../config/RabbitMqConfig";
 import { DatasetProcessingStatus } from "../../enum/DatasetProcessingStatus";
 import { TrueFalse } from "../../enum/CommonEnum";
+import { DatasetHistoryActionType } from "../../enum/DatasetHistoryActionType";
 import { RunPython } from "../../python-manager/PythonManager";
 import { Logger } from "../../log/Logger";
 import { BuildIngestFilePath } from "../../util/UploadUtil";
@@ -97,9 +98,42 @@ async function MarkFailed(DatasetId: number): Promise<void> {
 }
 
 
-// Writes the column's fresh metadata and the dataset's final status in one DB transaction, so
-// a partial failure never leaves the column row updated while the dataset still looks
-// in-flight (or vice-versa).
+interface ColumnStateSnapshot {
+    datatype: number;
+    is_nullable: boolean;
+    unique_count: number;
+    null_value_count: number;
+}
+
+
+function BuildColumnStateFromRow(row: {
+    type: number;
+    nullable: number;
+    unique_count: number | bigint;
+    null_value_count: number | bigint;
+}): ColumnStateSnapshot {
+    return {
+        datatype: Number(row.type),
+        is_nullable: Number(row.nullable) === TrueFalse.True,
+        unique_count: Number(row.unique_count),
+        null_value_count: Number(row.null_value_count),
+    };
+}
+
+
+function BuildColumnStateFromMetadata(metadata: ColumnMetadata): ColumnStateSnapshot {
+    return {
+        datatype: metadata.type,
+        is_nullable: metadata.nullable,
+        unique_count: metadata.uniqueCount,
+        null_value_count: metadata.nullValueCount,
+    };
+}
+
+
+// Writes the column's fresh metadata, the dataset's final status, and a T_DATASET_HISTORY row
+// capturing the before/after column state — all in one DB transaction, so a partial failure
+// never leaves one of the three updated while the other two are not.
 async function CommitSuccess(
     DatasetId: number,
     ColumnId: number,
@@ -111,7 +145,27 @@ async function CommitSuccess(
     try {
         await connection.beginTransaction();
 
-        const [updateResult]: any = await connection.execute(
+        // Pull the column's current row inside the transaction with FOR UPDATE so a concurrent
+        // writer cannot slip in between our read and our update. This is both the previous
+        // state we record in history and the existence check for the row.
+        const [prevRows]: any = await connection.query(
+            `SELECT type, nullable, unique_count, null_value_count
+             FROM T_COLUMN
+             WHERE id = ? AND dataset_id = ?
+             LIMIT 1
+             FOR UPDATE`,
+            [ColumnId, DatasetId]
+        );
+
+        if (!prevRows || prevRows.length === 0) {
+            // Something deleted the column while we were working. Treat it as a hard failure
+            // so the caller rolls the file change back.
+            throw new Error(`Column ${ColumnId} not found for dataset ${DatasetId}; aborting commit.`);
+        }
+
+        const previousState = BuildColumnStateFromRow(prevRows[0]);
+
+        await connection.execute(
             `UPDATE T_COLUMN
              SET type = ?,
                  nullable = ?,
@@ -129,11 +183,20 @@ async function CommitSuccess(
             ]
         );
 
-        if (!updateResult || Number(updateResult.affectedRows) === 0) {
-            // Something deleted the column while we were working. Treat it as a hard failure
-            // so the caller rolls the file change back.
-            throw new Error(`Column ${ColumnId} not found for dataset ${DatasetId}; aborting commit.`);
-        }
+        const currentState = BuildColumnStateFromMetadata(Metadata);
+
+        await connection.execute(
+            `INSERT INTO T_DATASET_HISTORY
+                (dataset_id, action_type, column_id, previous_state, current_state)
+             VALUES (?, ?, ?, ?, ?)`,
+            [
+                DatasetId,
+                DatasetHistoryActionType.MISSING_VALUE_HANDLING,
+                ColumnId,
+                JSON.stringify(previousState),
+                JSON.stringify(currentState)
+            ]
+        );
 
         await connection.execute(
             `UPDATE T_DATASET
