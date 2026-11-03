@@ -10,6 +10,7 @@ import { BuildIngestFilePath } from "../../util/UploadUtil";
 import { MissingValueHandlingQueuePayload } from "../../entity/DataCleaningEntity";
 import { QueueRegistry } from "../QueueRegistry";
 import { ColumnMetadata, HandleMissingValuePythonResponse } from "../../entity/DataCleaningEntity";
+import { BuildColumnStateFromMetadata, BuildColumnStateFromRow } from "../../util/audit/MissingValueHandling";
 
 
 const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
@@ -98,39 +99,6 @@ async function MarkFailed(DatasetId: number): Promise<void> {
 }
 
 
-interface ColumnStateSnapshot {
-    datatype: number;
-    nullable: boolean;
-    unique_count: number;
-    null_value_count: number;
-}
-
-
-function BuildColumnStateFromRow(row: {
-    type: number;
-    nullable: number;
-    unique_count: number | bigint;
-    null_value_count: number | bigint;
-}): ColumnStateSnapshot {
-    return {
-        datatype: Number(row.type),
-        nullable: Number(row.nullable) === TrueFalse.True,
-        unique_count: Number(row.unique_count),
-        null_value_count: Number(row.null_value_count),
-    };
-}
-
-
-function BuildColumnStateFromMetadata(datatype: number, nullable: number, uniqueCount: number, nullValueCount: number): ColumnStateSnapshot {
-    return {
-        datatype,
-        nullable: nullable === TrueFalse.True,
-        unique_count: uniqueCount,
-        null_value_count: nullValueCount,
-    };
-}
-
-
 // Writes the column's fresh metadata, the dataset's final status, and a T_DATASET_HISTORY row
 // capturing the before/after column state — all in one DB transaction, so a partial failure
 // never leaves one of the three updated while the other two are not.
@@ -183,7 +151,7 @@ async function CommitSuccess(
             ]
         );
 
-        const currentState = BuildColumnStateFromMetadata(Metadata.type, Metadata.nullable == true ? TrueFalse.True : TrueFalse.False, Metadata.uniqueCount, Metadata.nullValueCount);
+        const currentState = BuildColumnStateFromMetadata(Metadata.type, Metadata.nullable, Metadata.uniqueCount, Metadata.nullValueCount);
 
         await connection.execute(
             `INSERT INTO T_DATASET_HISTORY
