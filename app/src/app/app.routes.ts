@@ -13,6 +13,9 @@ import { ViewDatasetInfoComponent } from './page-components/manage-dataset/view-
 import { ViewDeletedDatasetGridComponent } from './page-components/manage-dataset/view-deleted-dataset-grid/view-deleted-dataset-grid.component';
 import { ProcessingBaseComponent } from './page-components/processing/processing-base/processing-base.component';
 import { HandleMissingValueComponent } from './page-components/data-cleaning/handle-missing-value/handle-missing-value.component';
+import { HandleDuplicateValueComponent } from './page-components/data-cleaning/handle-duplicate-value/handle-duplicate-value.component';
+import { HistoryMissingValueHandlingComponent } from './page-components/dataset-history/history-missing-value-handling/history-missing-value-handling.component';
+import { HistoryDuplicateHandlingComponent } from './page-components/dataset-history/history-duplicate-handling/history-duplicate-handling.component';
 
 export const routes: Routes = [
   {
@@ -40,8 +43,12 @@ export const routes: Routes = [
           { path: 'datasets/view', component: ViewDatasetInfoComponent },
 
           { path: 'data-cleaning/missing-value-handling', component: HandleMissingValueComponent },
+          { path: 'data-cleaning/duplicate-handling', component: HandleDuplicateValueComponent },
 
           { path: 'processing', component: ProcessingBaseComponent },
+
+          { path: 'dataset-history/missing-value-handling', component: HistoryMissingValueHandlingComponent },
+          { path: 'dataset-history/duplicate-handling', component: HistoryDuplicateHandlingComponent },
 
           { path: 'logout', component: LogoutComponent }
         ]
