@@ -25,7 +25,7 @@ export interface MissingValueHandlingHistoryItem {
     currentState: unknown;
     replacement_strategy_name: string | null;
     isActive: number;
-    createdOn: string;
+    createdOn: Date | string;
 }
 
 export interface DatasetOwnerIdRow extends RowDataPacket {

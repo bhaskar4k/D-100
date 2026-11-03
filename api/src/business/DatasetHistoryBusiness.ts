@@ -152,9 +152,7 @@ export class DatasetHistoryBusiness {
                 ? (strategyNameByEnum.get(strategyEnum) ?? strategyEnum)
                 : null,
             isActive: Number(row.is_active),
-            createdOn: row.created_on instanceof Date
-                ? row.created_on.toISOString()
-                : String(row.created_on),
+            createdOn: row.created_on,
         }));
     }
 }
