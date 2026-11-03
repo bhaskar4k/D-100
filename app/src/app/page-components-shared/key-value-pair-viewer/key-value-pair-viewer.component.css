@@ -25,14 +25,17 @@
 }
 
 /* Material gives mat-table rows a fixed min-height (~52px) that would hide the padding
- * change above on short content, so tighten the row heights to match. */
-::ng-deep .kv-table .mat-mdc-row,
-::ng-deep .kv-table .mat-mdc-no-data-row {
+ * change above on short content, so tighten the row heights to match. The `.kv-table`
+ * anchor stays scoped to this component (the attribute Angular adds); only what comes
+ * after ::ng-deep drops scoping, so these overrides can't bleed to tables outside this
+ * component. */
+.kv-table ::ng-deep .mat-mdc-row,
+.kv-table ::ng-deep .mat-mdc-no-data-row {
     min-height: 32px;
     height: auto;
 }
 
-::ng-deep .kv-table .mat-mdc-header-row {
+.kv-table ::ng-deep .mat-mdc-header-row {
     min-height: 36px;
     height: auto;
 }
