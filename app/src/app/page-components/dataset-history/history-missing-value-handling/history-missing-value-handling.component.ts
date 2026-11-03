@@ -6,10 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { DatasetSelectionComponent } from '../../../page-components-shared/dataset-selection/dataset-selection.component';
-import {
-  KeyValuePairViewerComponent,
-  KeyValueModalData
-} from '../../../page-components-shared/key-value-pair-viewer/key-value-pair-viewer.component';
+import { KeyValuePairViewerComponent } from '../../../page-components-shared/key-value-pair-viewer/key-value-pair-viewer.component';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
 import { DatasetItem } from '../../../models/dataset.model';
 import {
@@ -27,7 +24,8 @@ import { ResponseTypeColor } from '../../../constants/commonConsts';
     MatTableModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
-    DatasetSelectionComponent
+    DatasetSelectionComponent,
+    KeyValuePairViewerComponent
   ],
   templateUrl: './history-missing-value-handling.component.html',
   styleUrl: './history-missing-value-handling.component.css'
@@ -40,6 +38,13 @@ export class HistoryMissingValueHandlingComponent implements OnDestroy {
   SelectedDataset: DatasetItem | null = null;
   History: DatasetHistoryItem[] = [];
   Loaded = false;
+
+  // The viewer below the table reflects whichever View button was last clicked. Null means
+  // nothing is being viewed yet.
+  SelectedViewTitle: string = '';
+  SelectedViewData: unknown = null;
+  SelectedRowIndex: number | null = null;
+  SelectedView: 'previous' | 'current' | null = null;
 
   private historySubscription?: Subscription;
 
@@ -56,6 +61,7 @@ export class HistoryMissingValueHandlingComponent implements OnDestroy {
     this.SelectedDataset = dataset;
     this.History = [];
     this.Loaded = false;
+    this.ResetSelectedView();
 
     if (!dataset) {
       return;
@@ -64,14 +70,28 @@ export class HistoryMissingValueHandlingComponent implements OnDestroy {
     this.LoadHistory(dataset.datasetUid);
   }
 
-  OnView(title: string, data: Record<string, unknown> | null): void {
-    this.dialog.open<KeyValuePairViewerComponent, KeyValueModalData>(KeyValuePairViewerComponent, {
-      data: { title, data },
-      autoFocus: 'first-tabbable',
-      panelClass: 'key-value-dialog',
-      maxWidth: '80vw',
-      width: 'min(560px, 90vw)'
-    });
+  OnView(rowIndex: number, which: 'previous' | 'current', title: string, data: unknown): void {
+    // Toggle off if the same cell is clicked again, so the user can close the viewer without
+    // navigating away.
+    if (this.SelectedRowIndex === rowIndex && this.SelectedView === which) {
+      this.ResetSelectedView();
+      return;
+    }
+    this.SelectedRowIndex = rowIndex;
+    this.SelectedView = which;
+    this.SelectedViewTitle = title;
+    this.SelectedViewData = data;
+  }
+
+  IsViewActive(rowIndex: number, which: 'previous' | 'current'): boolean {
+    return this.SelectedRowIndex === rowIndex && this.SelectedView === which;
+  }
+
+  private ResetSelectedView(): void {
+    this.SelectedRowIndex = null;
+    this.SelectedView = null;
+    this.SelectedViewTitle = '';
+    this.SelectedViewData = null;
   }
 
   private LoadHistory(datasetUid: string): void {

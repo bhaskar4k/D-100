@@ -45,10 +45,12 @@
 
                                     <ng-container matColumnDef="previousState">
                                         <th mat-header-cell *matHeaderCellDef>Previous State</th>
-                                        <td mat-cell *matCellDef="let row">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        <td mat-cell *matCellDef="let row; let i = index">
+                                            <button type="button" class="btn btn-sm"
+                                                [class.btn-secondary]="IsViewActive(i, 'previous')"
+                                                [class.btn-outline-secondary]="!IsViewActive(i, 'previous')"
                                                 matTooltip="View previous state" matTooltipPosition="above"
-                                                (click)="OnView('Previous State', row.previousState)">
+                                                (click)="OnView(i, 'previous', 'Previous State', row.previousState)">
                                                 <i class="bi bi-eye-fill me-1"></i>View
                                             </button>
                                         </td>
@@ -56,10 +58,12 @@
 
                                     <ng-container matColumnDef="currentState">
                                         <th mat-header-cell *matHeaderCellDef>Current State</th>
-                                        <td mat-cell *matCellDef="let row">
-                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                        <td mat-cell *matCellDef="let row; let i = index">
+                                            <button type="button" class="btn btn-sm"
+                                                [class.btn-primary]="IsViewActive(i, 'current')"
+                                                [class.btn-outline-primary]="!IsViewActive(i, 'current')"
                                                 matTooltip="View current state" matTooltipPosition="above"
-                                                (click)="OnView('Current State', row.currentState)">
+                                                (click)="OnView(i, 'current', 'Current State', row.currentState)">
                                                 <i class="bi bi-eye-fill me-1"></i>View
                                             </button>
                                         </td>
@@ -74,6 +78,11 @@
                                     <tr mat-row *matRowDef="let row; columns: DisplayedColumns"></tr>
                                 </table>
                             </div>
+                        </div>
+
+                        <div class="mt-3" *ngIf="SelectedView !== null">
+                            <app-key-value-pair-viewer [title]="SelectedViewTitle" [data]="SelectedViewData">
+                            </app-key-value-pair-viewer>
                         </div>
                     </div>
                 </div>

@@ -30,3 +30,24 @@
     font-weight: 500;
     color: #9ca3af;
 }
+
+.kv-inline {
+    background-color: #111827;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.kv-inline-head {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 0.9rem;
+    background-color: #1f2937;
+    border-bottom: 1px solid #374151;
+}
+
+.kv-inline-title {
+    color: #e5e7eb;
+    font-size: 0.95rem;
+    font-weight: 600;
+}

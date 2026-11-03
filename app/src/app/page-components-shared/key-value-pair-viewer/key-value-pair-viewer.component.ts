@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, Input, OnChanges, Optional, SimpleChanges } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatTableModule } from '@angular/material/table';
 
@@ -19,22 +19,47 @@ interface KeyValueRow {
   templateUrl: './key-value-pair-viewer.component.html',
   styleUrl: './key-value-pair-viewer.component.css'
 })
-export class KeyValuePairViewerComponent {
+export class KeyValuePairViewerComponent implements OnChanges {
+  // Inputs used when the component is embedded directly in a page template
+  // (<app-key-value-pair-viewer [title]="..." [data]="..."/>). In modal mode they are ignored
+  // and the component reads MAT_DIALOG_DATA instead.
+  @Input() title: string = 'Details';
+  @Input() data: unknown = null;
+
   readonly DisplayedColumns = ['key', 'value'];
 
-  Title = 'Details';
+  IsModal = false;
   Rows: KeyValueRow[] = [];
 
   constructor(
-    @Inject(MAT_DIALOG_DATA) data: KeyValueModalData,
-    private dialogRef: MatDialogRef<KeyValuePairViewerComponent>
+    // MatDialog injects MAT_DIALOG_DATA and MatDialogRef when the component is opened via
+    // dialog.open(); when the component is used inline those injections are absent, hence
+    // @Optional. The presence of dialogData is also the signal that puts us in modal mode.
+    @Optional() @Inject(MAT_DIALOG_DATA) private readonly dialogData: KeyValueModalData | null,
+    @Optional() private readonly dialogRef: MatDialogRef<KeyValuePairViewerComponent> | null
   ) {
-    this.Title = data?.title ?? this.Title;
-    this.Rows = this.BuildRows(data?.data);
+    if (dialogData) {
+      this.IsModal = true;
+      this.title = dialogData.title ?? this.title;
+      this.data = dialogData.data;
+      this.Rows = this.BuildRows(this.data);
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Rebuild rows when the parent swaps the data input. Skip in modal mode: the dialog
+    // instance is one-shot and its data is already captured in the constructor.
+    if (this.IsModal) {
+      return;
+    }
+
+    if (changes['data']) {
+      this.Rows = this.BuildRows(this.data);
+    }
   }
 
   OnClose(): void {
-    this.dialogRef.close();
+    this.dialogRef?.close();
   }
 
   private BuildRows(data: unknown): KeyValueRow[] {
