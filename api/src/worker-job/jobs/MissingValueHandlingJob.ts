@@ -105,6 +105,7 @@ async function MarkFailed(DatasetId: number): Promise<void> {
 async function CommitSuccess(
     DatasetId: number,
     ColumnId: number,
+    StrategyEnum: string,
     Metadata: ColumnMetadata
 ): Promise<void> {
     const pool = await ConnectionPool;
@@ -131,7 +132,7 @@ async function CommitSuccess(
             throw new Error(`Column ${ColumnId} not found for dataset ${DatasetId}; aborting commit.`);
         }
 
-        const previousState = BuildColumnStateFromRow(prevRows[0]);
+        const previousState = BuildColumnStateFromRow(prevRows[0], StrategyEnum);
 
         await connection.execute(
             `UPDATE T_COLUMN
@@ -151,7 +152,7 @@ async function CommitSuccess(
             ]
         );
 
-        const currentState = BuildColumnStateFromMetadata(Metadata.type, Metadata.nullable, Metadata.uniqueCount, Metadata.nullValueCount);
+        const currentState = BuildColumnStateFromMetadata(Metadata.type, Metadata.nullable, Metadata.uniqueCount, Metadata.nullValueCount, StrategyEnum);
 
         await connection.execute(
             `INSERT INTO T_DATASET_HISTORY
@@ -235,7 +236,7 @@ async function HandleMissingValueJob(Payload: MissingValueHandlingQueuePayload):
         backupPath = response.data.backupPath;
 
         try {
-            await CommitSuccess(Payload.datasetId, Payload.columnId, response.data.columnMetadata);
+            await CommitSuccess(Payload.datasetId, Payload.columnId, Payload.strategyEnum, response.data.columnMetadata);
         } catch (dbError) {
             // The parquet is already swapped on disk but the DB commit failed. Rename the
             // backup back over the live file so the dataset's on-disk state matches the DB
