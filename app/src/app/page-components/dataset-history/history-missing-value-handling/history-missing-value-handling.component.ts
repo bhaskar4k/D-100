@@ -3,10 +3,12 @@ import { CommonModule, DatePipe, formatDate } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { DatasetSelectionComponent } from '../../../page-components-shared/dataset-selection/dataset-selection.component';
 import { KeyValuePairViewerComponent } from '../../../page-components-shared/key-value-pair-viewer/key-value-pair-viewer.component';
+import { PreviewDatasetComponent, PreviewDatasetDialogData } from '../../../page-components-shared/preview-dataset/preview-dataset.component';
 import { CustomAlertComponent } from '../../../page-components-shared/custom-alert/custom-alert.component';
 import { DatasetItem } from '../../../models/dataset.model';
 import {
@@ -24,6 +26,7 @@ import { DateFormat, ResponseTypeColor } from '../../../constants/commonConsts';
     MatTableModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     DatasetSelectionComponent,
     KeyValuePairViewerComponent
   ],
@@ -115,6 +118,32 @@ export class HistoryMissingValueHandlingComponent implements OnInit, OnDestroy {
   OnHistorySearch(value: string): void {
     this.HistorySearchText = value;
     this.historySearch$.next(value);
+  }
+
+  get CanPreview(): boolean {
+    return !!this.SelectedDataset && this.SelectedDataset.isActive && this.SelectedDataset.isProcessed;
+  }
+
+  OnPreview(): void {
+    if (!this.CanPreview || this.MatProgressBar || !this.SelectedDataset) {
+      return;
+    }
+
+    this.dialog.open<PreviewDatasetComponent, PreviewDatasetDialogData>(
+      PreviewDatasetComponent,
+      {
+        data: {
+          datasetUid: this.SelectedDataset.datasetUid,
+          fileName: this.SelectedDataset.fileName,
+          extension: this.SelectedDataset.extension
+        },
+        autoFocus: 'first-tabbable',
+        panelClass: 'preview-dataset-dialog',
+        maxWidth: '80vw',
+        width: 'min(max-content, 80vw)',
+        minWidth: 'min(560px, 90vw)'
+      }
+    );
   }
 
   private LoadHistory(datasetUid: string): void {

@@ -17,6 +17,11 @@
                     <div class="step-block">
                         <div class="step-label">
                             <span>Select a dataset <span class="text-danger">*</span></span>
+                            <button type="button" class="app-icon-button text-primary ms-auto"
+                                matTooltip="Preview top N rows" matTooltipPosition="above" aria-label="Preview dataset"
+                                *ngIf="CanPreview" [disabled]="MatProgressBar" (click)="OnPreview()">
+                                <i class="bi bi-eye-fill"></i>
+                            </button>
                         </div>
                         <app-dataset-selection (datasetChange)="OnDatasetChange($event)"></app-dataset-selection>
                     </div>
