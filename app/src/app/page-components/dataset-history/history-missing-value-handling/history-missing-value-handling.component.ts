@@ -2,7 +2,6 @@ import { Component, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { DatasetSelectionComponent } from '../../../page-components-shared/dataset-selection/dataset-selection.component';
@@ -23,7 +22,6 @@ import { ResponseTypeColor } from '../../../constants/commonConsts';
     DatePipe,
     MatTableModule,
     MatProgressSpinnerModule,
-    MatTooltipModule,
     DatasetSelectionComponent,
     KeyValuePairViewerComponent
   ],
@@ -38,13 +36,6 @@ export class HistoryMissingValueHandlingComponent implements OnDestroy {
   SelectedDataset: DatasetItem | null = null;
   History: DatasetHistoryItem[] = [];
   Loaded = false;
-
-  // The viewer below the table reflects whichever View button was last clicked. Null means
-  // nothing is being viewed yet.
-  SelectedViewTitle: string = '';
-  SelectedViewData: unknown = null;
-  SelectedRowIndex: number | null = null;
-  SelectedView: 'previous' | 'current' | null = null;
 
   private historySubscription?: Subscription;
 
@@ -61,37 +52,12 @@ export class HistoryMissingValueHandlingComponent implements OnDestroy {
     this.SelectedDataset = dataset;
     this.History = [];
     this.Loaded = false;
-    this.ResetSelectedView();
 
     if (!dataset) {
       return;
     }
 
     this.LoadHistory(dataset.datasetUid);
-  }
-
-  OnView(rowIndex: number, which: 'previous' | 'current', title: string, data: unknown): void {
-    // Toggle off if the same cell is clicked again, so the user can close the viewer without
-    // navigating away.
-    if (this.SelectedRowIndex === rowIndex && this.SelectedView === which) {
-      this.ResetSelectedView();
-      return;
-    }
-    this.SelectedRowIndex = rowIndex;
-    this.SelectedView = which;
-    this.SelectedViewTitle = title;
-    this.SelectedViewData = data;
-  }
-
-  IsViewActive(rowIndex: number, which: 'previous' | 'current'): boolean {
-    return this.SelectedRowIndex === rowIndex && this.SelectedView === which;
-  }
-
-  private ResetSelectedView(): void {
-    this.SelectedRowIndex = null;
-    this.SelectedView = null;
-    this.SelectedViewTitle = '';
-    this.SelectedViewData = null;
   }
 
   private LoadHistory(datasetUid: string): void {
