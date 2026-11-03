@@ -26,9 +26,8 @@
                             <span>History</span>
                             <div class="app-table-search ms-auto" *ngIf="HistoryDataSource.data.length > 0">
                                 <i class="bi bi-search"></i>
-                                <input #historySearchInput type="text" placeholder="Search column or strategy..."
-                                    autocomplete="off" [value]="HistorySearchText"
-                                    (input)="OnHistorySearch(historySearchInput.value)" />
+                                <input #historySearchInput type="text" placeholder="Search..." autocomplete="off"
+                                    [value]="HistorySearchText" (input)="OnHistorySearch(historySearchInput.value)" />
                                 @if (HistorySearchText) {
                                 <button type="button" class="app-table-search-clear" aria-label="Clear search"
                                     (click)="historySearchInput.value = ''; OnHistorySearch('')"><i

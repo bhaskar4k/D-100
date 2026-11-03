@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, formatDate } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -58,9 +58,9 @@ export class HistoryMissingValueHandlingComponent implements OnInit, OnDestroy {
     private historyService: DatasetHistoryService,
     private dialog: MatDialog
   ) {
-    // Match against column name and strategy name — the two fields visible as text on the
-    // row. The previous/current state objects are rendered through the key-value viewer and
-    // aren't practical to search as free text.
+    // Match against column name, strategy name, and the formatted applied-on date so the user
+    // can search for the same text they see in the table. The previous/current state objects
+    // are rendered through the key-value viewer and aren't practical to search as free text.
     this.HistoryDataSource.filterPredicate = (data, filter) => {
       const text = filter.trim().toLowerCase();
       if (!text) {
@@ -68,7 +68,17 @@ export class HistoryMissingValueHandlingComponent implements OnInit, OnDestroy {
       }
       const column = (data.columnName ?? '').toLowerCase();
       const strategy = (data.replacement_strategy_name ?? '').toLowerCase();
-      return column.includes(text) || strategy.includes(text);
+      // Format with the same DateFormat the template uses, so searching "nov 2026" or
+      // "14:30" matches what the row actually shows. A missing/invalid date is skipped.
+      let createdOn = '';
+      if (data.createdOn) {
+        try {
+          createdOn = formatDate(data.createdOn as string | Date, DateFormat, 'en-US').toLowerCase();
+        } catch {
+          createdOn = '';
+        }
+      }
+      return column.includes(text) || strategy.includes(text) || createdOn.includes(text);
     };
   }
 
