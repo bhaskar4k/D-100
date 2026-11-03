@@ -9,6 +9,7 @@ import {
 } from "../entity/DatasetHistoryEntity";
 import { MissingValueHandlingStateEntity } from "../entity/audit/MissingValueHandlingEntity";
 import { DatasetHistoryActionType } from "../enum/DatasetHistoryActionType";
+import { DataType } from "../enum/DataType";
 import { SafeJsonParse } from "../util/JsonUtil";
 
 
@@ -23,16 +24,25 @@ function ExtractReplacementStrategyEnum(state: unknown): string | null {
 }
 
 
-// Returns a shallow copy of the state with `replacement_strategy` removed. The strategy is
-// lifted to its own top-level field on the response, so the client doesn't need to look for
-// it inside the serialized blob.
+// Returns a shallow copy of the state with `replacement_strategy` removed and `datatype`
+// resolved from its numeric DataType id to its enum name (e.g. 1 -> "Integer"). The strategy
+// is lifted to its own top-level field on the response, and the datatype name is friendlier
+// for the UI to render than the raw id — the on-disk row keeps the id, we only shape the
+// outgoing payload here.
 function StripReplacementStrategyField(state: unknown): unknown {
     if (!state || typeof state !== "object" || Array.isArray(state)) {
         return state;
     }
-    const { replacement_strategy, ...rest } = state as MissingValueHandlingStateEntity & Record<string, unknown>;
+    const { replacement_strategy, datatype, ...rest } = state as MissingValueHandlingStateEntity & Record<string, unknown>;
     void replacement_strategy; // keeps TS from flagging the destructured var as unused
-    return rest;
+
+    // Reverse-maps the numeric DataType to its name. Falls back to "Unknown" when the id
+    // isn't a member of the enum (e.g. a legacy or corrupted row).
+    const datatypeName = typeof datatype === "number"
+        ? (DataType[datatype] ?? "Unknown")
+        : null;
+
+    return { ...rest, datatype: datatypeName };
 }
 
 
