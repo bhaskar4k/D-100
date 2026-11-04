@@ -1,0 +1,98 @@
+<div class="page-loader" *ngIf="MatProgressBar">
+    <mat-spinner diameter="50"></mat-spinner>
+</div>
+
+<div class="card shadow-sm m-3 p-3">
+    <div class="app-page-header">
+        <h4 class="app-page-title">
+            <i class="bi bi-hdd-stack-fill me-2 text-info"></i>
+            Storage Control
+        </h4>
+
+        <div class="app-page-actions">
+            <button type="button" class="app-icon-button text-success" matTooltip="Refresh" matTooltipPosition="above"
+                aria-label="Refresh storage" [disabled]="MatProgressBar" (click)="OnRefresh()">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+    </div>
+
+    <ng-container *ngIf="Details as D; else noDetails">
+        <div class="storage-plan-row">
+            <div class="storage-plan-label">Current Plan</div>
+            <span class="app-badge plan-badge" [ngClass]="PlanBadgeClass()">
+                <i class="bi bi-award-fill"></i>
+                <span>{{ PlanLabel() }}</span>
+            </span>
+        </div>
+
+        <div class="storage-tile-grid">
+            <div class="storage-tile">
+                <div class="storage-tile-header">
+                    <i class="bi bi-hdd-fill storage-tile-icon icon-allocated"></i>
+                    <span class="storage-tile-label">Allocated</span>
+                </div>
+                <div class="storage-tile-value">{{ FormatBytes(D.allowedStorage) }}</div>
+                <div class="storage-tile-sub" *ngIf="!IsUnlimited(D.allowedStorage)">
+                    {{ D.allowedStorage }} bytes
+                </div>
+            </div>
+
+            <div class="storage-tile">
+                <div class="storage-tile-header">
+                    <i class="bi bi-pie-chart-fill storage-tile-icon icon-used"></i>
+                    <span class="storage-tile-label">Used</span>
+                </div>
+                <div class="storage-tile-value">{{ FormatBytes(D.usedStorage) }}</div>
+                <div class="storage-tile-sub">{{ D.usedStorage }} bytes</div>
+            </div>
+
+            <div class="storage-tile">
+                <div class="storage-tile-header">
+                    <i class="bi bi-cloud-check-fill storage-tile-icon icon-available"></i>
+                    <span class="storage-tile-label">Available</span>
+                </div>
+                <div class="storage-tile-value">
+                    {{ IsUnlimited(D.allowedStorage) ? 'Unlimited' : FormatBytes(D.availableStorage) }}
+                </div>
+                <div class="storage-tile-sub" *ngIf="!IsUnlimited(D.allowedStorage)">
+                    {{ D.availableStorage }} bytes
+                </div>
+            </div>
+        </div>
+
+        <div class="storage-usage-section" *ngIf="UsagePercentage() !== null; else unlimitedBar">
+            <div class="storage-usage-header">
+                <span class="storage-usage-label">Storage Usage</span>
+                <span class="storage-usage-percent" [ngClass]="UsageColorClass()">
+                    {{ UsagePercentageDisplay() }}
+                </span>
+            </div>
+            <div class="storage-usage-track">
+                <div class="storage-usage-fill" [ngClass]="UsageColorClass()" [style.width.%]="UsagePercentage()"></div>
+            </div>
+            <div class="storage-usage-footnote">
+                {{ FormatBytes(D.usedStorage) }} of {{ FormatBytes(D.allowedStorage) }} used
+            </div>
+        </div>
+
+        <ng-template #unlimitedBar>
+            <div class="storage-usage-section">
+                <div class="storage-usage-header">
+                    <span class="storage-usage-label">Storage Usage</span>
+                    <span class="storage-usage-percent usage-ok">Unlimited</span>
+                </div>
+                <div class="storage-usage-footnote">
+                    {{ FormatBytes(D.usedStorage) }} used on an unlimited plan
+                </div>
+            </div>
+        </ng-template>
+    </ng-container>
+
+    <ng-template #noDetails>
+        <div class="storage-empty" *ngIf="!MatProgressBar">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>Storage details are not available for your account yet.</span>
+        </div>
+    </ng-template>
+</div>

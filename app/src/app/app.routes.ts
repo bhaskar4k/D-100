@@ -16,6 +16,8 @@ import { HandleMissingValueComponent } from './page-components/data-cleaning/han
 import { HandleDuplicateValueComponent } from './page-components/data-cleaning/handle-duplicate-value/handle-duplicate-value.component';
 import { HistoryMissingValueHandlingComponent } from './page-components/dataset-history/history-missing-value-handling/history-missing-value-handling.component';
 import { HistoryDuplicateHandlingComponent } from './page-components/dataset-history/history-duplicate-handling/history-duplicate-handling.component';
+import { StorageControlComponent } from './page-components/storage-control/storage-control.component';
+import { MyProfileComponent } from './page-components/my-profile/my-profile.component';
 
 export const routes: Routes = [
   {
@@ -49,6 +51,9 @@ export const routes: Routes = [
 
           { path: 'dataset-history/missing-value-handling', component: HistoryMissingValueHandlingComponent },
           { path: 'dataset-history/duplicate-handling', component: HistoryDuplicateHandlingComponent },
+
+          { path: 'storage-control', component: StorageControlComponent },
+          { path: 'my-profile', component: MyProfileComponent },
 
           { path: 'logout', component: LogoutComponent }
         ]
