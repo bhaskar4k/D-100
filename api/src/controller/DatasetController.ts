@@ -36,6 +36,23 @@ export class DatasetController {
     }
 
 
+    static async GetAllActive(req: Request, res: Response): Promise<void> {
+        try {
+            await Logger.Info("GetAllActiveDatasets -> Called", req.UserData?.id);
+
+            const result = await DatasetService.GetAllActiveDatasets(Number(req.UserData!.id));
+
+            res.status(HttpStatusCode.OK).json(new SuccessDto(result, "Active datasets retrieved successfully.", HttpStatusCode.OK));
+        } catch (error) {
+            await Logger.Error("GetAllActive Datasets Error", error, req.UserData?.id);
+
+            res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json(
+                new ErrorDto(null, "An unexpected error occurred to get active datasets.", HttpStatusCode.INTERNAL_SERVER_ERROR)
+            );
+        }
+    }
+
+
     static async GetDeleted(req: Request, res: Response): Promise<void> {
         try {
             await Logger.Info("GetDeletedDatasets -> Called", req.UserData?.id);

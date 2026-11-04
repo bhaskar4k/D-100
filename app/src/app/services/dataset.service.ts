@@ -20,6 +20,10 @@ export class DatasetService {
         return this.http.get<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.GetAll, { params });
     }
 
+    GetAllActive(): Observable<ApiResponseDto> {
+        return this.http.get<ApiResponseDto>(GetBaseURL() + Endpoints.Dataset.GetAllActive);
+    }
+
     GetDeleted(page: number, pageSize: number, search: string = ''): Observable<ApiResponseDto> {
         let params = new HttpParams().set('page', page).set('pageSize', pageSize);
 
