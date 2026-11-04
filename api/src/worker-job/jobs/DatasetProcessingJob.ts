@@ -1,5 +1,3 @@
-import path from "path";
-import fs from "fs/promises";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { ConnectionPool } from "../../data-access-layer/database";
 import { GetRabbitMqChannel } from "../../config/RabbitMqConfig";
@@ -8,6 +6,7 @@ import { TrueFalse } from "../../enum/CommonEnum";
 import { RunPython } from "../../python-manager/PythonManager";
 import { Logger } from "../../log/Logger";
 import { BuildRawFilePath, BuildIngestFilePath } from "../../util/UploadUtil";
+import { SafeGetFileSize } from "../../util/FileUtil";
 import { QueueRegistry } from "../QueueRegistry";
 
 const RAW_UPLOAD_PATH = process.env.RAW_UPLOAD_PATH;
@@ -240,15 +239,9 @@ async function ProcessDataset(DatasetId: number): Promise<void> {
         }
 
         // Stat the parquet after conversion so the quota bump reflects the actual bytes on
-        // disk. Best-effort: if the stat fails (file vanished, permissions), fall back to
-        // null and let PersistMetadata skip the quota update rather than fail processing.
-        let ingestedFileSize: number | null = null;
-        try {
-            const stat = await fs.stat(targetPath);
-            ingestedFileSize = stat.size;
-        } catch (statError) {
-            await Logger.Error(`Dataset ${DatasetId}: could not stat ingested parquet at ${targetPath}.`, statError);
-        }
+        // disk. Best-effort via SafeGetFileSize: on failure it logs and hands back null, and
+        // PersistMetadata then skips the quota update instead of failing processing.
+        const ingestedFileSize = await SafeGetFileSize(targetPath, `Dataset ${DatasetId} ingested parquet`);
 
         await PersistMetadata(
             DatasetId,
