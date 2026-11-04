@@ -1,4 +1,4 @@
-import { ResultSetHeader } from "mysql2";
+import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { ConnectionPool } from "../data-access-layer/database";
 import jwt from "jsonwebtoken";
 import { v7 as uuidv7 } from "uuid";
@@ -7,9 +7,14 @@ import { JwtSecret, JwtExpiresInSeconds } from "../config/JwtConfig";
 import { LoginResult, UserExistsRow, UserLoginRow } from "../entity/AuthenticationEntity";
 import { UserStatus } from "../enum/UserEnum";
 import { Status, TrueFalse } from "../enum/CommonEnum";
-import { StorageMaster, STORAGE_MASTER_BYTES } from "../enum/StorageMasterEnum";
+import { StorageMaster } from "../enum/StorageMasterEnum";
 import { GetSessionKey } from "../util/AuthUtil";
 import { Logger } from "../log/Logger";
+
+
+interface StoragePlanRow extends RowDataPacket {
+    storage: number | string | bigint;
+}
 
 export class AuthenticationBusiness {
     static async IsEmailRegistered(email: string): Promise<boolean> {
@@ -76,12 +81,31 @@ export class AuthenticationBusiness {
                 return false;
             }
 
-            // Every new sign-up starts on the BRONZE plan. Wrapped in the same transaction as
-            // the user insert so a failure here can't leave a user without a quota row.
+            // Every new sign-up starts on the BRONZE plan. Pull the byte count from the
+            // storage-master row inside the same transaction — that way the quota reflects
+            // whatever the current BRONZE row holds, not whatever the enum default was when
+            // this build shipped. `enum` is a MySQL reserved word, so it needs backticks.
+            const [planRows] = await connection.query<StoragePlanRow[]>(
+                `SELECT storage
+                 FROM T_STORAGE_MASTER
+                 WHERE \`enum\` = ?
+                   AND is_active = 1
+                 LIMIT 1`,
+                [StorageMaster.BRONZE]
+            );
+
+            if (planRows.length === 0) {
+                await connection.rollback();
+                throw new Error(`${StorageMaster.BRONZE} storage plan not found or inactive in T_STORAGE_MASTER.`);
+            }
+
+            // Wrapped in the same transaction as the user insert so a failure here can't
+            // leave a user without a quota row. The value is passed through as the DB
+            // returned it (number / string / bigint) — mysql2 accepts any of them for BIGINT.
             await connection.execute(
                 `INSERT INTO T_USER_STORAGE (USER_ID, ALLOWED_STORAGE, USED_STORAGE)
                  VALUES (?, ?, 0)`,
-                [userResult.insertId, STORAGE_MASTER_BYTES[StorageMaster.BRONZE]]
+                [userResult.insertId, planRows[0].storage]
             );
 
             await connection.commit();
