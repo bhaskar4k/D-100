@@ -13,6 +13,7 @@ import { TrueFalse } from "../enum/CommonEnum";
 import { DownloadedFileType } from "../enum/DownloadedFileType";
 import { RunPython } from "../python-manager/PythonManager";
 import { BuildDownloadFolderPath, BuildIngestFilePath, BuildRawFilePath, SanitizeDownloadBaseName } from "../util/UploadUtil";
+import { SafeGetFileSize } from "../util/FileUtil";
 import { Logger } from "../log/Logger";
 
 
@@ -878,6 +879,12 @@ export class DatasetService {
         const columnName = columnRows[0].column_name;
         const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
+        // Pre-rewrite size — captured before the transaction opens so we can apply the
+        // (usually negative) delta to used_storage after Python shrinks the parquet.
+        // SafeGetFileSize logs and returns null on failure; in that case the quota update
+        // further down is skipped.
+        const sizeBefore = await SafeGetFileSize(ingestPath, `Dataset ${DatasetUid} ingested parquet (before column delete)`);
+
         const connection = await pool.getConnection();
         try {
             await connection.beginTransaction();
@@ -904,6 +911,26 @@ export class DatasetService {
                 await connection.rollback();
                 await Logger.Error("DeleteColumn Python Error", new Error(response.message), UserId);
                 return "Could not delete the column from the file. Please try again.";
+            }
+
+            // Stat the parquet after Python has swapped the rewritten file in and apply the
+            // size delta to used_storage inside the same transaction. The delta is negative
+            // (the file shrank), so we add it as-is. Skipped when either stat failed or when
+            // the size didn't change — SafeGetFileSize already logged the reason for null.
+            const sizeAfter = await SafeGetFileSize(ingestPath, `Dataset ${DatasetUid} ingested parquet (after column delete)`);
+            if (sizeBefore !== null && sizeAfter !== null && sizeBefore !== sizeAfter) {
+                const delta = sizeAfter - sizeBefore;
+                const [quotaResult] = await connection.execute<ResultSetHeader>(
+                    `UPDATE T_USER_STORAGE
+                     SET used_storage = used_storage + ?
+                     WHERE user_id = ?`,
+                    [delta, UserId]
+                );
+                if (quotaResult.affectedRows === 0) {
+                    // No quota row means registration never set one up. Don't fail the delete
+                    // over it — just surface it so an operator can backfill the row.
+                    await Logger.Info(`User ${UserId} has no T_USER_STORAGE row; used_storage not updated after column delete.`, UserId);
+                }
             }
 
             await connection.commit();
