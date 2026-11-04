@@ -1,5 +1,6 @@
 import path from "path";
-import { RowDataPacket } from "mysql2";
+import fs from "fs/promises";
+import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { ConnectionPool } from "../../data-access-layer/database";
 import { GetRabbitMqChannel } from "../../config/RabbitMqConfig";
 import { DatasetProcessingStatus } from "../../enum/DatasetProcessingStatus";
@@ -30,6 +31,7 @@ interface DatasetRow extends RowDataPacket {
     id: number;
     dataset_uid: string;
     extension: string;
+    created_by: number;
 }
 
 interface ColumnMetadata {
@@ -106,10 +108,18 @@ async function MarkFailed(DatasetId: number): Promise<void> {
 }
 
 
-// Writes rowCount + columnInfo to the DB and flips the dataset to PROCESSED. Done in one
-// transaction so a partial failure never leaves half the columns inserted with the dataset
-// still looking processed.
-async function PersistMetadata(DatasetId: number, Metadata: FileMetadata): Promise<void> {
+// Writes rowCount + columnInfo to the DB, flips the dataset to PROCESSED, and bumps the
+// owner's used_storage by the ingested (parquet) file size. Done in one transaction so a
+// partial failure never leaves half the columns inserted with the dataset still looking
+// processed, or the dataset flipped while the quota delta is missing. The raw-file size was
+// already accounted for in used_storage at upload-initiate time, so this adds only the
+// parquet mirror on top of it.
+async function PersistMetadata(
+    DatasetId: number,
+    UserId: number,
+    IngestedFileSize: number | null,
+    Metadata: FileMetadata
+): Promise<void> {
     const pool = await ConnectionPool;
     const connection = await pool.getConnection();
 
@@ -151,6 +161,28 @@ async function PersistMetadata(DatasetId: number, Metadata: FileMetadata): Promi
             [Metadata.rowCount, TrueFalse.True, DatasetProcessingStatus.PROCESSED, DatasetId]
         );
 
+        // Skip the quota bump when Python couldn't report a parquet size (null) or returned 0
+        // — nothing meaningful to charge against the user. MySQL does the BIGINT addition
+        // server-side so a number parameter is fine here (a single parquet is well inside
+        // Number.MAX_SAFE_INTEGER).
+        if (IngestedFileSize !== null && IngestedFileSize > 0) {
+            const [quotaResult] = await connection.execute<ResultSetHeader>(
+                `UPDATE T_USER_STORAGE
+                 SET used_storage = used_storage + ?
+                 WHERE user_id = ?`,
+                [IngestedFileSize, UserId]
+            );
+
+            if (quotaResult.affectedRows === 0) {
+                // No quota row means registration never set one up. Don't fail processing
+                // over it — just surface it so an operator can backfill the row.
+                await Logger.Info(
+                    `User ${UserId} has no T_USER_STORAGE row; ingested size not added to used_storage.`,
+                    String(UserId)
+                );
+            }
+        }
+
         await connection.commit();
     } catch (error) {
         await connection.rollback();
@@ -166,7 +198,7 @@ async function ProcessDataset(DatasetId: number): Promise<void> {
         const pool = await ConnectionPool;
 
         const [rows] = await pool.query<DatasetRow[]>(
-            `SELECT id, dataset_uid, extension FROM T_DATASET WHERE id = ? LIMIT 1`,
+            `SELECT id, dataset_uid, extension, created_by FROM T_DATASET WHERE id = ? LIMIT 1`,
             [DatasetId]
         );
 
@@ -197,7 +229,7 @@ async function ProcessDataset(DatasetId: number): Promise<void> {
             throw new Error(`Python returned error (GetFileMetadata): ${metadataResponse.message}`);
         }
 
-        const conversionResponse = await RunPython<{ targetPath: string; targetSize: number | null }>(
+        const conversionResponse = await RunPython<boolean>(
             "ConvertToParquet",
             { SourcePath: sourcePath, TargetPath: targetPath },
             ProcessingTimeoutMs
@@ -207,7 +239,23 @@ async function ProcessDataset(DatasetId: number): Promise<void> {
             throw new Error(`Python returned error (ConvertToParquet): ${conversionResponse.message}`);
         }
 
-        await PersistMetadata(DatasetId, metadataResponse.data);
+        // Stat the parquet after conversion so the quota bump reflects the actual bytes on
+        // disk. Best-effort: if the stat fails (file vanished, permissions), fall back to
+        // null and let PersistMetadata skip the quota update rather than fail processing.
+        let ingestedFileSize: number | null = null;
+        try {
+            const stat = await fs.stat(targetPath);
+            ingestedFileSize = stat.size;
+        } catch (statError) {
+            await Logger.Error(`Dataset ${DatasetId}: could not stat ingested parquet at ${targetPath}.`, statError);
+        }
+
+        await PersistMetadata(
+            DatasetId,
+            Number(dataset.created_by),
+            ingestedFileSize,
+            metadataResponse.data
+        );
 
         await Logger.Info(
             `Dataset ${DatasetId} processed (${metadataResponse.data.rowCount} rows, ${metadataResponse.data.columnInfo.length} columns, parquet at ${targetPath}).`
