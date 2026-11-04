@@ -6,11 +6,13 @@ export enum StorageMaster {
     IRON = "IRON",
     GOLD = "GOLD",
     DIAMOND = "DIAMOND",
+    UNLIMITED = "UNLIMITED",
 }
 
 // 1 GiB expressed in bytes. Storage quotas are stored as raw byte counts so the DB never has
 // to know about display units.
-const BYTES_PER_GIB = 1024 ** 3;
+export const BYTES_PER_GIB = 1024 ** 3;
+export const MAX_BIGINT_SIGNED = "9223372036854775807";
 
 // Byte allowance per plan. Single source of truth for the seeder and any runtime lookup
 // (e.g. upgrading a user's quota). `satisfies` keeps the keys exhaustive — adding a new
@@ -21,4 +23,5 @@ export const STORAGE_MASTER_BYTES = {
     [StorageMaster.IRON]: 20 * BYTES_PER_GIB,
     [StorageMaster.GOLD]: 50 * BYTES_PER_GIB,
     [StorageMaster.DIAMOND]: 100 * BYTES_PER_GIB,
-} satisfies Record<StorageMaster, number>;
+    [StorageMaster.UNLIMITED]: MAX_BIGINT_SIGNED,
+} satisfies Record<StorageMaster, number | string>;
