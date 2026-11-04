@@ -14,7 +14,7 @@ import { SafeJsonParse } from "../util/JsonUtil";
 
 // Pulls `replacement_strategy` off a parsed `extra_data` object. Returns null when it's
 // missing, empty, or the object is malformed.
-function ExtractReplacementStrategyEnum(extraData: unknown): string | null {
+function ExtractReplacementStrategyEnumFromExtraData(extraData: unknown): string | null {
     if (!extraData || typeof extraData !== "object" || Array.isArray(extraData)) {
         return null;
     }
@@ -127,7 +127,7 @@ export class DatasetHistoryBusiness {
             const previousState = SafeJsonParse(row.previous_state);
             const currentState = SafeJsonParse(row.current_state);
             const extraData = row.extra_data ? SafeJsonParse(row.extra_data) : null;
-            const strategyEnum = ExtractReplacementStrategyEnum(extraData);
+            const strategyEnum = ExtractReplacementStrategyEnumFromExtraData(extraData);
             return { row, previousState, currentState, extraData, strategyEnum };
         });
 
