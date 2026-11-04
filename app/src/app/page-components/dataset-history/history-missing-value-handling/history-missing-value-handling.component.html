@@ -81,6 +81,14 @@
                                         </td>
                                     </ng-container>
 
+                                    <ng-container matColumnDef="extraData">
+                                        <th mat-header-cell *matHeaderCellDef>Extra Data</th>
+                                        <td mat-cell *matCellDef="let row">
+                                            <app-key-value-pair-viewer [title]="''"
+                                                [data]="row.extraData"></app-key-value-pair-viewer>
+                                        </td>
+                                    </ng-container>
+
                                     <ng-container matColumnDef="createdOn">
                                         <th mat-header-cell *matHeaderCellDef>Applied On</th>
                                         <td mat-cell *matCellDef="let row">{{ row.createdOn | date: DateFormat }}</td>

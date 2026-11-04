@@ -1,5 +1,4 @@
 import { validate as IsValidUuid } from "uuid";
-import { RowDataPacket } from "mysql2";
 import { ConnectionPool } from "../data-access-layer/database";
 import {
     DatasetHistoryRow,
@@ -13,31 +12,27 @@ import { DataType } from "../enum/DataType";
 import { SafeJsonParse } from "../util/JsonUtil";
 
 
-// Pulls the strategy enum off a parsed state object. Returns null when the state is null,
-// not an object, or missing the field — the caller then falls through to the other state.
-function ExtractReplacementStrategyEnum(state: unknown): string | null {
-    if (!state || typeof state !== "object" || Array.isArray(state)) {
+// Pulls `replacement_strategy` off a parsed `extra_data` object. Returns null when it's
+// missing, empty, or the object is malformed.
+function ExtractReplacementStrategyEnum(extraData: unknown): string | null {
+    if (!extraData || typeof extraData !== "object" || Array.isArray(extraData)) {
         return null;
     }
-    const value = (state as { replacement_strategy?: unknown }).replacement_strategy;
+    const value = (extraData as { replacement_strategy?: unknown }).replacement_strategy;
     return typeof value === "string" && value.length > 0 ? value : null;
 }
 
 
-// Returns a shallow copy of the state with `replacement_strategy` removed and `datatype`
-// resolved from its numeric DataType id to its enum name (e.g. 1 -> "Integer"). The strategy
-// is lifted to its own top-level field on the response, and the datatype name is friendlier
-// for the UI to render than the raw id — the on-disk row keeps the id, we only shape the
-// outgoing payload here.
-function StripReplacementStrategyField(state: unknown): unknown {
+// Returns a shallow copy of the column state with `datatype` resolved from its numeric
+// DataType id to its enum name (e.g. 1 -> "Integer"). The on-disk row keeps the id — we only
+// shape the outgoing payload here. State snapshots no longer carry `replacement_strategy`
+// (that moved to `extra_data`), so nothing to strip there anymore.
+function NormalizeColumnStateForClient(state: unknown): unknown {
     if (!state || typeof state !== "object" || Array.isArray(state)) {
         return state;
     }
-    const { replacement_strategy, datatype, ...rest } = state as MissingValueHandlingStateEntity & Record<string, unknown>;
-    void replacement_strategy; // keeps TS from flagging the destructured var as unused
+    const { datatype, ...rest } = state as MissingValueHandlingStateEntity & Record<string, unknown>;
 
-    // Reverse-maps the numeric DataType to its name. Falls back to "Unknown" when the id
-    // isn't a member of the enum (e.g. a legacy or corrupted row).
     const datatypeName = typeof datatype === "number"
         ? (DataType[datatype] ?? "Unknown")
         : null;
@@ -75,10 +70,10 @@ async function ResolveDatasetOwnership(DatasetUid: string, UserId: number): Prom
 
 export class DatasetHistoryBusiness {
     // Returns MISSING_VALUE_HANDLING history rows for a dataset the caller owns. The row's
-    // previous/current serialized state matches `MissingValueHandlingStateEntity`; this method
-    // lifts `replacement_strategy` out of each state, resolves it to its human-readable name
-    // from the strategy master, and strips the field from the states so the client reads it
-    // from a single top-level `replacement_strategy_name`.
+    // previous/current serialized state matches `MissingValueHandlingStateEntity` and the
+    // `extra_data` matches `MissingValueHandlingExtraData`. This method lifts
+    // `replacement_strategy` out of extra_data, resolves it to its human-readable name from
+    // the strategy master, and normalizes the column-state datatype id to its enum name.
     static async DoGetMissingValueHandlingHistory(
         UserId: number,
         DatasetUid: string
@@ -102,6 +97,7 @@ export class DatasetHistoryBusiness {
                     c.column_name,
                     h.previous_state,
                     h.current_state,
+                    h.extra_data,
                     h.is_active,
                     h.created_on
              FROM T_DATASET_HISTORY h
@@ -113,15 +109,13 @@ export class DatasetHistoryBusiness {
             [datasetId, DatasetHistoryActionType.MISSING_VALUE_HANDLING]
         );
 
-        // First pass: parse each row's JSON once and pull the strategy enum off the state so
-        // we know which strategy names to resolve.
+        // First pass: parse each row's JSON once and pull the strategy enum off extra_data.
         const parsedRows = rows.map(row => {
             const previousState = SafeJsonParse(row.previous_state);
             const currentState = SafeJsonParse(row.current_state);
-            // Both states carry the same strategy — the one that was applied — but currentState
-            // is written after the fact so we prefer it; previousState is the fallback.
-            const strategyEnum = ExtractReplacementStrategyEnum(currentState) ?? ExtractReplacementStrategyEnum(previousState);
-            return { row, previousState, currentState, strategyEnum };
+            const extraData = row.extra_data ? SafeJsonParse(row.extra_data) : null;
+            const strategyEnum = ExtractReplacementStrategyEnum(extraData);
+            return { row, previousState, currentState, extraData, strategyEnum };
         });
 
         const strategyEnums = Array.from(
@@ -148,14 +142,15 @@ export class DatasetHistoryBusiness {
             }
         }
 
-        return parsedRows.map(({ row, previousState, currentState, strategyEnum }) => ({
+        return parsedRows.map(({ row, previousState, currentState, extraData, strategyEnum }) => ({
             id: Number(row.id),
             datasetId: Number(row.dataset_id),
             actionType: row.action_type,
             columnId: Number(row.column_id),
             columnName: row.column_name,
-            previousState: StripReplacementStrategyField(previousState),
-            currentState: StripReplacementStrategyField(currentState),
+            previousState: NormalizeColumnStateForClient(previousState),
+            currentState: NormalizeColumnStateForClient(currentState),
+            extraData,
             // Falls back to the enum string if the strategy row has been deleted — better to
             // show "MEAN" than nothing in that corner case.
             replacement_strategy_name: strategyEnum

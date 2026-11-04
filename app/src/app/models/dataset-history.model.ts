@@ -10,6 +10,7 @@ export interface MissingValueHandlingHistoryItem {
     columnName: string | null;
     previousState: Record<string, unknown> | null;
     currentState: Record<string, unknown> | null;
+    extraData: Record<string, unknown> | null;
     replacement_strategy_name: string | null;
     isActive: number;
     createdOn: string;
