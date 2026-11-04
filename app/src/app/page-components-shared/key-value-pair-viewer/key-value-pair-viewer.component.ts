@@ -6,6 +6,7 @@ import { MatTableModule } from '@angular/material/table';
 export interface KeyValueModalData {
   title?: string;
   data: unknown;
+  showKeysHavingNullValue?: boolean;
 }
 
 interface KeyValueRow {
@@ -25,6 +26,10 @@ export class KeyValuePairViewerComponent implements OnChanges {
   // and the component reads MAT_DIALOG_DATA instead.
   @Input() title: string = 'Details';
   @Input() data: unknown = null;
+  // When true, keys whose value is null/undefined are shown (rendered as "-"). When false,
+  // those entries are filtered out entirely. Defaults to true so existing callers see all
+  // fields as they did before this input was added.
+  @Input() showKeysHavingNullValue: boolean = true;
 
   readonly DisplayedColumns = ['key', 'value'];
 
@@ -42,18 +47,20 @@ export class KeyValuePairViewerComponent implements OnChanges {
       this.IsModal = true;
       this.title = dialogData.title ?? this.title;
       this.data = dialogData.data;
+      this.showKeysHavingNullValue = dialogData.showKeysHavingNullValue ?? this.showKeysHavingNullValue;
       this.Rows = this.BuildRows(this.data);
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Rebuild rows when the parent swaps the data input. Skip in modal mode: the dialog
-    // instance is one-shot and its data is already captured in the constructor.
+    // Rebuild rows when the parent swaps the data input or flips the null-visibility input.
+    // Skip in modal mode: the dialog instance is one-shot and its data is already captured
+    // in the constructor.
     if (this.IsModal) {
       return;
     }
 
-    if (changes['data']) {
+    if (changes['data'] || changes['showKeysHavingNullValue']) {
       this.Rows = this.BuildRows(this.data);
     }
   }
@@ -67,10 +74,14 @@ export class KeyValuePairViewerComponent implements OnChanges {
       return [];
     }
 
-    return Object.entries(data as Record<string, unknown>).map(([rawKey, rawValue]) => ({
-      key: this.HumanizeKey(rawKey),
-      value: this.FormatValue(rawValue),
-    }));
+    return Object.entries(data as Record<string, unknown>)
+      // Drop null/undefined entries entirely when the caller opts out; otherwise they still
+      // show up with a "-" placeholder via FormatValue.
+      .filter(([, rawValue]) => this.showKeysHavingNullValue || (rawValue !== null && rawValue !== undefined))
+      .map(([rawKey, rawValue]) => ({
+        key: this.HumanizeKey(rawKey),
+        value: this.FormatValue(rawValue),
+      }));
   }
 
   // "this_is_a_json_variable" -> "This is a json variable"
