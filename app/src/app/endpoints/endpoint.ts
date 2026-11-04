@@ -49,6 +49,9 @@ export const Endpoints = {
     DatasetHistory: {
         GetHistory: "DatasetHistory/GetHistory",
     },
+    UserStorage: {
+        GetDetails: "UserStorage/GetDetails",
+    },
     Download: {
         SingleFile: "file/download/single-file"
     },

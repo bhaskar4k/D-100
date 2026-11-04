@@ -123,6 +123,24 @@ const menuItems: MenuSeed[] = [
     {
         active: 1,
         displayOrder: 7,
+        icon: "bi bi-hdd-rack",
+        label: "Storage Control",
+        parentLabel: null,
+        route: "/storage-control",
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 8,
+        icon: "bi bi-person-bounding-box",
+        label: "Profile",
+        parentLabel: null,
+        route: "/my-profile",
+        access_type: MenuAccessType.Authenticated
+    },
+    {
+        active: 1,
+        displayOrder: 9,
         icon: "bi bi-box-arrow-in-right",
         label: "Login",
         parentLabel: null,
@@ -131,7 +149,7 @@ const menuItems: MenuSeed[] = [
     },
     {
         active: 1,
-        displayOrder: 8,
+        displayOrder: 10,
         icon: "bi bi-person-add",
         label: "Register",
         parentLabel: null,
@@ -140,7 +158,7 @@ const menuItems: MenuSeed[] = [
     },
     {
         active: 1,
-        displayOrder: 9,
+        displayOrder: 11,
         icon: "bi bi-box-arrow-left",
         label: "Logout",
         parentLabel: null,
