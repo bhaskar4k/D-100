@@ -821,23 +821,34 @@ export class DatasetService {
                 return "Could not rename the column in the file. Please try again.";
             }
 
-            // Stat the parquet after Python has swapped the rewritten file in and apply the
-            // size delta to used_storage inside the same transaction. The delta is signed
-            // (rename can grow or shrink the file by a few bytes). Skipped when either stat
-            // failed or the size didn't change — SafeGetFileSize already logged any failure.
+            // Stat the parquet after Python has swapped the rewritten file in. The size is
+            // the source of truth for both T_DATASET.filesize (so the dataset grid shows the
+            // current on-disk size after a rename) and the used_storage delta (so the owner's
+            // quota reflects the rewrite). Both writes happen inside the same transaction so
+            // disk, dataset row and quota row stay in sync. Skipped when the stat failed —
+            // SafeGetFileSize already logged why.
             const sizeAfter = await SafeGetFileSize(ingestPath, `Dataset ${DatasetUid} ingested parquet (after column rename)`);
-            if (sizeBefore !== null && sizeAfter !== null && sizeBefore !== sizeAfter) {
-                const delta = sizeAfter - sizeBefore;
-                const [quotaResult] = await connection.execute<ResultSetHeader>(
-                    `UPDATE T_USER_STORAGE
-                     SET used_storage = used_storage + ?
-                     WHERE user_id = ?`,
-                    [delta, UserId]
+            if (sizeAfter !== null) {
+                await connection.execute(
+                    `UPDATE T_DATASET SET filesize = ? WHERE id = ?`,
+                    [sizeAfter, dataset.id]
                 );
-                if (quotaResult.affectedRows === 0) {
-                    // No quota row means registration never set one up. Don't fail the rename
-                    // over it — just surface it so an operator can backfill the row.
-                    await Logger.Info(`User ${UserId} has no T_USER_STORAGE row; used_storage not updated after column rename.`, UserId);
+
+                // Apply the signed quota delta only when we also have a reliable pre-rewrite
+                // size — otherwise we'd adjust the quota by a bogus amount.
+                if (sizeBefore !== null && sizeBefore !== sizeAfter) {
+                    const delta = sizeAfter - sizeBefore;
+                    const [quotaResult] = await connection.execute<ResultSetHeader>(
+                        `UPDATE T_USER_STORAGE
+                         SET used_storage = used_storage + ?
+                         WHERE user_id = ?`,
+                        [delta, UserId]
+                    );
+                    if (quotaResult.affectedRows === 0) {
+                        // No quota row means registration never set one up. Don't fail the rename
+                        // over it — just surface it so an operator can backfill the row.
+                        await Logger.Info(`User ${UserId} has no T_USER_STORAGE row; used_storage not updated after column rename.`, UserId);
+                    }
                 }
             }
 
@@ -940,23 +951,34 @@ export class DatasetService {
                 return "Could not delete the column from the file. Please try again.";
             }
 
-            // Stat the parquet after Python has swapped the rewritten file in and apply the
-            // size delta to used_storage inside the same transaction. The delta is negative
-            // (the file shrank), so we add it as-is. Skipped when either stat failed or when
-            // the size didn't change — SafeGetFileSize already logged the reason for null.
+            // Stat the parquet after Python has swapped the rewritten file in. The size is
+            // the source of truth for both T_DATASET.filesize (so the dataset grid shows the
+            // current on-disk size after a column drop) and the used_storage delta (so the
+            // owner's quota reflects the shrink). Both writes happen inside the same
+            // transaction so disk, dataset row and quota row stay in sync. Skipped when the
+            // stat failed — SafeGetFileSize already logged why.
             const sizeAfter = await SafeGetFileSize(ingestPath, `Dataset ${DatasetUid} ingested parquet (after column delete)`);
-            if (sizeBefore !== null && sizeAfter !== null && sizeBefore !== sizeAfter) {
-                const delta = sizeAfter - sizeBefore;
-                const [quotaResult] = await connection.execute<ResultSetHeader>(
-                    `UPDATE T_USER_STORAGE
-                     SET used_storage = used_storage + ?
-                     WHERE user_id = ?`,
-                    [delta, UserId]
+            if (sizeAfter !== null) {
+                await connection.execute(
+                    `UPDATE T_DATASET SET filesize = ? WHERE id = ?`,
+                    [sizeAfter, dataset.id]
                 );
-                if (quotaResult.affectedRows === 0) {
-                    // No quota row means registration never set one up. Don't fail the delete
-                    // over it — just surface it so an operator can backfill the row.
-                    await Logger.Info(`User ${UserId} has no T_USER_STORAGE row; used_storage not updated after column delete.`, UserId);
+
+                // Apply the signed quota delta only when we also have a reliable pre-rewrite
+                // size — otherwise we'd adjust the quota by a bogus amount.
+                if (sizeBefore !== null && sizeBefore !== sizeAfter) {
+                    const delta = sizeAfter - sizeBefore;
+                    const [quotaResult] = await connection.execute<ResultSetHeader>(
+                        `UPDATE T_USER_STORAGE
+                         SET used_storage = used_storage + ?
+                         WHERE user_id = ?`,
+                        [delta, UserId]
+                    );
+                    if (quotaResult.affectedRows === 0) {
+                        // No quota row means registration never set one up. Don't fail the delete
+                        // over it — just surface it so an operator can backfill the row.
+                        await Logger.Info(`User ${UserId} has no T_USER_STORAGE row; used_storage not updated after column delete.`, UserId);
+                    }
                 }
             }
 
