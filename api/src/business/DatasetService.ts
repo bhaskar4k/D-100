@@ -14,6 +14,7 @@ import { DownloadedFileType } from "../enum/DownloadedFileType";
 import { RunPython } from "../python-manager/PythonManager";
 import { BuildDownloadFolderPath, BuildIngestFilePath, BuildRawFilePath, SanitizeDownloadBaseName } from "../util/UploadUtil";
 import { SafeGetFileSize } from "../util/FileUtil";
+import { ApplyIngestedSizeChange } from "../util/StorageAccountingUtil";
 import { Logger } from "../log/Logger";
 
 
@@ -821,36 +822,17 @@ export class DatasetService {
                 return "Could not rename the column in the file. Please try again.";
             }
 
-            // Stat the parquet after Python has swapped the rewritten file in. The size is
-            // the source of truth for both T_DATASET.filesize (so the dataset grid shows the
-            // current on-disk size after a rename) and the used_storage delta (so the owner's
-            // quota reflects the rewrite). Both writes happen inside the same transaction so
-            // disk, dataset row and quota row stay in sync. Skipped when the stat failed —
-            // SafeGetFileSize already logged why.
+            // Stat the parquet after Python has swapped the rewritten file in, then hand
+            // both sizes to the shared accounting util — it updates T_DATASET.filesize and
+            // the owner's used_storage delta inside this same transaction.
             const sizeAfter = await SafeGetFileSize(ingestPath, `Dataset ${DatasetUid} ingested parquet (after column rename)`);
-            if (sizeAfter !== null) {
-                await connection.execute(
-                    `UPDATE T_DATASET SET filesize = ? WHERE id = ?`,
-                    [sizeAfter, dataset.id]
-                );
-
-                // Apply the signed quota delta only when we also have a reliable pre-rewrite
-                // size — otherwise we'd adjust the quota by a bogus amount.
-                if (sizeBefore !== null && sizeBefore !== sizeAfter) {
-                    const delta = sizeAfter - sizeBefore;
-                    const [quotaResult] = await connection.execute<ResultSetHeader>(
-                        `UPDATE T_USER_STORAGE
-                         SET used_storage = used_storage + ?
-                         WHERE user_id = ?`,
-                        [delta, UserId]
-                    );
-                    if (quotaResult.affectedRows === 0) {
-                        // No quota row means registration never set one up. Don't fail the rename
-                        // over it — just surface it so an operator can backfill the row.
-                        await Logger.Info(`User ${UserId} has no T_USER_STORAGE row; used_storage not updated after column rename.`, UserId);
-                    }
-                }
-            }
+            await ApplyIngestedSizeChange(connection, {
+                DatasetId: dataset.id,
+                UserId,
+                SizeBefore: sizeBefore,
+                SizeAfter: sizeAfter,
+                ContextLabel: "column rename",
+            });
 
             await connection.commit();
             return null;
@@ -951,36 +933,17 @@ export class DatasetService {
                 return "Could not delete the column from the file. Please try again.";
             }
 
-            // Stat the parquet after Python has swapped the rewritten file in. The size is
-            // the source of truth for both T_DATASET.filesize (so the dataset grid shows the
-            // current on-disk size after a column drop) and the used_storage delta (so the
-            // owner's quota reflects the shrink). Both writes happen inside the same
-            // transaction so disk, dataset row and quota row stay in sync. Skipped when the
-            // stat failed — SafeGetFileSize already logged why.
+            // Stat the parquet after Python has swapped the rewritten file in, then hand
+            // both sizes to the shared accounting util — it updates T_DATASET.filesize and
+            // the owner's used_storage delta inside this same transaction.
             const sizeAfter = await SafeGetFileSize(ingestPath, `Dataset ${DatasetUid} ingested parquet (after column delete)`);
-            if (sizeAfter !== null) {
-                await connection.execute(
-                    `UPDATE T_DATASET SET filesize = ? WHERE id = ?`,
-                    [sizeAfter, dataset.id]
-                );
-
-                // Apply the signed quota delta only when we also have a reliable pre-rewrite
-                // size — otherwise we'd adjust the quota by a bogus amount.
-                if (sizeBefore !== null && sizeBefore !== sizeAfter) {
-                    const delta = sizeAfter - sizeBefore;
-                    const [quotaResult] = await connection.execute<ResultSetHeader>(
-                        `UPDATE T_USER_STORAGE
-                         SET used_storage = used_storage + ?
-                         WHERE user_id = ?`,
-                        [delta, UserId]
-                    );
-                    if (quotaResult.affectedRows === 0) {
-                        // No quota row means registration never set one up. Don't fail the delete
-                        // over it — just surface it so an operator can backfill the row.
-                        await Logger.Info(`User ${UserId} has no T_USER_STORAGE row; used_storage not updated after column delete.`, UserId);
-                    }
-                }
-            }
+            await ApplyIngestedSizeChange(connection, {
+                DatasetId: dataset.id,
+                UserId,
+                SizeBefore: sizeBefore,
+                SizeAfter: sizeAfter,
+                ContextLabel: "column delete",
+            });
 
             await connection.commit();
             return null;
