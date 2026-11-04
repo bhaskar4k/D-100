@@ -1,4 +1,5 @@
 import fs from "fs/promises";
+import { RowDataPacket } from "mysql2";
 import { ConnectionPool } from "../../data-access-layer/database";
 import { GetRabbitMqChannel } from "../../config/RabbitMqConfig";
 import { DatasetProcessingStatus } from "../../enum/DatasetProcessingStatus";
@@ -7,6 +8,8 @@ import { DatasetHistoryActionType } from "../../enum/DatasetHistoryActionType";
 import { RunPython } from "../../python-manager/PythonManager";
 import { Logger } from "../../log/Logger";
 import { BuildIngestFilePath } from "../../util/UploadUtil";
+import { SafeGetFileSize } from "../../util/FileUtil";
+import { ApplyIngestedSizeChange } from "../../util/StorageAccountingUtil";
 import { MissingValueHandlingQueuePayload } from "../../entity/DataCleaningEntity";
 import { QueueRegistry } from "../QueueRegistry";
 import { ColumnMetadata, HandleMissingValuePythonResponse } from "../../entity/DataCleaningEntity";
@@ -15,6 +18,11 @@ import {
     BuildColumnStateFromRow,
     BuildMissingValueHandlingExtraData
 } from "../../util/audit/MissingValueHandling";
+
+
+interface DatasetOwnerLookupRow extends RowDataPacket {
+    created_by: number;
+}
 
 
 const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
@@ -103,14 +111,18 @@ async function MarkFailed(DatasetId: number): Promise<void> {
 }
 
 
-// Writes the column's fresh metadata, the dataset's final status, and a T_DATASET_HISTORY row
-// capturing the before/after column state — all in one DB transaction, so a partial failure
-// never leaves one of the three updated while the other two are not.
+// Writes the column's fresh metadata, the dataset's final status, a T_DATASET_HISTORY row
+// capturing the before/after column state, and (via ApplyIngestedSizeChange) the new
+// T_DATASET.filesize plus the owner's used_storage delta — all in one DB transaction, so a
+// partial failure never leaves one of these updated while the others are not.
 async function CommitSuccess(
     DatasetId: number,
+    UserId: number,
     ColumnId: number,
     StrategyEnum: string,
     ConstantValue: string | null,
+    SizeBefore: number | null,
+    SizeAfter: number | null,
     Metadata: ColumnMetadata
 ): Promise<void> {
     const pool = await ConnectionPool;
@@ -193,6 +205,16 @@ async function CommitSuccess(
             [TrueFalse.True, DatasetProcessingStatus.PROCESSED, DatasetId]
         );
 
+        // Push the new on-disk size to T_DATASET.filesize and the signed delta to the
+        // owner's used_storage, inside this same transaction.
+        await ApplyIngestedSizeChange(connection, {
+            DatasetId,
+            UserId,
+            SizeBefore,
+            SizeAfter,
+            ContextLabel: "missing value handling",
+        });
+
         await connection.commit();
     } catch (error) {
         await connection.rollback();
@@ -231,7 +253,24 @@ async function HandleMissingValueJob(Payload: MissingValueHandlingQueuePayload):
     let backupPath: string | null = null;
 
     try {
+        // Needed by ApplyIngestedSizeChange so the quota delta lands on the right user.
+        // Pulling it up-front also means a dataset whose owner row has vanished fails fast,
+        // before Python runs.
+        const pool = await ConnectionPool;
+        const [ownerRows] = await pool.query<DatasetOwnerLookupRow[]>(
+            `SELECT created_by FROM T_DATASET WHERE id = ? LIMIT 1`,
+            [Payload.datasetId]
+        );
+        if (ownerRows.length === 0) {
+            throw new Error(`Dataset ${Payload.datasetId} not found; aborting missing-value job.`);
+        }
+        const userId = Number(ownerRows[0].created_by);
+
         await MarkStarted(Payload.datasetId);
+
+        // Pre-rewrite size so CommitSuccess can apply the delta against T_USER_STORAGE. The
+        // post-rewrite size is captured below, after Python has swapped the file in.
+        const sizeBefore = await SafeGetFileSize(FilePath, `Dataset ${Payload.datasetUid} ingested parquet (before missing value handling)`);
 
         const response = await RunPython<HandleMissingValuePythonResponse>(
             "HandleMissingValue",
@@ -251,12 +290,17 @@ async function HandleMissingValueJob(Payload: MissingValueHandlingQueuePayload):
 
         backupPath = response.data.backupPath;
 
+        const sizeAfter = await SafeGetFileSize(FilePath, `Dataset ${Payload.datasetUid} ingested parquet (after missing value handling)`);
+
         try {
             await CommitSuccess(
                 Payload.datasetId,
+                userId,
                 Payload.columnId,
                 Payload.strategyEnum,
                 Payload.constantValue ?? null,
+                sizeBefore,
+                sizeAfter,
                 response.data.columnMetadata
             );
         } catch (dbError) {

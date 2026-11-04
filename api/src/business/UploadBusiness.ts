@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import { ResultSetHeader } from "mysql2";
 import { v7 as uuidv7, validate as IsValidUuid } from "uuid";
 import { RedisConnection } from "../config/RedisConfig";
 import { ConnectionPool } from "../data-access-layer/database";
@@ -61,13 +62,43 @@ export class UploadBusiness {
         const uploadId = uuidv7();
         const totalChunks = Math.ceil(FileSize / ChunkSize);
 
+        // T_DATASET insert + T_USER_STORAGE quota bump happen together so the pending row
+        // and the quota delta can never drift. Downstream fs setup and Redis writes remain
+        // outside the transaction — the same as before this change, so their failure modes
+        // are unchanged (an orphan row that a later sweep can tidy).
         const pool = await ConnectionPool;
-        await pool.execute(
-            `INSERT INTO T_DATASET
-                (dataset_uid, filename, extension, filesize, status, created_by, initiated_on)
-             VALUES (?, ?, ?, ?, ?, ?, NOW(3))`,
-            [uploadId, path.parse(FileName).name, extension, FileSize, FileUploadStatus.INIT, Number(UserId)]
-        );
+        const connection = await pool.getConnection();
+
+        try {
+            await connection.beginTransaction();
+
+            await connection.execute(
+                `INSERT INTO T_DATASET
+                    (dataset_uid, filename, extension, filesize, status, created_by, initiated_on)
+                 VALUES (?, ?, ?, ?, ?, ?, NOW(3))`,
+                [uploadId, path.parse(FileName).name, extension, FileSize, FileUploadStatus.INIT, Number(UserId)]
+            );
+
+            const [quotaResult] = await connection.execute<ResultSetHeader>(
+                `UPDATE T_USER_STORAGE
+                 SET used_storage = used_storage + ?
+                 WHERE user_id = ?`,
+                [FileSize, Number(UserId)]
+            );
+
+            if (quotaResult.affectedRows === 0) {
+                // No quota row means registration never set one up. Don't fail the upload
+                // over it — just surface it so an operator can backfill the row.
+                await Logger.Info(`User ${UserId} has no T_USER_STORAGE row; used_storage not updated.`, UserId);
+            }
+
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
 
         const filePath = GetFilePath(uploadId, extension);
         await fs.mkdir(path.dirname(filePath), { recursive: true });
