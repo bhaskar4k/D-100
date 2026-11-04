@@ -1,1 +1,86 @@
-<p>my-profile works!</p>
+<div class="page-loader" *ngIf="MatProgressBar">
+    <mat-spinner diameter="50"></mat-spinner>
+</div>
+
+<div class="card shadow-sm m-3 p-3">
+    <div class="app-page-header">
+        <h4 class="app-page-title">
+            <i class="bi bi-person-circle me-2 text-primary"></i>
+            My Profile
+        </h4>
+
+        <div class="app-page-actions">
+            <button type="button" class="app-icon-button text-success" matTooltip="Refresh" matTooltipPosition="above"
+                aria-label="Refresh profile" [disabled]="MatProgressBar" (click)="OnRefresh()">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+    </div>
+
+    <ng-container *ngIf="Profile as P; else noProfile">
+        <div class="profile-header">
+            <div class="profile-avatar" aria-hidden="true">{{ GetInitials(P.name) }}</div>
+            <div class="profile-header-text">
+                <div class="profile-name">{{ P.name }}</div>
+                <div class="profile-email">
+                    <i class="bi bi-envelope-fill me-1"></i>{{ P.email }}
+                </div>
+                <div class="profile-status-row">
+                    <span class="app-badge" [ngClass]="AccountStatusClass(P)">
+                        {{ AccountStatusLabel(P) }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-detail-grid">
+            <div class="app-detail-cell">
+                <div class="app-detail-label">Full Name</div>
+                <div class="app-detail-value">{{ P.name }}</div>
+            </div>
+
+            <div class="app-detail-cell">
+                <div class="app-detail-label">Email</div>
+                <div class="app-detail-value">{{ P.email }}</div>
+            </div>
+
+            <div class="app-detail-cell">
+                <div class="app-detail-label">Phone</div>
+                <div class="app-detail-value">{{ P.phone || '-' }}</div>
+            </div>
+
+            <div class="app-detail-cell">
+                <div class="app-detail-label">Account Status</div>
+                <div class="app-detail-value">
+                    <span class="app-badge" [ngClass]="AccountStatusClass(P)">
+                        {{ AccountStatusLabel(P) }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="app-detail-cell">
+                <div class="app-detail-label">Member Since</div>
+                <div class="app-detail-value">{{ P.createdAt | date: DateFormat }}</div>
+            </div>
+
+            <div class="app-detail-cell">
+                <div class="app-detail-label">Last Updated</div>
+                <div class="app-detail-value">
+                    {{ P.modifiedAt ? (P.modifiedAt | date: DateFormat) : '-' }}
+                </div>
+            </div>
+
+            <div class="app-detail-cell">
+                <div class="app-detail-label">User ID</div>
+                <div class="app-detail-value app-detail-mono">{{ P.id }}</div>
+            </div>
+        </div>
+    </ng-container>
+
+    <ng-template #noProfile>
+        <div class="profile-empty" *ngIf="!MatProgressBar">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>Your profile could not be loaded.</span>
+        </div>
+    </ng-template>
+</div>

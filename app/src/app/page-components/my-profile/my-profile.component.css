@@ -1,0 +1,71 @@
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 18px;
+    margin-bottom: 20px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    flex-wrap: wrap;
+}
+
+/* Gradient-tinted avatar circle, sized so two initials fit comfortably. Hidden from AT via
+   aria-hidden on the host element since the full name is right next to it. */
+.profile-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #f8fafc;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.profile-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.profile-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #f8fafc;
+    word-break: break-word;
+}
+
+.profile-email {
+    font-size: 0.875rem;
+    color: #cbd5e1;
+    word-break: break-word;
+}
+
+.profile-status-row {
+    margin-top: 4px;
+}
+
+.profile-empty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    font-size: 0.875rem;
+    color: #cbd5e1;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+}
+
+.profile-empty i {
+    color: #fbbf24;
+    font-size: 1.125rem;
+}
