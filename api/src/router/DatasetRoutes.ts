@@ -7,6 +7,7 @@ const DatasetRouter = Router();
 DatasetRouter.use(JwtMiddleWare);
 
 DatasetRouter.get("/GetAll", DatasetController.GetAll);
+DatasetRouter.get("/GetAllActive", DatasetController.GetAllActive);
 DatasetRouter.get("/GetDeleted", DatasetController.GetDeleted);
 DatasetRouter.get("/GetDetails/:datasetUid", DatasetController.GetDetails);
 DatasetRouter.get("/Preview/:datasetUid", DatasetController.Preview);

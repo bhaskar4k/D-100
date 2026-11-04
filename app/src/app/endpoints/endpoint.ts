@@ -23,6 +23,7 @@ export const Endpoints = {
     },
     Dataset: {
         GetAll: "Dataset/GetAll",
+        GetAllActive: "Dataset/GetAllActive",
         GetDeleted: "Dataset/GetDeleted",
         GetDetails: "Dataset/GetDetails",
         Preview: "Dataset/Preview",
