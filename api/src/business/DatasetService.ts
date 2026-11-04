@@ -13,6 +13,8 @@ import { TrueFalse } from "../enum/CommonEnum";
 import { DownloadedFileType } from "../enum/DownloadedFileType";
 import { RunPython } from "../python-manager/PythonManager";
 import { BuildDownloadFolderPath, BuildIngestFilePath, BuildRawFilePath, SanitizeDownloadBaseName } from "../util/UploadUtil";
+import { SafeGetFileSize } from "../util/FileUtil";
+import { ApplyIngestedSizeChange } from "../util/StorageAccountingUtil";
 import { Logger } from "../log/Logger";
 
 
@@ -778,6 +780,13 @@ export class DatasetService {
 
         const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
+        // Pre-rewrite size — captured before the transaction opens so we can apply the size
+        // delta to used_storage after Python rewrites the parquet. A rename usually nudges
+        // the file size by a few bytes (metadata/dictionary reshuffling) and can go either
+        // way. SafeGetFileSize logs and returns null on failure; in that case the quota
+        // update further down is skipped.
+        const sizeBefore = await SafeGetFileSize(ingestPath, `Dataset ${DatasetUid} ingested parquet (before column rename)`);
+
         const connection = await pool.getConnection();
         try {
             await connection.beginTransaction();
@@ -812,6 +821,18 @@ export class DatasetService {
                 await Logger.Error("UpdateColumnName Python Error", new Error(response.message), UserId);
                 return "Could not rename the column in the file. Please try again.";
             }
+
+            // Stat the parquet after Python has swapped the rewritten file in, then hand
+            // both sizes to the shared accounting util — it updates T_DATASET.filesize and
+            // the owner's used_storage delta inside this same transaction.
+            const sizeAfter = await SafeGetFileSize(ingestPath, `Dataset ${DatasetUid} ingested parquet (after column rename)`);
+            await ApplyIngestedSizeChange(connection, {
+                DatasetId: dataset.id,
+                UserId,
+                SizeBefore: sizeBefore,
+                SizeAfter: sizeAfter,
+                ContextLabel: "column rename",
+            });
 
             await connection.commit();
             return null;
@@ -878,6 +899,12 @@ export class DatasetService {
         const columnName = columnRows[0].column_name;
         const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
+        // Pre-rewrite size — captured before the transaction opens so we can apply the
+        // (usually negative) delta to used_storage after Python shrinks the parquet.
+        // SafeGetFileSize logs and returns null on failure; in that case the quota update
+        // further down is skipped.
+        const sizeBefore = await SafeGetFileSize(ingestPath, `Dataset ${DatasetUid} ingested parquet (before column delete)`);
+
         const connection = await pool.getConnection();
         try {
             await connection.beginTransaction();
@@ -905,6 +932,18 @@ export class DatasetService {
                 await Logger.Error("DeleteColumn Python Error", new Error(response.message), UserId);
                 return "Could not delete the column from the file. Please try again.";
             }
+
+            // Stat the parquet after Python has swapped the rewritten file in, then hand
+            // both sizes to the shared accounting util — it updates T_DATASET.filesize and
+            // the owner's used_storage delta inside this same transaction.
+            const sizeAfter = await SafeGetFileSize(ingestPath, `Dataset ${DatasetUid} ingested parquet (after column delete)`);
+            await ApplyIngestedSizeChange(connection, {
+                DatasetId: dataset.id,
+                UserId,
+                SizeBefore: sizeBefore,
+                SizeAfter: sizeAfter,
+                ContextLabel: "column delete",
+            });
 
             await connection.commit();
             return null;
