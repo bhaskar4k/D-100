@@ -25,8 +25,6 @@ const IN_FLIGHT_STATUSES = new Set<number>([
 export class DatasetSelectionComponent implements OnInit, OnDestroy {
   @Output() datasetChange = new EventEmitter<DatasetItem | null>();
 
-  readonly PageSize = 1000;
-
   Loading = false;
   Datasets: DatasetItem[] = [];
   Options: Dropdown[] = [];
@@ -65,7 +63,7 @@ export class DatasetSelectionComponent implements OnInit, OnDestroy {
     this.Loading = true;
     this.loadSubscription?.unsubscribe();
 
-    this.loadSubscription = this.datasetService.GetAll(1, this.PageSize).subscribe({
+    this.loadSubscription = this.datasetService.GetAllActive().subscribe({
       next: response => {
         this.Loading = false;
 

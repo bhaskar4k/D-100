@@ -92,6 +92,54 @@ export class DatasetService {
     }
 
 
+    // Returns every active dataset the user owns, in the same shape as GetDatasets but with
+    // no pagination and `autoDeletionTime` forced to null (the deletion schedule only matters
+    // for soft-deleted rows, which this endpoint never returns). Used by the dataset-selection
+    // dropdown which wants the whole list in one shot.
+    static async GetAllActiveDatasets(UserId: number): Promise<DatasetPage> {
+        try {
+            const pool = await ConnectionPool;
+            const { where, params } = BuildWhere(UserId, "", TrueFalse.True);
+
+            const [rows] = await pool.query<DatasetRow[]>(
+                `SELECT T_DATASET.dataset_uid, T_DATASET.filename, T_DATASET.extension,
+                        T_DATASET.filesize, T_DATASET.status, T_DATASET.created_on,
+                        T_DATASET.is_processed, T_DATASET.processing_status,
+                        T_DATASET.processing_completed_on, T_DATASET.modified_on,
+                        T_DATASET.is_active
+                 FROM T_DATASET
+                 ${where}
+                 ORDER BY T_DATASET.id DESC`,
+                params
+            );
+
+            const items = rows.map((row) => ({
+                datasetUid: row.dataset_uid,
+                fileName: row.filename,
+                extension: row.extension,
+                fileSize: Number(row.filesize),
+                status: row.status,
+                uploadedOn: row.created_on,
+                isProcessed: row.is_processed === TrueFalse.True ? true : false,
+                processingStatus: row.processing_status,
+                processingCompletedOn: row.processing_completed_on,
+                modifiedOn: row.modified_on,
+                isActive: row.is_active === TrueFalse.True ? true : false,
+                autoDeletionTime: null
+            }));
+
+            return {
+                items,
+                total: items.length,
+                page: 1,
+                pageSize: items.length
+            };
+        } catch (error: any) {
+            throw error;
+        }
+    }
+
+
     private static async GetDatasetsByActive(UserId: number, Page: number, PageSize: number, Search: string, IsActive: TrueFalse): Promise<DatasetPage> {
         try {
             const pool = await ConnectionPool;
