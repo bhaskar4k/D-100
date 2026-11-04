@@ -7,6 +7,7 @@ import { JwtSecret, JwtExpiresInSeconds } from "../config/JwtConfig";
 import { LoginResult, UserExistsRow, UserLoginRow } from "../entity/AuthenticationEntity";
 import { UserStatus } from "../enum/UserEnum";
 import { Status, TrueFalse } from "../enum/CommonEnum";
+import { StorageMaster, STORAGE_MASTER_BYTES } from "../enum/StorageMasterEnum";
 import { GetSessionKey } from "../util/AuthUtil";
 import { Logger } from "../log/Logger";
 
@@ -50,12 +51,15 @@ export class AuthenticationBusiness {
 
 
     static async DoRegister(name: string, email: string, phone: string, password: string): Promise<boolean> {
+        const pool = await ConnectionPool;
+        const connection = await pool.getConnection();
+
         try {
-            const pool = await ConnectionPool;
+            await connection.beginTransaction();
 
             const hashedPassword = password;
 
-            const [result] = await pool.execute<ResultSetHeader>(
+            const [userResult] = await connection.execute<ResultSetHeader>(
                 `INSERT INTO T_USER_MASTER
                     (name, email, phone, password)
                  VALUES (?, ?, ?, ?)`,
@@ -67,13 +71,28 @@ export class AuthenticationBusiness {
                 ]
             );
 
-            if (result.affectedRows === 1) {
-                await Logger.Info(`User registered: ${email}`, result.insertId);
+            if (userResult.affectedRows !== 1) {
+                await connection.rollback();
+                return false;
             }
 
-            return result.affectedRows === 1;
+            // Every new sign-up starts on the BRONZE plan. Wrapped in the same transaction as
+            // the user insert so a failure here can't leave a user without a quota row.
+            await connection.execute(
+                `INSERT INTO T_USER_STORAGE (USER_ID, ALLOWED_STORAGE, USED_STORAGE)
+                 VALUES (?, ?, 0)`,
+                [userResult.insertId, STORAGE_MASTER_BYTES[StorageMaster.BRONZE]]
+            );
+
+            await connection.commit();
+
+            await Logger.Info(`User registered: ${email}`, userResult.insertId);
+            return true;
         } catch (error: any) {
+            await connection.rollback();
             throw error;
+        } finally {
+            connection.release();
         }
     }
 
