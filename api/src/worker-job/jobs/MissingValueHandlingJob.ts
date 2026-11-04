@@ -10,7 +10,11 @@ import { BuildIngestFilePath } from "../../util/UploadUtil";
 import { MissingValueHandlingQueuePayload } from "../../entity/DataCleaningEntity";
 import { QueueRegistry } from "../QueueRegistry";
 import { ColumnMetadata, HandleMissingValuePythonResponse } from "../../entity/DataCleaningEntity";
-import { BuildColumnStateFromMetadata, BuildColumnStateFromRow } from "../../util/audit/MissingValueHandling";
+import {
+    BuildColumnStateFromMetadata,
+    BuildColumnStateFromRow,
+    BuildMissingValueHandlingExtraData
+} from "../../util/audit/MissingValueHandling";
 
 
 const INGEST_UPLOAD_PATH = process.env.INGEST_UPLOAD_PATH;
@@ -106,6 +110,7 @@ async function CommitSuccess(
     DatasetId: number,
     ColumnId: number,
     StrategyEnum: string,
+    ConstantValue: string | null,
     Metadata: ColumnMetadata
 ): Promise<void> {
     const pool = await ConnectionPool;
@@ -132,7 +137,7 @@ async function CommitSuccess(
             throw new Error(`Column ${ColumnId} not found for dataset ${DatasetId}; aborting commit.`);
         }
 
-        const previousState = BuildColumnStateFromRow(prevRows[0], StrategyEnum);
+        const previousState = BuildColumnStateFromRow(prevRows[0]);
 
         await connection.execute(
             `UPDATE T_COLUMN
@@ -152,18 +157,29 @@ async function CommitSuccess(
             ]
         );
 
-        const currentState = BuildColumnStateFromMetadata(Metadata.type, Metadata.nullable, Metadata.uniqueCount, Metadata.nullValueCount, StrategyEnum);
+        const currentState = BuildColumnStateFromMetadata(
+            Metadata.type,
+            Metadata.nullable,
+            Metadata.uniqueCount,
+            Metadata.nullValueCount
+        );
+
+        // Action-specific context — strategy and the constant value (if any) live here rather
+        // than inside the column-state snapshot so previousState / currentState stay purely a
+        // description of the column itself.
+        const extraData = BuildMissingValueHandlingExtraData(StrategyEnum, ConstantValue);
 
         await connection.execute(
             `INSERT INTO T_DATASET_HISTORY
-                (dataset_id, action_type, column_id, previous_state, current_state)
-             VALUES (?, ?, ?, ?, ?)`,
+                (dataset_id, action_type, column_id, previous_state, current_state, extra_data)
+             VALUES (?, ?, ?, ?, ?, ?)`,
             [
                 DatasetId,
                 DatasetHistoryActionType.MISSING_VALUE_HANDLING,
                 ColumnId,
                 JSON.stringify(previousState),
-                JSON.stringify(currentState)
+                JSON.stringify(currentState),
+                JSON.stringify(extraData)
             ]
         );
 
@@ -236,7 +252,13 @@ async function HandleMissingValueJob(Payload: MissingValueHandlingQueuePayload):
         backupPath = response.data.backupPath;
 
         try {
-            await CommitSuccess(Payload.datasetId, Payload.columnId, Payload.strategyEnum, response.data.columnMetadata);
+            await CommitSuccess(
+                Payload.datasetId,
+                Payload.columnId,
+                Payload.strategyEnum,
+                Payload.constantValue ?? null,
+                response.data.columnMetadata
+            );
         } catch (dbError) {
             // The parquet is already swapped on disk but the DB commit failed. Rename the
             // backup back over the live file so the dataset's on-disk state matches the DB

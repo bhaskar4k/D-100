@@ -4,12 +4,12 @@
 // previousState nor currentState carry replacement_strategy here.
 export interface MissingValueHandlingHistoryItem {
     id: number;
-    datasetId: number;
     actionType: string;
     columnId: number;
     columnName: string | null;
     previousState: Record<string, unknown> | null;
     currentState: Record<string, unknown> | null;
+    extraData: Record<string, unknown> | null;
     replacement_strategy_name: string | null;
     isActive: number;
     createdOn: string;
