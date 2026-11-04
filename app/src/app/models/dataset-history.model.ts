@@ -4,7 +4,6 @@
 // previousState nor currentState carry replacement_strategy here.
 export interface MissingValueHandlingHistoryItem {
     id: number;
-    datasetId: number;
     actionType: string;
     columnId: number;
     columnName: string | null;

@@ -23,6 +23,19 @@ function ExtractReplacementStrategyEnum(extraData: unknown): string | null {
 }
 
 
+// Returns a shallow copy of extra_data with `replacement_strategy` removed. The strategy is
+// lifted to its own top-level `replacement_strategy_name` on the response, so keeping it on
+// extra_data would duplicate the field in the client payload.
+function StripReplacementStrategyFromExtraData(extraData: unknown): unknown {
+    if (!extraData || typeof extraData !== "object" || Array.isArray(extraData)) {
+        return extraData;
+    }
+    const { replacement_strategy, ...rest } = extraData as { replacement_strategy?: unknown } & Record<string, unknown>;
+    void replacement_strategy; // keeps TS from flagging the destructured var as unused
+    return rest;
+}
+
+
 // Returns a shallow copy of the column state with `datatype` resolved from its numeric
 // DataType id to its enum name (e.g. 1 -> "Integer"). The on-disk row keeps the id — we only
 // shape the outgoing payload here. State snapshots no longer carry `replacement_strategy`
@@ -144,13 +157,12 @@ export class DatasetHistoryBusiness {
 
         return parsedRows.map(({ row, previousState, currentState, extraData, strategyEnum }) => ({
             id: Number(row.id),
-            datasetId: Number(row.dataset_id),
             actionType: row.action_type,
             columnId: Number(row.column_id),
             columnName: row.column_name,
             previousState: NormalizeColumnStateForClient(previousState),
             currentState: NormalizeColumnStateForClient(currentState),
-            extraData,
+            extraData: StripReplacementStrategyFromExtraData(extraData),
             // Falls back to the enum string if the strategy row has been deleted — better to
             // show "MEAN" than nothing in that corner case.
             replacement_strategy_name: strategyEnum

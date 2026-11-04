@@ -18,7 +18,6 @@ export interface DatasetHistoryRow extends RowDataPacket {
 // human-readable name against the strategy master.
 export interface MissingValueHandlingHistoryItem {
     id: number;
-    datasetId: number;
     actionType: string;
     columnId: number;
     columnName: string | null;
