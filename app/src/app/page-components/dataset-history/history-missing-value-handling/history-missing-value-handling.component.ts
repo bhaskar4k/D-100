@@ -35,7 +35,7 @@ import { DateFormat, ResponseTypeColor } from '../../../constants/commonConsts';
 })
 export class HistoryMissingValueHandlingComponent implements OnInit, OnDestroy {
   readonly DateFormat = DateFormat;
-  readonly DisplayedColumns = ['index', 'columnName', 'strategy', 'previousState', 'currentState', 'createdOn'];
+  readonly DisplayedColumns = ['index', 'columnName', 'strategy', 'previousState', 'currentState', 'extraData', 'createdOn'];
   readonly PageSizeOptions = [5, 10, 25, 50, 100];
   readonly SearchDebounceMs = 200;
 
