@@ -7,20 +7,10 @@ import { Subscription } from 'rxjs';
 import { UserStorageService } from '../../services/user-storage.service';
 import { UserStorageDetails } from '../../models/user-storage.model';
 import { CustomAlertComponent } from '../../page-components-shared/custom-alert/custom-alert.component';
-import { ResponseTypeColor } from '../../constants/commonConsts';
-import { UNLIMITED_BYTES } from '../../constants/commonConsts';
+import { ResponseTypeColor, UNLIMITED_BYTES } from '../../constants/commonConsts';
+import { BYTE_UNIT_DIVISORS, BYTE_UNITS_DESC, ByteUnit } from '../../enums/byte-unit.enum';
+import { STORAGE_MASTER_LABEL, ResolveStorageMaster } from '../../enums/storage-master.enum';
 
-
-// Base-1024 units mirror how GetReadableFileSize formats dataset sizes elsewhere, so the
-// numbers people see here match what they see on the dataset grid.
-const BYTE_UNITS: ReadonlyArray<{ label: string; divisor: bigint }> = [
-    { label: 'PB', divisor: 1024n ** 5n },
-    { label: 'TB', divisor: 1024n ** 4n },
-    { label: 'GB', divisor: 1024n ** 3n },
-    { label: 'MB', divisor: 1024n ** 2n },
-    { label: 'KB', divisor: 1024n },
-    { label: 'Byte', divisor: 1n },
-];
 
 @Component({
     selector: 'app-storage-control',
@@ -67,9 +57,10 @@ export class StorageControlComponent implements OnInit, OnDestroy {
         }
     }
 
-    // Formats a byte count into the largest unit where the whole part is >= 1, with two decimal
-    // places. BigInt stays intact until the final divide by the unit's divisor as a Number — by
-    // then we've reduced to a small enough ratio that f64 precision is fine for display.
+    // Formats a byte count into the largest ByteUnit where the whole part is >= 1, with two
+    // decimal places. BigInt stays intact until the final divide by the unit's divisor as a
+    // Number — by then we've reduced to a small enough ratio that f64 precision is fine for
+    // display.
     FormatBytes(bytes: string | null | undefined): string {
         if (bytes === null || bytes === undefined || bytes === '') {
             return '-';
@@ -83,29 +74,30 @@ export class StorageControlComponent implements OnInit, OnDestroy {
         }
 
         if (value <= 0n) {
-            return '0 Byte';
+            return `0 ${ByteUnit.BYTE}`;
         }
 
         if (value >= UNLIMITED_BYTES) {
             return 'Unlimited';
         }
 
-        for (const unit of BYTE_UNITS) {
-            if (value >= unit.divisor) {
-                if (unit.divisor === 1n) {
-                    return `${value.toString()} Byte${value === 1n ? '' : 's'}`;
+        for (const unit of BYTE_UNITS_DESC) {
+            const divisor = BYTE_UNIT_DIVISORS[unit];
+            if (value >= divisor) {
+                if (unit === ByteUnit.BYTE) {
+                    return `${value.toString()} ${ByteUnit.BYTE}${value === 1n ? '' : 's'}`;
                 }
                 // Convert via toString to keep the integer part exact, then divide with Number
                 // for the fractional tail. Any value small enough to fall into this branch is
                 // well under Number.MAX_SAFE_INTEGER.
-                const whole = Number(value / unit.divisor);
-                const remainder = Number(value % unit.divisor) / Number(unit.divisor);
+                const whole = Number(value / divisor);
+                const remainder = Number(value % divisor) / Number(divisor);
                 const amount = (whole + remainder).toFixed(2);
-                return `${parseFloat(amount)} ${unit.label}`;
+                return `${parseFloat(amount)} ${unit}`;
             }
         }
 
-        return `${value.toString()} Byte`;
+        return `${value.toString()} ${ByteUnit.BYTE}`;
     }
 
     // 0–100 with two decimals. Returns null when the quota is unlimited or missing so the UI
@@ -144,24 +136,16 @@ export class StorageControlComponent implements OnInit, OnDestroy {
         return 'usage-ok';
     }
 
+    // The backend sends `planName` straight from T_STORAGE_MASTER when it resolves, else null.
+    // Prefer that over the enum-driven label so an operator renaming a plan row flows through.
     PlanLabel(): string {
         if (!this.Details) return '-';
-        return this.Details.planName ?? 'Custom';
+        if (this.Details.planName) return this.Details.planName;
+        return STORAGE_MASTER_LABEL[ResolveStorageMaster(this.Details.planEnum)].label;
     }
 
     PlanBadgeClass(): string {
-        // Each known plan gets its own tint so the current plan reads at a glance. Unknown /
-        // custom allocations fall back to a neutral style.
-        const key = (this.Details?.planEnum ?? '').toUpperCase();
-        switch (key) {
-            case 'BRONZE': return 'plan-bronze';
-            case 'SILVER': return 'plan-silver';
-            case 'IRON': return 'plan-iron';
-            case 'GOLD': return 'plan-gold';
-            case 'DIAMOND': return 'plan-diamond';
-            case 'UNLIMITED': return 'plan-unlimited';
-            default: return 'plan-custom';
-        }
+        return STORAGE_MASTER_LABEL[ResolveStorageMaster(this.Details?.planEnum)].color;
     }
 
     private Load(): void {

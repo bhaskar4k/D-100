@@ -14,66 +14,6 @@
     color: #9ca3af;
 }
 
-.storage-plan-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    border: 1px solid transparent;
-}
-
-.storage-plan-badge i {
-    font-size: 0.875rem;
-}
-
-/* Per-plan palette — kept visually consistent with other status badges in the app (soft bg,
-   sharper text and border of the same hue) so the page reads like it belongs here. */
-.storage-plan-badge.plan-bronze {
-    color: #d8a177;
-    background-color: rgba(205, 127, 50, 0.14);
-    border-color: rgba(205, 127, 50, 0.35);
-}
-
-.storage-plan-badge.plan-silver {
-    color: #d8dde6;
-    background-color: rgba(192, 192, 192, 0.15);
-    border-color: rgba(192, 192, 192, 0.4);
-}
-
-.storage-plan-badge.plan-iron {
-    color: #b2b8c2;
-    background-color: rgba(100, 110, 128, 0.18);
-    border-color: rgba(100, 110, 128, 0.42);
-}
-
-.storage-plan-badge.plan-gold {
-    color: #f1c84b;
-    background-color: rgba(241, 200, 75, 0.14);
-    border-color: rgba(241, 200, 75, 0.4);
-}
-
-.storage-plan-badge.plan-diamond {
-    color: #7dd3fc;
-    background-color: rgba(125, 211, 252, 0.14);
-    border-color: rgba(125, 211, 252, 0.4);
-}
-
-.storage-plan-badge.plan-unlimited {
-    color: #a78bfa;
-    background-color: rgba(167, 139, 250, 0.14);
-    border-color: rgba(167, 139, 250, 0.4);
-}
-
-.storage-plan-badge.plan-custom {
-    color: #cbd5e1;
-    background-color: rgba(203, 213, 225, 0.1);
-    border-color: rgba(203, 213, 225, 0.3);
-}
-
 /* Three-up tile grid. Mirrors .app-detail-grid sizing but gives each tile more vertical room
    so the headline byte figure can breathe. */
 .storage-tile-grid {

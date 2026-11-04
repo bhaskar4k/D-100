@@ -20,10 +20,10 @@
     <ng-container *ngIf="Details as D; else noDetails">
         <div class="storage-plan-row">
             <div class="storage-plan-label">Current Plan</div>
-            <div class="storage-plan-badge" [ngClass]="PlanBadgeClass()">
+            <span class="app-badge plan-badge" [ngClass]="PlanBadgeClass()">
                 <i class="bi bi-award-fill"></i>
                 <span>{{ PlanLabel() }}</span>
-            </div>
+            </span>
         </div>
 
         <div class="storage-tile-grid">

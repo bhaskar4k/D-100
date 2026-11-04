@@ -306,8 +306,13 @@ div.mat-mdc-select-panel.mdc-menu-surface {
 }
 
 @keyframes app-spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Small screens */
@@ -480,4 +485,65 @@ div.mat-mdc-select-panel.mdc-menu-surface {
 .app-badge.file-badge i {
     font-size: 0.95rem;
     line-height: 1;
+}
+
+/* Storage plan badge — same pill shape as the other .app-badge variants but a bit roomier
+   and with a border, so a plan tier reads as a chip rather than a status pill. Any component
+   that shows a storage-plan tier uses: class="app-badge plan-badge plan-<tier>". The per-tier
+   tint classes below work on their own too (without .plan-badge) if a lighter pill is wanted. */
+.app-badge.plan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    font-size: 0.8125rem;
+    letter-spacing: 0.02em;
+    border: 1px solid transparent;
+}
+
+.app-badge.plan-badge i {
+    font-size: 0.875rem;
+    line-height: 1;
+}
+
+.app-badge.plan-bronze {
+    background-color: rgba(205, 127, 50, 0.14);
+    color: #d8a177;
+    border-color: rgba(205, 127, 50, 0.35);
+}
+
+.app-badge.plan-silver {
+    background-color: rgba(192, 192, 192, 0.15);
+    color: #d8dde6;
+    border-color: rgba(192, 192, 192, 0.4);
+}
+
+.app-badge.plan-iron {
+    background-color: rgba(100, 110, 128, 0.18);
+    color: #b2b8c2;
+    border-color: rgba(100, 110, 128, 0.42);
+}
+
+.app-badge.plan-gold {
+    background-color: rgba(241, 200, 75, 0.14);
+    color: #f1c84b;
+    border-color: rgba(241, 200, 75, 0.4);
+}
+
+.app-badge.plan-diamond {
+    background-color: rgba(125, 211, 252, 0.14);
+    color: #7dd3fc;
+    border-color: rgba(125, 211, 252, 0.4);
+}
+
+.app-badge.plan-unlimited {
+    background-color: rgba(167, 139, 250, 0.14);
+    color: #a78bfa;
+    border-color: rgba(167, 139, 250, 0.4);
+}
+
+.app-badge.plan-custom {
+    background-color: rgba(203, 213, 225, 0.1);
+    color: #cbd5e1;
+    border-color: rgba(203, 213, 225, 0.3);
 }
