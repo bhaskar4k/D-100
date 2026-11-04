@@ -1,0 +1,229 @@
+.storage-plan-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 6px 0 20px;
+    flex-wrap: wrap;
+}
+
+.storage-plan-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #9ca3af;
+}
+
+.storage-plan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border: 1px solid transparent;
+}
+
+.storage-plan-badge i {
+    font-size: 0.875rem;
+}
+
+/* Per-plan palette — kept visually consistent with other status badges in the app (soft bg,
+   sharper text and border of the same hue) so the page reads like it belongs here. */
+.storage-plan-badge.plan-bronze {
+    color: #d8a177;
+    background-color: rgba(205, 127, 50, 0.14);
+    border-color: rgba(205, 127, 50, 0.35);
+}
+
+.storage-plan-badge.plan-silver {
+    color: #d8dde6;
+    background-color: rgba(192, 192, 192, 0.15);
+    border-color: rgba(192, 192, 192, 0.4);
+}
+
+.storage-plan-badge.plan-iron {
+    color: #b2b8c2;
+    background-color: rgba(100, 110, 128, 0.18);
+    border-color: rgba(100, 110, 128, 0.42);
+}
+
+.storage-plan-badge.plan-gold {
+    color: #f1c84b;
+    background-color: rgba(241, 200, 75, 0.14);
+    border-color: rgba(241, 200, 75, 0.4);
+}
+
+.storage-plan-badge.plan-diamond {
+    color: #7dd3fc;
+    background-color: rgba(125, 211, 252, 0.14);
+    border-color: rgba(125, 211, 252, 0.4);
+}
+
+.storage-plan-badge.plan-unlimited {
+    color: #a78bfa;
+    background-color: rgba(167, 139, 250, 0.14);
+    border-color: rgba(167, 139, 250, 0.4);
+}
+
+.storage-plan-badge.plan-custom {
+    color: #cbd5e1;
+    background-color: rgba(203, 213, 225, 0.1);
+    border-color: rgba(203, 213, 225, 0.3);
+}
+
+/* Three-up tile grid. Mirrors .app-detail-grid sizing but gives each tile more vertical room
+   so the headline byte figure can breathe. */
+.storage-tile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px 18px;
+    margin-bottom: 20px;
+}
+
+.storage-tile {
+    padding: 16px 18px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    min-width: 0;
+}
+
+.storage-tile-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.storage-tile-icon {
+    font-size: 1.125rem;
+}
+
+.icon-allocated {
+    color: #60a5fa;
+}
+
+.icon-used {
+    color: #f87171;
+}
+
+.icon-available {
+    color: #4ade80;
+}
+
+.storage-tile-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #9ca3af;
+}
+
+.storage-tile-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #f8fafc;
+    word-break: break-word;
+}
+
+.storage-tile-sub {
+    margin-top: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    word-break: break-all;
+}
+
+/* Usage bar block. */
+.storage-usage-section {
+    margin-top: 6px;
+    padding: 14px 16px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+}
+
+.storage-usage-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.storage-usage-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #9ca3af;
+}
+
+.storage-usage-percent {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.storage-usage-percent.usage-ok {
+    color: #4ade80;
+}
+
+.storage-usage-percent.usage-warning {
+    color: #fbbf24;
+}
+
+.storage-usage-percent.usage-critical {
+    color: #f87171;
+}
+
+.storage-usage-track {
+    width: 100%;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.storage-usage-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+.storage-usage-fill.usage-ok {
+    background-color: #22c55e;
+}
+
+.storage-usage-fill.usage-warning {
+    background-color: #f59e0b;
+}
+
+.storage-usage-fill.usage-critical {
+    background-color: #ef4444;
+}
+
+.storage-usage-footnote {
+    margin-top: 8px;
+    font-size: 0.8125rem;
+    color: #cbd5e1;
+}
+
+.storage-empty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    font-size: 0.875rem;
+    color: #cbd5e1;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+}
+
+.storage-empty i {
+    color: #fbbf24;
+    font-size: 1.125rem;
+}

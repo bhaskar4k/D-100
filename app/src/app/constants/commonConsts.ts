@@ -10,3 +10,5 @@ export type ResponseTypeColor = typeof ResponseTypeColor[keyof typeof ResponseTy
 export const JwtTokenKey = "D_100_JWT";
 export const MenuToggleFlag = "D_100_MENU_TOGGLE";
 export const DateFormat = 'dd MMM yyyy HH:mm:ss';
+
+export const UNLIMITED_BYTES = BigInt('9223372036854775807');
