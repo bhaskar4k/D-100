@@ -92,7 +92,7 @@ export class StorageControlComponent implements OnInit, OnDestroy {
                 // well under Number.MAX_SAFE_INTEGER.
                 const whole = Number(value / divisor);
                 const remainder = Number(value % divisor) / Number(divisor);
-                const amount = (whole + remainder).toFixed(2);
+                const amount = (whole + remainder).toFixed(6);
                 return `${parseFloat(amount)} ${unit}`;
             }
         }
