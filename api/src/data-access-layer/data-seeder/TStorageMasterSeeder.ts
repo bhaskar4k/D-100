@@ -1,9 +1,5 @@
 import { ConnectionPool } from "../../data-access-layer/database";
-import { StorageMaster } from "../../enum/StorageMasterEnum";
-
-// 1 GiB expressed in bytes. Storage quotas are stored as raw byte counts so the DB never has
-// to know about display units; the plan sizes below multiply up from here.
-const BYTES_PER_GIB = 1024 ** 3;
+import { StorageMaster, STORAGE_MASTER_BYTES } from "../../enum/StorageMasterEnum";
 
 
 interface StorageMasterSeed {
@@ -14,12 +10,14 @@ interface StorageMasterSeed {
 }
 
 
+// Byte counts come straight from STORAGE_MASTER_BYTES, so adding a new plan is a one-line
+// change in the enum file plus a name entry here.
 const plans: StorageMasterSeed[] = [
-    { name: "Bronze Plan",  enum: StorageMaster.BRONZE,  storage: 5   * BYTES_PER_GIB, is_active: 1 },
-    { name: "Silver Plan",  enum: StorageMaster.SILVER,  storage: 10  * BYTES_PER_GIB, is_active: 1 },
-    { name: "Iron Plan",    enum: StorageMaster.IRON,    storage: 20  * BYTES_PER_GIB, is_active: 1 },
-    { name: "Gold Plan",    enum: StorageMaster.GOLD,    storage: 50  * BYTES_PER_GIB, is_active: 1 },
-    { name: "Diamond Plan", enum: StorageMaster.DIAMOND, storage: 100 * BYTES_PER_GIB, is_active: 1 },
+    { name: "Bronze Plan",  enum: StorageMaster.BRONZE,  storage: STORAGE_MASTER_BYTES[StorageMaster.BRONZE],  is_active: 1 },
+    { name: "Silver Plan",  enum: StorageMaster.SILVER,  storage: STORAGE_MASTER_BYTES[StorageMaster.SILVER],  is_active: 1 },
+    { name: "Iron Plan",    enum: StorageMaster.IRON,    storage: STORAGE_MASTER_BYTES[StorageMaster.IRON],    is_active: 1 },
+    { name: "Gold Plan",    enum: StorageMaster.GOLD,    storage: STORAGE_MASTER_BYTES[StorageMaster.GOLD],    is_active: 1 },
+    { name: "Diamond Plan", enum: StorageMaster.DIAMOND, storage: STORAGE_MASTER_BYTES[StorageMaster.DIAMOND], is_active: 1 },
 ];
 
 
