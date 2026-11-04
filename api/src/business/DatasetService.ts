@@ -779,6 +779,13 @@ export class DatasetService {
 
         const ingestPath = BuildIngestFilePath(DatasetUid, INGEST_UPLOAD_PATH!, UploadedFileName);
 
+        // Pre-rewrite size — captured before the transaction opens so we can apply the size
+        // delta to used_storage after Python rewrites the parquet. A rename usually nudges
+        // the file size by a few bytes (metadata/dictionary reshuffling) and can go either
+        // way. SafeGetFileSize logs and returns null on failure; in that case the quota
+        // update further down is skipped.
+        const sizeBefore = await SafeGetFileSize(ingestPath, `Dataset ${DatasetUid} ingested parquet (before column rename)`);
+
         const connection = await pool.getConnection();
         try {
             await connection.beginTransaction();
@@ -812,6 +819,26 @@ export class DatasetService {
                 await connection.rollback();
                 await Logger.Error("UpdateColumnName Python Error", new Error(response.message), UserId);
                 return "Could not rename the column in the file. Please try again.";
+            }
+
+            // Stat the parquet after Python has swapped the rewritten file in and apply the
+            // size delta to used_storage inside the same transaction. The delta is signed
+            // (rename can grow or shrink the file by a few bytes). Skipped when either stat
+            // failed or the size didn't change — SafeGetFileSize already logged any failure.
+            const sizeAfter = await SafeGetFileSize(ingestPath, `Dataset ${DatasetUid} ingested parquet (after column rename)`);
+            if (sizeBefore !== null && sizeAfter !== null && sizeBefore !== sizeAfter) {
+                const delta = sizeAfter - sizeBefore;
+                const [quotaResult] = await connection.execute<ResultSetHeader>(
+                    `UPDATE T_USER_STORAGE
+                     SET used_storage = used_storage + ?
+                     WHERE user_id = ?`,
+                    [delta, UserId]
+                );
+                if (quotaResult.affectedRows === 0) {
+                    // No quota row means registration never set one up. Don't fail the rename
+                    // over it — just surface it so an operator can backfill the row.
+                    await Logger.Info(`User ${UserId} has no T_USER_STORAGE row; used_storage not updated after column rename.`, UserId);
+                }
             }
 
             await connection.commit();
