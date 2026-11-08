@@ -26,14 +26,13 @@ function ToIsoString(value: string | Date | null): string | null {
 
 export class UserProfileBusiness {
     // Returns the authenticated user's profile from T_USER_MASTER. The password column is
-    // never selected, let alone returned. `id` is cast to CHAR in the SELECT so BIGINT
-    // precision survives through mysql2.
+    // never selected, let alone returned. The user id isn't in the response either — the JWT
+    // on every request identifies the caller, so the client doesn't need it.
     static async DoGetUserProfile(UserId: number): Promise<UserProfileDetailsResponse | null> {
         const pool = await ConnectionPool;
 
         const [rows] = await pool.query<UserProfileRow[]>(
-            `SELECT CAST(id AS CHAR) AS id,
-                    name,
+            `SELECT name,
                     email,
                     phone,
                     active,
@@ -53,7 +52,6 @@ export class UserProfileBusiness {
         const row = rows[0];
 
         return {
-            id: row.id,
             name: row.name,
             email: row.email,
             phone: row.phone,
