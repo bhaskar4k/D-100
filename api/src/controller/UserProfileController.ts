@@ -53,7 +53,7 @@ export class UserProfileController {
             }
 
             res.status(HttpStatusCode.OK).json(
-                new SuccessDto(null, "Password updated successfully.", HttpStatusCode.OK)
+                new SuccessDto(null, "Password has been successfully updated.", HttpStatusCode.OK)
             );
         } catch (error) {
             await Logger.Error("UserProfile.ChangePassword Error", error, req.UserData?.id);
