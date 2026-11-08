@@ -7,5 +7,6 @@ const UserProfileRouter = Router();
 UserProfileRouter.use(JwtMiddleWare);
 
 UserProfileRouter.get("/GetDetails", UserProfileController.GetDetails);
+UserProfileRouter.post("/ChangePassword", UserProfileController.ChangePassword);
 
 export default UserProfileRouter;

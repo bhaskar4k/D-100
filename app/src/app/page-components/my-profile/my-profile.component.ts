@@ -8,6 +8,7 @@ import { UserProfileService } from '../../services/user-profile.service';
 import { UserProfileDetails } from '../../models/user-profile.model';
 import { CustomAlertComponent } from '../../page-components-shared/custom-alert/custom-alert.component';
 import { DateFormat, ResponseTypeColor } from '../../constants/commonConsts';
+import { ChangePasswordDialogComponent, ChangePasswordDialogResult } from './change-password-dialog/change-password-dialog.component';
 
 @Component({
     selector: 'app-my-profile',
@@ -45,6 +46,28 @@ export class MyProfileComponent implements OnInit, OnDestroy {
             return;
         }
         this.Load();
+    }
+
+    // Opens the change-password dialog. On a successful change the dialog closes with `true`,
+    // and we reload the profile so modifiedAt / Last Updated reflects the fresh timestamp.
+    OnChangePassword(): void {
+        if (this.MatProgressBar) {
+            return;
+        }
+
+        const ref = this.dialog.open<ChangePasswordDialogComponent, undefined, ChangePasswordDialogResult>(
+            ChangePasswordDialogComponent,
+            {
+                autoFocus: 'first-tabbable',
+                disableClose: true,
+            }
+        );
+
+        ref.afterClosed().subscribe(result => {
+            if (result === true) {
+                this.Load();
+            }
+        });
     }
 
     // One- or two-letter initials for the avatar tile. Uses the first letters of the first

@@ -54,6 +54,7 @@ export const Endpoints = {
     },
     UserProfile: {
         GetDetails: "UserProfile/GetDetails",
+        ChangePassword: "UserProfile/ChangePassword",
     },
     Download: {
         SingleFile: "file/download/single-file"

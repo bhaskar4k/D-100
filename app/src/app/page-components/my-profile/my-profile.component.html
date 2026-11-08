@@ -10,6 +10,12 @@
         </h4>
 
         <div class="app-page-actions">
+            <button type="button" class="app-icon-button text-warning" matTooltip="Change password"
+                matTooltipPosition="above" aria-label="Change password" [disabled]="MatProgressBar || !Profile"
+                (click)="OnChangePassword()">
+                <i class="bi bi-key-fill"></i>
+            </button>
+
             <button type="button" class="app-icon-button text-success" matTooltip="Refresh" matTooltipPosition="above"
                 aria-label="Refresh profile" [disabled]="MatProgressBar" (click)="OnRefresh()">
                 <i class="bi bi-arrow-clockwise"></i>

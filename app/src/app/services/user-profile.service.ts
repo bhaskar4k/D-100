@@ -13,4 +13,11 @@ export class UserProfileService {
     GetDetails(): Observable<ApiResponseDto> {
         return this.http.get<ApiResponseDto>(GetBaseURL() + Endpoints.UserProfile.GetDetails);
     }
+
+    ChangePassword(currentPassword: string, newPassword: string): Observable<ApiResponseDto> {
+        return this.http.post<ApiResponseDto>(
+            GetBaseURL() + Endpoints.UserProfile.ChangePassword,
+            { currentPassword, newPassword }
+        );
+    }
 }
