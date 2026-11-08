@@ -12,6 +12,7 @@ import ProcessingRouter from "./router/ProcessingRoutes";
 import DataCleaningRouter from "./router/DataCleaningRoutes";
 import DatasetHistoryRouter from "./router/DatasetHistoryRoutes";
 import UserStorageRouter from "./router/UserStorageRoutes";
+import UserProfileRouter from "./router/UserProfileRoutes";
 import CorsConfig from "./config/CorsConfig";
 
 const app = express();
@@ -29,6 +30,7 @@ app.use("/Api/Processing", ProcessingRouter);
 app.use("/Api/DataCleaning", DataCleaningRouter);
 app.use("/Api/DatasetHistory", DatasetHistoryRouter);
 app.use("/Api/UserStorage", UserStorageRouter);
+app.use("/Api/UserProfile", UserProfileRouter);
 
 
 app.get("/api/health", async (_req, res) => {
