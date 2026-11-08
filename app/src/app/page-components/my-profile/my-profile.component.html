@@ -18,62 +18,98 @@
     </div>
 
     <ng-container *ngIf="Profile as P; else noProfile">
-        <div class="profile-header">
+        <div class="profile-hero">
+            <div class="profile-hero-glow" aria-hidden="true"></div>
+
             <div class="profile-avatar" aria-hidden="true">{{ GetInitials(P.name) }}</div>
-            <div class="profile-header-text">
+
+            <div class="profile-hero-text">
                 <div class="profile-name">{{ P.name }}</div>
                 <div class="profile-email">
                     <i class="bi bi-envelope-fill me-1"></i>{{ P.email }}
                 </div>
-                <div class="profile-status-row">
+                <div class="profile-hero-meta">
                     <span class="app-badge" [ngClass]="AccountStatusClass(P)">
-                        {{ AccountStatusLabel(P) }}
+                        <i class="bi bi-shield-fill-check me-1"></i>{{ AccountStatusLabel(P) }}
+                    </span>
+                    <span class="profile-hero-since">
+                        <i class="bi bi-calendar-event me-1"></i>
+                        Member since {{ P.createdAt | date: DateFormat }}
                     </span>
                 </div>
             </div>
         </div>
 
-        <div class="app-detail-grid">
-            <div class="app-detail-cell">
-                <div class="app-detail-label">Full Name</div>
-                <div class="app-detail-value">{{ P.name }}</div>
-            </div>
-
-            <div class="app-detail-cell">
-                <div class="app-detail-label">Email</div>
-                <div class="app-detail-value">{{ P.email }}</div>
-            </div>
-
-            <div class="app-detail-cell">
-                <div class="app-detail-label">Phone</div>
-                <div class="app-detail-value">{{ P.phone || '-' }}</div>
-            </div>
-
-            <div class="app-detail-cell">
-                <div class="app-detail-label">Account Status</div>
-                <div class="app-detail-value">
-                    <span class="app-badge" [ngClass]="AccountStatusClass(P)">
-                        {{ AccountStatusLabel(P) }}
-                    </span>
+        <div class="profile-section-grid">
+            <section class="profile-section">
+                <div class="profile-section-header">
+                    <i class="bi bi-person-lines-fill profile-section-icon"></i>
+                    <span>Contact Information</span>
                 </div>
-            </div>
 
-            <div class="app-detail-cell">
-                <div class="app-detail-label">Member Since</div>
-                <div class="app-detail-value">{{ P.createdAt | date: DateFormat }}</div>
-            </div>
-
-            <div class="app-detail-cell">
-                <div class="app-detail-label">Last Updated</div>
-                <div class="app-detail-value">
-                    {{ P.modifiedAt ? (P.modifiedAt | date: DateFormat) : '-' }}
+                <div class="profile-row">
+                    <div class="profile-row-icon icon-email">
+                        <i class="bi bi-envelope-fill"></i>
+                    </div>
+                    <div class="profile-row-body">
+                        <div class="profile-row-label">Email</div>
+                        <div class="profile-row-value">{{ P.email }}</div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="app-detail-cell">
-                <div class="app-detail-label">User ID</div>
-                <div class="app-detail-value app-detail-mono">{{ P.id }}</div>
-            </div>
+                <div class="profile-row">
+                    <div class="profile-row-icon icon-phone">
+                        <i class="bi bi-telephone-fill"></i>
+                    </div>
+                    <div class="profile-row-body">
+                        <div class="profile-row-label">Phone</div>
+                        <div class="profile-row-value">{{ P.phone || '-' }}</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="profile-section">
+                <div class="profile-section-header">
+                    <i class="bi bi-shield-lock-fill profile-section-icon"></i>
+                    <span>Account Information</span>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-row-icon icon-status">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                    <div class="profile-row-body">
+                        <div class="profile-row-label">Account Status</div>
+                        <div class="profile-row-value">
+                            <span class="app-badge" [ngClass]="AccountStatusClass(P)">
+                                {{ AccountStatusLabel(P) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-row-icon icon-created">
+                        <i class="bi bi-calendar-event-fill"></i>
+                    </div>
+                    <div class="profile-row-body">
+                        <div class="profile-row-label">Member Since</div>
+                        <div class="profile-row-value">{{ P.createdAt | date: DateFormat }}</div>
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-row-icon icon-updated">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="profile-row-body">
+                        <div class="profile-row-label">Last Updated</div>
+                        <div class="profile-row-value">
+                            {{ P.modifiedAt ? (P.modifiedAt | date: DateFormat) : '-' }}
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </ng-container>
 
