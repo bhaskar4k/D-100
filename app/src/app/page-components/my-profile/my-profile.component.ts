@@ -8,7 +8,7 @@ import { UserProfileService } from '../../services/user-profile.service';
 import { UserProfileDetails } from '../../models/user-profile.model';
 import { CustomAlertComponent } from '../../page-components-shared/custom-alert/custom-alert.component';
 import { DateFormat, ResponseTypeColor } from '../../constants/commonConsts';
-import { ChangePasswordDialogComponent, ChangePasswordDialogResult } from './change-password-dialog/change-password-dialog.component';
+import { ChangePasswordComponent, ChangePasswordDialogResult } from '../auth/change-password/change-password.component';
 
 @Component({
     selector: 'app-my-profile',
@@ -55,8 +55,8 @@ export class MyProfileComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const ref = this.dialog.open<ChangePasswordDialogComponent, undefined, ChangePasswordDialogResult>(
-            ChangePasswordDialogComponent,
+        const ref = this.dialog.open<ChangePasswordComponent, undefined, ChangePasswordDialogResult>(
+            ChangePasswordComponent,
             {
                 autoFocus: 'first-tabbable',
                 disableClose: true,
